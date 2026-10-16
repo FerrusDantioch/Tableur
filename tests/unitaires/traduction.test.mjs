@@ -50,3 +50,18 @@ describe('Décalage des références (copier-coller)', () => {
     assert.equal(decalerReferences('texte A1', 1, 0), 'texte A1'); // pas une formule
   });
 });
+
+describe('Texte tabulé (coller depuis Excel ou une page web)', async () => {
+  const { lireTexteTabule } = await import('../../js/affichage/presse-papiers.js');
+  test('lignes, colonnes et guillemets', () => {
+    assert.deepEqual(lireTexteTabule('a\tb\r\nc\td\r\n'), [
+      ['a', 'b'],
+      ['c', 'd'],
+    ]);
+    assert.deepEqual(lireTexteTabule('seul'), [['seul']]);
+    assert.deepEqual(lireTexteTabule('"deux\nlignes"\tx'), [['deux\nlignes', 'x']]);
+    assert.deepEqual(lireTexteTabule('"il dit ""oui"""'), [['il dit "oui"']]);
+    assert.deepEqual(lireTexteTabule('a\t\tc'), [['a', '', 'c']]);
+    assert.deepEqual(lireTexteTabule(''), []);
+  });
+});

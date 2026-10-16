@@ -18,6 +18,7 @@ import { Interactions } from './affichage/interactions.js';
 import { MiseEnForme } from './affichage/mise-en-forme.js';
 import { demander, preparerFenetres } from './affichage/fenetres.js';
 import { installerMenu } from './affichage/menu.js';
+import { PressePapiers } from './affichage/presse-papiers.js';
 import { demanderStockagePersistant, ecrireClasseur, lireClasseur, mettreDeCote, preferences } from './services/stockage.js';
 import { SauvegardeAuto } from './services/sauvegarde-auto.js';
 import { demarrerServiceWorker } from './services/pwa.js';
@@ -151,6 +152,15 @@ for (const bouton of document.querySelectorAll('.barre-outils button, .panneau b
 }
 boutonAnnuler.addEventListener('click', () => commandes.annuler());
 boutonRetablir.addEventListener('click', () => commandes.retablir());
+
+// Copier, couper, coller (Ctrl+C, Ctrl+X, Ctrl+V) quand la grille a le focus.
+new PressePapiers({
+  classeur,
+  feuille,
+  selection,
+  presenterCellule,
+  estActif: () => !edition.enCours && [edition.champCellule, zone].includes(document.activeElement),
+});
 
 // --- Titre du classeur -------------------------------------------------------
 const champTitre = element('titre');
