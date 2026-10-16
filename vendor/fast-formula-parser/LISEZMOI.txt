@@ -1,0 +1,21 @@
+fast-formula-parser — copie fournie avec l'application
+======================================================
+
+Rôle      : lire et calculer les formules (=SOMME(A1:A10), =SI(...), etc.).
+Version   : 1.0.19 (paquet npm « fast-formula-parser »)
+Source    : https://github.com/LesterLyu/fast-formula-parser
+Fichier   : parser.min.js = fichier « build/parser.min.js » du paquet npm, non modifié.
+Empreinte : sha256 687035c3607cc995c5edc4fbc33075946e0fee6a410812afec564235509b5416
+Licence   : MIT (texte complet : licences/fast-formula-parser-MIT.txt)
+
+Ce fichier contient aussi, intégrées par son auteur :
+  - Chevrotain 7.0.1 (licence Apache 2.0) — outil de lecture des formules ;
+  - jStat (MIT), bessel (Apache 2.0), bahttext (MIT) — fonctions mathématiques.
+Leurs licences sont dans le dossier licences/ à la racine du projet.
+
+Le fichier est chargé par index.html comme un script classique : il crée la
+variable globale « FormulaParser », utilisée par js/calcul/bibliotheque.js.
+
+Pour le mettre à jour : télécharger le paquet (npm pack fast-formula-parser),
+copier build/parser.min.js ici, vérifier la licence, puis lancer les tests
+(npm test) avant de publier.
