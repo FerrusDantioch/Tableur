@@ -132,6 +132,8 @@ export class Interactions {
       // la cellule par la position du pointeur plutôt que par e.target.)
       const cible = grille.cible(document.elementFromPoint(e.clientX, e.clientY));
       if (cible?.type === 'cellule' && !edition.enCours) this.#commencer('modification');
+      // Double-clic sur le bord d'une colonne : largeur ajustée au contenu.
+      if (cible?.type === 'largeur') this.commandes.ajusterLargeur?.([cible.colonne]);
     });
     racine.addEventListener('focus', () => {
       // Au clavier, le focus doit être dans le champ invisible de la cellule active.

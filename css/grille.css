@@ -47,7 +47,7 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  background: var(--cellule);
+  background: var(--teinte, var(--cellule));
   border-right: 1px solid var(--quadrillage);
   border-bottom: 1px solid var(--quadrillage);
   cursor: cell;
@@ -72,6 +72,17 @@
 .grille td.gras {
   font-weight: 700;
 }
+
+/* Couleurs de fond : l'attribut data-fond choisit la teinte du thème, utilisée
+   par les cellules, les pastilles du nuancier et le témoin du bouton « Fond ». */
+[data-fond="jaune"] { --teinte: var(--fond-jaune); }
+[data-fond="orange"] { --teinte: var(--fond-orange); }
+[data-fond="rouge"] { --teinte: var(--fond-rouge); }
+[data-fond="rose"] { --teinte: var(--fond-rose); }
+[data-fond="violet"] { --teinte: var(--fond-violet); }
+[data-fond="bleu"] { --teinte: var(--fond-bleu); }
+[data-fond="vert"] { --teinte: var(--fond-vert); }
+[data-fond="gris"] { --teinte: var(--fond-gris); }
 
 /* --- En-têtes (A, B, C… en haut ; 1, 2, 3… à gauche), toujours visibles ----- */
 
@@ -119,12 +130,29 @@
 .poignee-largeur {
   position: absolute;
   top: 0;
-  right: -6px;
+  right: 0;
   width: 12px;
   height: 100%;
   cursor: col-resize;
   z-index: 1;
   touch-action: none;
+}
+
+/* Au doigt : poignée plus large, avec un petit trait pour la repérer. */
+@media (pointer: coarse) {
+  .poignee-largeur {
+    width: 22px;
+  }
+  .poignee-largeur::after {
+    content: "";
+    position: absolute;
+    top: 30%;
+    bottom: 30%;
+    right: 4px;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--trait);
+  }
 }
 
 /* --- Sélection ---------------------------------------------------------------- */
