@@ -45,6 +45,7 @@ const FICHIERS = [
   'js/affichage/interactions.js',
   'js/affichage/menu.js',
   'js/affichage/mise-en-forme.js',
+  'js/affichage/presse-papiers.js',
   'js/affichage/selection.js',
   'js/services/export-csv.js',
   'js/services/export-pdf.js',
