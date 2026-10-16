@@ -49,6 +49,7 @@ const FICHIERS = [
   'js/services/export-csv.js',
   'js/services/export-pdf.js',
   'js/services/fichiers.js',
+  'js/services/onglets.js',
   'js/services/pwa.js',
   'js/services/sauvegarde-auto.js',
   'js/services/stockage.js',
