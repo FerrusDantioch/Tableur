@@ -24,6 +24,7 @@ import { demarrerServiceWorker } from './services/pwa.js';
 import { genererCSV } from './services/export-csv.js';
 import { ExportPdf } from './services/export-pdf.js';
 import { nomDeFichier, telecharger } from './services/fichiers.js';
+import { surveillerAutresOnglets } from './services/onglets.js';
 
 const CONFIG = self.CONFIG_APP;
 const element = (id) => document.getElementById(id);
@@ -155,11 +156,23 @@ boutonRetablir.addEventListener('click', () => commandes.retablir());
 const champTitre = element('titre');
 champTitre.value = classeur.titre;
 document.title = `${classeur.titre} – ${CONFIG.nom}`;
-champTitre.addEventListener('change', () => classeur.renommer(champTitre.value));
+// Le titre est enregistré pendant la frappe (même si l'on ferme l'application
+// sans quitter le champ). Échap remet le titre d'avant.
+let titreAvant = classeur.titre;
+champTitre.addEventListener('focus', () => {
+  titreAvant = classeur.titre;
+});
+champTitre.addEventListener('input', () => classeur.renommer(champTitre.value));
+champTitre.addEventListener('change', () => {
+  champTitre.value = classeur.titre;
+});
 champTitre.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' || e.key === 'Escape') {
     e.preventDefault();
-    if (e.key === 'Escape') champTitre.value = classeur.titre;
+    if (e.key === 'Escape') {
+      classeur.renommer(titreAvant);
+      champTitre.value = classeur.titre;
+    }
     interactions.focaliser();
   }
 });
@@ -201,7 +214,7 @@ classeur.abonner((evenement) => {
       selection.reborner();
       break;
     case 'titre':
-      champTitre.value = classeur.titre;
+      if (document.activeElement !== champTitre) champTitre.value = classeur.titre;
       document.title = `${classeur.titre} – ${CONFIG.nom}`;
       break;
     case 'historique':
@@ -303,6 +316,21 @@ commandes.exporterPdf = () => {
   interactions.validerEdition(null, { refocaliser: false });
   exportPdf.exporter();
 };
+
+// --- Divers ----------------------------------------------------------------------
+
+// Taille de fenêtre modifiée (ou téléphone tourné) : le cadre de sélection est recalé.
+window.addEventListener('resize', () => interactions.actualiser());
+
+// Avertissement si l'application est ouverte deux fois.
+const bandeauOnglets = element('bandeau-onglets');
+surveillerAutresOnglets(() => {
+  bandeauOnglets.hidden = false;
+});
+element('bouton-compris').addEventListener('click', () => {
+  bandeauOnglets.hidden = true;
+  interactions.focaliser();
+});
 
 const bandeau = element('bandeau-mise-a-jour');
 demarrerServiceWorker({

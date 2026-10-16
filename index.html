@@ -138,6 +138,12 @@
       <button id="bouton-recharger" class="outil" type="button">Recharger</button>
     </div>
 
+    <!-- Bandeau affiché si Tableur est ouvert dans deux onglets ou fenêtres. -->
+    <div id="bandeau-onglets" class="bandeau" role="alert" hidden>
+      <span>Tableur est aussi ouvert ailleurs (autre onglet ou fenêtre). Gardez-en un seul ouvert, sinon des modifications pourraient être perdues.</span>
+      <button id="bouton-compris" class="outil" type="button">Compris</button>
+    </div>
+
     <!-- ================= Fenêtres ================= -->
 
     <dialog id="fenetre-menu" class="fenetre" aria-labelledby="titre-menu">
@@ -287,7 +293,7 @@
         <section>
           <h3>Raccourcis</h3>
           <ul>
-            <li><strong>Ctrl + Z</strong> annuler, <strong>Ctrl + Y</strong> rétablir, <strong>Ctrl + B</strong> gras, <strong>Suppr</strong> vider les cellules, <strong>Ctrl + A</strong> tout sélectionner.</li>
+            <li><strong>Ctrl + Z</strong> annuler, <strong>Ctrl + Y</strong> rétablir, <strong>Ctrl + B</strong> gras, <strong>Suppr</strong> vider les cellules, <strong>Ctrl + A</strong> tout sélectionner, <strong>Ctrl + P</strong> exporter en PDF.</li>
           </ul>
         </section>
       </div>

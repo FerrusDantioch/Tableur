@@ -176,3 +176,36 @@ test('application installable et utilisable sans connexion', async () => {
   await contexte.setOffline(false);
   await contexte.close();
 });
+
+test('titre enregistré pendant la frappe ; Échap remet l’ancien', async () => {
+  const { contexte, page } = await ouvrirApplication(navigateur, serveur.url);
+  await page.click('#titre');
+  await page.keyboard.press('Control+a');
+  await page.keyboard.type('Comptes');
+  // Sans quitter le champ : le titre est déjà pris en compte et enregistré.
+  await attendreEnregistrement(page);
+  assert.equal(await page.evaluate(() => window.tableur.classeur.titre), 'Comptes');
+  await page.keyboard.press('Enter');
+  await page.click('#titre');
+  await page.keyboard.press('Control+a');
+  await page.keyboard.type('Brouillon');
+  await page.keyboard.press('Escape');
+  assert.equal(await page.inputValue('#titre'), 'Comptes');
+  await attendreEnregistrement(page);
+  await recharger(page);
+  assert.equal(await page.inputValue('#titre'), 'Comptes');
+  await contexte.close();
+});
+
+test('avertissement si l’application est ouverte deux fois', async () => {
+  const { contexte, page } = await ouvrirApplication(navigateur, serveur.url);
+  assert.equal(await page.isVisible('#bandeau-onglets'), false);
+  const seconde = await contexte.newPage();
+  await seconde.goto(serveur.url);
+  await seconde.waitForFunction(() => window.tableur !== undefined);
+  await seconde.waitForSelector('#bandeau-onglets', { state: 'visible' });
+  await page.waitForSelector('#bandeau-onglets', { state: 'visible' });
+  await seconde.click('#bouton-compris');
+  assert.equal(await seconde.isVisible('#bandeau-onglets'), false);
+  await contexte.close();
+});
