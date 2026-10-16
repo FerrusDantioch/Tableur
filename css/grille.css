@@ -1,0 +1,198 @@
+/* ==========================================================================
+   La grille : cellules, en-têtes collants, cadre de sélection, champ de
+   saisie posé sur la cellule active.
+   ========================================================================== */
+
+.zone-grille {
+  position: relative;
+  /* Les z-index de la grille restent à l'intérieur de la grille. */
+  isolation: isolate;
+  overflow: auto;
+  background: var(--fond);
+  outline: none;
+  overscroll-behavior: contain;
+  --hauteur-ligne: 32px;
+}
+
+/* Au doigt : lignes un peu plus hautes. */
+@media (pointer: coarse) {
+  .zone-grille {
+    --hauteur-ligne: 36px;
+  }
+}
+
+.grille-contenu {
+  position: relative;
+  width: max-content;
+}
+
+.grille {
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-family: var(--police-cellules);
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+  /* Un appui rapide au doigt sélectionne, sans zoom par double appui. */
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* --- Cellules ----------------------------------------------------------------- */
+
+.grille td {
+  height: var(--hauteur-ligne);
+  padding: 0 8px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  background: var(--cellule);
+  border-right: 1px solid var(--quadrillage);
+  border-bottom: 1px solid var(--quadrillage);
+  cursor: cell;
+}
+
+/* Alignement automatique, comme dans Excel : nombres à droite, texte à gauche. */
+.grille td.nombre {
+  text-align: right;
+}
+
+.grille td.booleen,
+.grille td.erreur {
+  text-align: center;
+}
+
+.grille td.erreur {
+  color: var(--erreur);
+  font-family: var(--police-entetes);
+  font-size: 0.85rem;
+}
+
+.grille td.gras {
+  font-weight: 700;
+}
+
+/* --- En-têtes (A, B, C… en haut ; 1, 2, 3… à gauche), toujours visibles ----- */
+
+.grille th {
+  height: var(--hauteur-ligne);
+  padding: 0 4px;
+  background: var(--entete);
+  color: var(--entete-texte);
+  font-family: var(--police-entetes);
+  font-size: 0.8rem;
+  font-weight: 500;
+  border-right: 1px solid var(--trait);
+  border-bottom: 1px solid var(--trait);
+  text-align: center;
+  cursor: pointer;
+}
+
+.grille thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
+.grille tbody th {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+}
+
+.grille th.coin {
+  left: 0;
+  z-index: 4;
+}
+
+.grille th.surligne {
+  background: var(--entete-surligne);
+  color: var(--entete-surligne-texte);
+}
+
+/* Poignée pour changer la largeur d'une colonne (bord droit de l'en-tête). */
+.entete-colonne {
+  position: relative;
+}
+
+.poignee-largeur {
+  position: absolute;
+  top: 0;
+  right: -6px;
+  width: 12px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 1;
+  touch-action: none;
+}
+
+/* --- Sélection ---------------------------------------------------------------- */
+
+.cadre-plage,
+.cadre-actif {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.cadre-plage {
+  background: var(--selection);
+  border: 1px solid var(--selection-trait);
+}
+
+.cadre-actif {
+  border: 2px solid var(--selection-trait);
+}
+
+/* Poignée ronde pour étendre la sélection au doigt (seulement au toucher). */
+.poignee-selection {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+  border-radius: 50%;
+  background: var(--selection-trait);
+  border: 3px solid var(--cellule);
+  z-index: 2;
+  touch-action: none;
+}
+
+.mode-toucher .poignee-selection {
+  display: block;
+}
+
+.en-edition .poignee-selection {
+  display: none;
+}
+
+/* --- Champ de saisie sur la cellule ------------------------------------------- */
+
+.editeur-cellule {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  margin: 0;
+  padding: 0 7px;
+  border: 2px solid var(--selection-trait);
+  border-radius: 0;
+  background: var(--cellule);
+  color: var(--texte);
+  font-family: var(--police-cellules);
+  font-size: 0.95rem;
+  outline: none;
+}
+
+/* Hors édition : le champ reste sur la cellule active pour recevoir le
+   clavier, mais il est invisible et laisse passer les clics. */
+body:not(.en-edition) .editeur-cellule {
+  opacity: 0;
+  pointer-events: none;
+  caret-color: transparent;
+}

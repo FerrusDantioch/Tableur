@@ -1,0 +1,40 @@
+/* ==========================================================================
+   Thèmes de couleurs
+   C'est le SEUL fichier qui contient des couleurs. Tout le reste du code
+   utilise ces variables.
+   ========================================================================== */
+
+/* --- Omni-système (thème par défaut) ---------------------------------------
+   Reprend l'identité du site de l'Omni-système : encre violette très sombre,
+   violet du logo, titres en Oxanium, texte en Literata. */
+:root,
+[data-theme="omni"] {
+  --fond: #14111d;          /* arrière-plan de l'application */
+  --surface: #1d1929;       /* barres, fenêtres, menus */
+  --trait: #332c47;         /* bordures fines */
+  --texte: #e9e4f2;         /* texte principal */
+  --discret: #a59cbb;       /* texte secondaire */
+  --accent: #a777ff;        /* violet du logo */
+  --accent-texte: #140d24;  /* texte posé sur l'accent */
+  --halo: #d6c2ff;          /* contour de focus, liens */
+  --accent-doux: #3b2e58;   /* fond d'un bouton activé */
+  --survol: #2a2340;        /* fond d'un bouton survolé */
+
+  /* Grille */
+  --cellule: #17131f;              /* fond des cellules */
+  --quadrillage: #2b2540;          /* traits entre les cellules */
+  --entete: #1d1929;               /* en-têtes A, B, C… et 1, 2, 3… */
+  --entete-texte: #a59cbb;
+  --entete-surligne: #3b2e58;      /* en-tête de la sélection */
+  --entete-surligne-texte: #e9e4f2;
+  --selection: rgb(167 119 255 / 0.16);
+  --selection-trait: #a777ff;
+  --erreur: #ff8a93;               /* texte des cellules en erreur */
+
+  /* Polices (fournies avec l'application, voir css/polices.css) */
+  --police-interface: "Oxanium", "Trebuchet MS", system-ui, sans-serif;
+  --police-cellules: "Literata", Georgia, "Times New Roman", serif;
+  --police-entetes: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+
+  color-scheme: dark;
+}

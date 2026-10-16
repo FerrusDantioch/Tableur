@@ -1,0 +1,312 @@
+/* ==========================================================================
+   Mise en page générale : en-tête, barre d'outils, barre de formule,
+   barre d'état. Les couleurs viennent de themes.css.
+   Pas d'animation : l'interface reste calme et ne clignote jamais.
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+  background: var(--fond);
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  height: 100dvh;
+  display: grid;
+  /* en-tête, outils, barre de formule, grille (prend la place restante), barre d'état */
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+  /* Une seule colonne, jamais plus large que l'écran. */
+  grid-template-columns: minmax(0, 1fr);
+  background: var(--fond);
+  color: var(--texte);
+  font-family: var(--police-interface);
+  font-size: 1rem;
+  line-height: 1.4;
+  /* Respecte les encoches des téléphones. */
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--halo);
+  outline-offset: 2px;
+}
+
+.visuellement-cache {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.icones {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+svg {
+  width: 22px;
+  height: 22px;
+  flex: none;
+}
+
+/* --- En-tête --------------------------------------------------------------- */
+
+.entete {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  padding-top: max(8px, env(safe-area-inset-top, 0px));
+  background: var(--surface);
+  border-bottom: 1px solid var(--trait);
+}
+
+.marque {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: var(--accent-doux);
+  color: var(--halo);
+}
+
+.titre-classeur {
+  flex: 1;
+  min-width: 0;
+}
+
+.titre-classeur input {
+  width: 100%;
+  max-width: 34ch;
+  min-height: 40px;
+  padding: 4px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+}
+
+.titre-classeur input:hover {
+  border-color: var(--trait);
+}
+
+.titre-classeur input:focus {
+  border-color: var(--accent);
+  background: var(--fond);
+  outline: none;
+}
+
+.entete-actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* --- Boutons ----------------------------------------------------------------- */
+
+/* Boutons larges, faciles à toucher au doigt (au moins 44 × 44 pixels). */
+.outil {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 1px solid var(--trait);
+  border-radius: 10px;
+  background: var(--surface);
+  font-weight: 500;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.outil:hover:not(:disabled) {
+  background: var(--survol);
+}
+
+.outil[aria-pressed="true"] {
+  background: var(--accent-doux);
+  border-color: var(--accent);
+}
+
+.outil:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.outil-rond {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--trait);
+  border-radius: 10px;
+  background: var(--surface);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.outil-rond:hover {
+  background: var(--survol);
+}
+
+/* --- Barre d'outils --------------------------------------------------------- */
+
+.barre-outils {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--trait);
+}
+
+.separateur {
+  width: 1px;
+  align-self: stretch;
+  margin: 4px 4px;
+  background: var(--trait);
+}
+
+/* Sur petit écran, les boutons n'affichent que leur icône. */
+@media (max-width: 760px) {
+  .outil .libelle {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .outil {
+    padding: 6px 10px;
+  }
+}
+
+/* --- Barre de formule ------------------------------------------------------- */
+
+.barre-formule {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--fond);
+  border-bottom: 1px solid var(--trait);
+}
+
+.nom-cellule {
+  width: 7.5em;
+  flex: none;
+  min-height: 40px;
+  padding: 4px 8px;
+  border: 1px solid var(--trait);
+  border-radius: 8px;
+  background: var(--surface);
+  font-family: var(--police-entetes);
+  font-size: 0.95rem;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.fx {
+  font-family: var(--police-entetes);
+  font-style: italic;
+  color: var(--discret);
+  padding: 0 2px;
+}
+
+.champ-formule {
+  flex: 1;
+  width: 0;
+  min-width: 0;
+  min-height: 40px;
+  padding: 4px 10px;
+  border: 1px solid var(--trait);
+  border-radius: 8px;
+  background: var(--surface);
+  font-family: var(--police-cellules);
+  font-size: 1rem;
+}
+
+.champ-formule:focus,
+.nom-cellule:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+/* Les boutons ✓ et ✕ n'apparaissent que pendant la saisie. */
+.barre-formule .outil-rond {
+  display: none;
+}
+
+.en-edition .barre-formule .outil-rond {
+  display: inline-grid;
+}
+
+/* --- Barre d'état (en bas) -------------------------------------------------- */
+
+.barre-etat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 34px;
+  padding: 4px 12px;
+  padding-bottom: max(4px, env(safe-area-inset-bottom, 0px));
+  background: var(--surface);
+  border-top: 1px solid var(--trait);
+  color: var(--discret);
+  font-size: 0.88rem;
+}
+
+.message {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.message.erreur {
+  color: var(--erreur);
+}
+
+.statistiques {
+  font-family: var(--police-entetes);
+  white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+  .statistiques {
+    display: none;
+  }
+  .nom-cellule {
+    width: 5em;
+    font-size: 0.85rem;
+  }
+  .fx {
+    display: none;
+  }
+}

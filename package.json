@@ -1,0 +1,16 @@
+{
+  "name": "tableur",
+  "version": "1.0.0",
+  "description": "Tableur hors ligne de la Suite bureautique de l'Omni-système",
+  "private": true,
+  "type": "module",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "node outils/serveur.mjs",
+    "test": "node --test \"tests/unitaires/*.test.mjs\"",
+    "test:navigateur": "node --test --test-concurrency=1 \"tests/navigateur/*.test.mjs\""
+  },
+  "devDependencies": {
+    "playwright": "1.56.1"
+  }
+}
