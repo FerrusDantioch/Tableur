@@ -392,8 +392,12 @@ svg {
 .message {
   min-width: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /* Deux lignes au maximum (utile sur téléphone pour lire l'explication). */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  line-height: 1.3;
 }
 
 .message.erreur {
@@ -401,8 +405,17 @@ svg {
 }
 
 .statistiques {
+  margin-left: auto;
   font-family: var(--police-entetes);
   white-space: nowrap;
+}
+
+.etat-sauvegarde {
+  white-space: nowrap;
+}
+
+.etat-sauvegarde.erreur {
+  color: var(--erreur);
 }
 
 @media (max-width: 520px) {

@@ -1,0 +1,263 @@
+/* ==========================================================================
+   Fenêtres (menu, aide, à propos, confirmation) et bandeau de mise à jour.
+   Elles apparaissent sans animation, sur un voile sombre.
+   ========================================================================== */
+
+.fenetre {
+  width: min(460px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  padding: 0;
+  border: 1px solid var(--trait);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--texte);
+  box-shadow: var(--ombre);
+  overflow: auto;
+}
+
+.fenetre-large {
+  width: min(720px, calc(100vw - 24px));
+}
+
+.fenetre::backdrop {
+  background: var(--voile);
+}
+
+.fenetre > * {
+  margin: 0;
+}
+
+.fenetre-corps {
+  display: grid;
+  gap: 18px;
+  padding: 0 20px 20px;
+}
+
+.fenetre-tete {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 14px 10px 20px;
+  background: var(--surface);
+}
+
+.fenetre h2 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.fenetre h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  color: var(--discret);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.fenetre p {
+  margin: 0;
+}
+
+.fenetre a {
+  color: var(--halo);
+  text-underline-offset: 3px;
+}
+
+.note {
+  color: var(--discret);
+  font-size: 0.9rem;
+}
+
+.actions-menu {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.actions-menu.colonne {
+  display: grid;
+}
+
+.actions-menu.colonne .outil {
+  justify-content: flex-start;
+}
+
+.boutons-fenetre {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.outil.danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--danger-texte);
+  font-weight: 700;
+}
+
+.outil.danger:hover {
+  background: var(--danger);
+  filter: brightness(0.95);
+}
+
+/* --- Choix du thème ----------------------------------------------------------- */
+
+.choix-themes {
+  display: grid;
+  gap: 8px;
+}
+
+.choix-theme {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 8px 12px;
+  border: 1px solid var(--trait);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.choix-theme:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-doux);
+}
+
+.choix-theme input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+
+/* Aperçu : la pastille porte son propre data-theme, donc ses couleurs. */
+.apercu-theme {
+  position: relative;
+  flex: none;
+  width: 56px;
+  height: 38px;
+  border-radius: 8px;
+  border: 1px solid var(--trait);
+  background: var(--fond);
+  overflow: hidden;
+}
+
+.apercu-theme::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 10px;
+  background: var(--entete);
+  border-bottom: 1px solid var(--quadrillage);
+}
+
+.apercu-theme::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  top: 17px;
+  width: 22px;
+  height: 12px;
+  border: 2px solid var(--selection-trait);
+  background: var(--cellule);
+}
+
+.textes-theme {
+  display: grid;
+}
+
+.textes-theme small {
+  color: var(--discret);
+}
+
+/* --- À propos ---------------------------------------------------------------------- */
+
+.a-propos-identite {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.a-propos-identite img {
+  border-radius: 18px;
+  flex: none;
+}
+
+.nom-appli {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.fenetre details {
+  border: 1px solid var(--trait);
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+
+.fenetre summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.fenetre ul {
+  margin: 10px 0 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 4px;
+}
+
+/* --- Aide ----------------------------------------------------------------------------- */
+
+.tableau-aide {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.tableau-aide th,
+.tableau-aide td {
+  text-align: left;
+  vertical-align: top;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--trait);
+}
+
+.tableau-aide th {
+  color: var(--discret);
+  font-weight: 500;
+}
+
+.tableau-aide code,
+.fenetre code {
+  font-family: var(--police-entetes);
+  font-size: 0.9em;
+  white-space: nowrap;
+}
+
+/* --- Bandeau « nouvelle version » ---------------------------------------------------- */
+
+.bandeau {
+  position: fixed;
+  left: 50%;
+  bottom: calc(48px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: max-content;
+  max-width: calc(100vw - 24px);
+  padding: 8px 8px 8px 16px;
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--ombre);
+}
+
+.bandeau[hidden] {
+  display: none;
+}
