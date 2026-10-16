@@ -7,7 +7,7 @@
   try {
     var preferences = JSON.parse(localStorage.getItem('tableur.preferences') || '{}');
     if (['omni', 'sombre', 'clair'].indexOf(preferences.theme) !== -1) theme = preferences.theme;
-  } catch (erreur) {
+  } catch {
     // Stockage indisponible (navigation privée…) : thème par défaut.
   }
   document.documentElement.setAttribute('data-theme', theme);
