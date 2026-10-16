@@ -1,0 +1,4 @@
+# Bibliothèques installées pour les tests (npm install) : elles ne sont pas publiées.
+node_modules/
+# Fichiers produits par les tests.
+tests/resultats/
