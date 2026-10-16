@@ -25,6 +25,9 @@
       <symbol id="i-retablir" viewBox="0 0 24 24"><path d="m15 15 5-5-5-5M20 10H10a6 6 0 0 0 0 12h3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
       <symbol id="i-valider" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" /></symbol>
       <symbol id="i-fermer" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" /></symbol>
+      <symbol id="i-gras" viewBox="0 0 24 24"><path d="M7 4.5h5.5a3.75 3.75 0 0 1 0 7.5H7zM7 12h6.5a3.75 3.75 0 0 1 0 7.5H7z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round" /></symbol>
+      <symbol id="i-fond" viewBox="0 0 24 24"><path d="M12 3.5c3 3.9 5.5 6.9 5.5 10.1a5.5 5.5 0 0 1-11 0C6.5 10.4 9 7.4 12 3.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /></symbol>
+      <symbol id="i-largeur" viewBox="0 0 24 24"><path d="M4 5v14M20 5v14M7.5 12h9M10 9.5 7.5 12l2.5 2.5M14 9.5l2.5 2.5-2.5 2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
     </svg>
 
     <header class="entete">
@@ -42,6 +45,34 @@
       <button id="bouton-retablir" class="outil" type="button" title="Rétablir (Ctrl+Y)" disabled>
         <svg aria-hidden="true"><use href="#i-retablir" /></svg><span class="libelle">Rétablir</span>
       </button>
+      <span class="separateur" aria-hidden="true"></span>
+      <button id="bouton-gras" class="outil" type="button" title="Gras (Ctrl+B)" aria-pressed="false">
+        <svg aria-hidden="true"><use href="#i-gras" /></svg><span class="libelle">Gras</span>
+      </button>
+      <button id="bouton-fond" class="outil" type="button" title="Couleur de fond" popovertarget="panneau-fond">
+        <span class="icone-fond" aria-hidden="true"><svg><use href="#i-fond" /></svg><span id="temoin-fond" class="temoin-fond"></span></span>
+        <span class="libelle">Fond</span>
+      </button>
+      <button id="bouton-largeur" class="outil" type="button" title="Largeur des colonnes" popovertarget="panneau-largeur">
+        <svg aria-hidden="true"><use href="#i-largeur" /></svg><span class="libelle">Largeur</span>
+      </button>
+    </div>
+
+    <!-- Panneaux qui s'ouvrent sous les boutons « Fond » et « Largeur ». -->
+    <div id="panneau-fond" class="panneau" popover>
+      <p class="panneau-titre">Couleur de fond</p>
+      <div class="nuancier"></div>
+    </div>
+    <div id="panneau-largeur" class="panneau" popover>
+      <p class="panneau-titre">Largeur <span id="largeur-colonnes">de la colonne A</span></p>
+      <div class="reglage-largeur">
+        <button id="largeur-moins" class="outil" type="button" aria-label="Plus étroite">−</button>
+        <output id="largeur-valeur" class="largeur-valeur">100 px</output>
+        <button id="largeur-plus" class="outil" type="button" aria-label="Plus large">+</button>
+      </div>
+      <button id="largeur-ajuster" class="outil large" type="button">Ajuster au contenu</button>
+      <button id="largeur-normale" class="outil large" type="button">Largeur normale</button>
+      <p class="panneau-aide">Astuce : on peut aussi faire glisser le bord droit d'un en-tête (A, B, C…), ou le double-cliquer.</p>
     </div>
 
     <div class="barre-formule">

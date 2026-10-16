@@ -30,6 +30,17 @@
   --selection: rgb(167 119 255 / 0.16);
   --selection-trait: #a777ff;
   --erreur: #ff8a93;               /* texte des cellules en erreur */
+  --ombre: 0 14px 36px rgb(0 0 0 / 0.45);
+
+  /* Couleurs de fond des cellules : teintes sourdes, le texte reste lisible */
+  --fond-jaune: #4a3f1c;
+  --fond-orange: #4f3018;
+  --fond-rouge: #522127;
+  --fond-rose: #4d2142;
+  --fond-violet: #3a2c5e;
+  --fond-bleu: #1d3557;
+  --fond-vert: #1d4230;
+  --fond-gris: #35313f;
 
   /* Polices (fournies avec l'application, voir css/polices.css) */
   --police-interface: "Oxanium", "Trebuchet MS", system-ui, sans-serif;

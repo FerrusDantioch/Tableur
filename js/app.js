@@ -15,6 +15,7 @@ import { Grille } from './affichage/grille.js';
 import { Selection } from './affichage/selection.js';
 import { Edition } from './affichage/edition.js';
 import { Interactions } from './affichage/interactions.js';
+import { MiseEnForme } from './affichage/mise-en-forme.js';
 
 const CONFIG = self.CONFIG_APP;
 const element = (id) => document.getElementById(id);
@@ -70,6 +71,9 @@ function mettreAJourBarreEtat() {
   statistiques.textContent = resume;
 }
 
+// Créée plus bas (elle a besoin des interactions), mais utilisée dès maintenant.
+let miseEnForme = null;
+
 /** Actions partagées entre la barre d'outils et les raccourcis clavier. */
 const commandes = {
   annuler() {
@@ -86,6 +90,7 @@ const commandes = {
   },
   selectionChangee() {
     mettreAJourBarreEtat();
+    miseEnForme?.actualiser();
   },
 };
 
@@ -101,9 +106,23 @@ const interactions = new Interactions({
   commandes,
 });
 
+miseEnForme = new MiseEnForme({
+  classeur,
+  feuille,
+  selection,
+  grille,
+  avantAction: () => interactions.validerEdition(null, { refocaliser: false }),
+  apresAction: () => interactions.focaliser(),
+  redessinerSelection: () => grille.afficherSelection(selection),
+});
+commandes.gras = () => miseEnForme.gras();
+commandes.redimensionner = (evenement, colonne) => miseEnForme.redimensionner(evenement, colonne);
+commandes.ajusterLargeur = (colonnes) => miseEnForme.ajusterLargeur(colonnes);
+miseEnForme.actualiser();
+
 // Les boutons de la barre d'outils ne prennent pas le focus : la saisie en
 // cours reste ouverte et le clavier continue de piloter la grille.
-for (const bouton of document.querySelectorAll('.barre-outils button')) {
+for (const bouton of document.querySelectorAll('.barre-outils button, .panneau button')) {
   bouton.addEventListener('pointerdown', (e) => {
     if (e.pointerType === 'mouse') e.preventDefault();
   });
