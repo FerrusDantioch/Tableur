@@ -16,11 +16,14 @@ import { Selection } from './affichage/selection.js';
 import { Edition } from './affichage/edition.js';
 import { Interactions } from './affichage/interactions.js';
 import { MiseEnForme } from './affichage/mise-en-forme.js';
-import { preparerFenetres } from './affichage/fenetres.js';
+import { demander, preparerFenetres } from './affichage/fenetres.js';
 import { installerMenu } from './affichage/menu.js';
 import { demanderStockagePersistant, ecrireClasseur, lireClasseur, mettreDeCote, preferences } from './services/stockage.js';
 import { SauvegardeAuto } from './services/sauvegarde-auto.js';
 import { demarrerServiceWorker } from './services/pwa.js';
+import { genererCSV } from './services/export-csv.js';
+import { ExportPdf } from './services/export-pdf.js';
+import { nomDeFichier, telecharger } from './services/fichiers.js';
 
 const CONFIG = self.CONFIG_APP;
 const element = (id) => document.getElementById(id);
@@ -250,6 +253,57 @@ installerMenu({
   avantAction: () => interactions.validerEdition(null, { refocaliser: false }),
 });
 
+// --- Exports PDF et CSV --------------------------------------------------------
+
+/** Court message dans la barre d'état (disparaît au prochain changement de sélection). */
+function signaler(texte) {
+  message.textContent = texte;
+  message.classList.remove('erreur');
+}
+
+const exportPdf = new ExportPdf({
+  classeur,
+  feuille,
+  presenterCellule,
+  preferences,
+  fenetreAide: element('fenetre-aide-pdf'),
+  demander,
+  signaler,
+});
+
+function exporterCsv() {
+  const contenu = genererCSV(feuille, moteur);
+  if (!contenu) {
+    signaler('Le classeur est vide : il n’y a rien à exporter.');
+    return;
+  }
+  const nom = `${nomDeFichier(classeur.titre)}.csv`;
+  telecharger(nom, contenu, 'text/csv;charset=utf-8');
+  signaler(`Fichier « ${nom} » enregistré dans les téléchargements.`);
+}
+
+const panneauExporter = element('panneau-exporter');
+panneauExporter.addEventListener('beforetoggle', (e) => {
+  if (e.newState !== 'open') return;
+  interactions.validerEdition(null, { refocaliser: false });
+  const r = element('bouton-exporter').getBoundingClientRect();
+  panneauExporter.style.top = `${r.bottom + 6}px`;
+  panneauExporter.style.left = `${Math.max(8, Math.min(r.left, window.innerWidth - 300))}px`;
+});
+element('exporter-pdf').addEventListener('click', () => {
+  panneauExporter.hidePopover();
+  exportPdf.exporter();
+});
+element('exporter-csv').addEventListener('click', () => {
+  panneauExporter.hidePopover();
+  exporterCsv();
+  interactions.focaliser();
+});
+commandes.exporterPdf = () => {
+  interactions.validerEdition(null, { refocaliser: false });
+  exportPdf.exporter();
+};
+
 const bandeau = element('bandeau-mise-a-jour');
 demarrerServiceWorker({
   surMiseAJour(appliquer) {
@@ -262,4 +316,4 @@ demarrerServiceWorker({
 interactions.focaliser();
 
 // Accès pour les tests automatiques et le débogage dans la console.
-window.tableur = { classeur, feuille, moteur, selection, grille, interactions, sauvegarde, adresse };
+window.tableur = { classeur, feuille, moteur, selection, grille, interactions, sauvegarde, exportPdf, adresse };

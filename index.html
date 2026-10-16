@@ -25,6 +25,7 @@
     <link rel="stylesheet" href="css/base.css" />
     <link rel="stylesheet" href="css/grille.css" />
     <link rel="stylesheet" href="css/fenetres.css" />
+    <link rel="stylesheet" href="css/impression.css" />
     <!-- Bibliothèque de calcul des formules (fast-formula-parser, licence MIT). -->
     <script defer src="vendor/fast-formula-parser/parser.min.js"></script>
     <script type="module" src="js/app.js"></script>
@@ -39,6 +40,7 @@
       <symbol id="i-fermer" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" /></symbol>
       <symbol id="i-gras" viewBox="0 0 24 24"><path d="M7 4.5h5.5a3.75 3.75 0 0 1 0 7.5H7zM7 12h6.5a3.75 3.75 0 0 1 0 7.5H7z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round" /></symbol>
       <symbol id="i-fond" viewBox="0 0 24 24"><path d="M12 3.5c3 3.9 5.5 6.9 5.5 10.1a5.5 5.5 0 0 1-11 0C6.5 10.4 9 7.4 12 3.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /></symbol>
+      <symbol id="i-exporter" viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
       <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" /></symbol>
       <symbol id="i-largeur" viewBox="0 0 24 24"><path d="M4 5v14M20 5v14M7.5 12h9M10 9.5 7.5 12l2.5 2.5M14 9.5l2.5 2.5-2.5 2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
     </svg>
@@ -74,6 +76,10 @@
       <button id="bouton-largeur" class="outil" type="button" title="Largeur des colonnes" popovertarget="panneau-largeur">
         <svg aria-hidden="true"><use href="#i-largeur" /></svg><span class="libelle">Largeur</span>
       </button>
+      <span class="separateur" aria-hidden="true"></span>
+      <button id="bouton-exporter" class="outil" type="button" title="Exporter en PDF ou en CSV" popovertarget="panneau-exporter">
+        <svg aria-hidden="true"><use href="#i-exporter" /></svg><span class="libelle">Exporter</span>
+      </button>
     </div>
 
     <!-- Panneaux qui s'ouvrent sous les boutons « Fond » et « Largeur ». -->
@@ -91,6 +97,16 @@
       <button id="largeur-ajuster" class="outil large" type="button">Ajuster au contenu</button>
       <button id="largeur-normale" class="outil large" type="button">Largeur normale</button>
       <p class="panneau-aide">Astuce : on peut aussi faire glisser le bord droit d'un en-tête (A, B, C…), ou le double-cliquer.</p>
+    </div>
+    <div id="panneau-exporter" class="panneau" popover>
+      <p class="panneau-titre">Exporter le classeur</p>
+      <button id="exporter-pdf" class="outil large choix-export" type="button">
+        <strong>PDF</strong><small>Pour imprimer ou envoyer un tableau figé</small>
+      </button>
+      <button id="exporter-csv" class="outil large choix-export" type="button">
+        <strong>CSV</strong><small>Pour Excel, LibreOffice ou Google Sheets</small>
+      </button>
+      <p class="panneau-aide">Le fichier porte le titre du classeur. Les formules sont exportées avec leur résultat.</p>
     </div>
 
     <div class="barre-formule">
@@ -159,6 +175,23 @@
         <div class="boutons-fenetre">
           <button class="outil" type="button" data-fermer="garder">Garder mon classeur</button>
           <button class="outil danger" type="button" data-fermer="effacer">Tout effacer</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="fenetre-aide-pdf" class="fenetre" aria-labelledby="titre-aide-pdf">
+      <div class="fenetre-tete"><h2 id="titre-aide-pdf">Exporter en PDF</h2></div>
+      <div class="fenetre-corps">
+        <p>La fenêtre d'impression va s'ouvrir. Pour obtenir un fichier PDF :</p>
+        <ol>
+          <li>dans « Imprimante » ou « Destination », choisissez <strong>« Enregistrer au format PDF »</strong> ;</li>
+          <li>appuyez sur <strong>« Enregistrer »</strong> (ou « Télécharger » sur téléphone).</li>
+        </ol>
+        <p class="note">Le tableau est imprimé de A1 jusqu'à la dernière cellule remplie, sur fond clair. Un tableau large passe automatiquement en format paysage.</p>
+        <label class="case"><input type="checkbox" /> Ne plus afficher cette explication</label>
+        <div class="boutons-fenetre">
+          <button class="outil" type="button" data-fermer="">Annuler</button>
+          <button class="outil principal" type="button" data-fermer="continuer">Continuer</button>
         </div>
       </div>
     </dialog>
