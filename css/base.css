@@ -313,6 +313,19 @@ svg {
   margin-top: 6px;
 }
 
+/* Boutons du panneau « Exporter » : format en gros, explication dessous. */
+.choix-export {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  padding: 10px 14px;
+  text-align: left;
+}
+
+.choix-export small {
+  color: var(--discret);
+}
+
 /* --- Barre de formule ------------------------------------------------------- */
 
 .barre-formule {

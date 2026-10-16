@@ -147,3 +147,23 @@
 
   color-scheme: light;
 }
+
+/* --- Impression et PDF : toujours une feuille claire, texte noir ------------- */
+@media print {
+  :root,
+  [data-theme] {
+    --texte: #000000;
+    --cellule: #ffffff;
+    --quadrillage: #c4c4c4;
+    --erreur: #b3261e;
+    --fond-jaune: #fbefc0;
+    --fond-orange: #fbe0c8;
+    --fond-rouge: #f8d7d7;
+    --fond-rose: #f7d9ea;
+    --fond-violet: #e4dcf8;
+    --fond-bleu: #d8e6f8;
+    --fond-vert: #d4eedc;
+    --fond-gris: #e6e5ea;
+    color-scheme: light;
+  }
+}
