@@ -16,6 +16,11 @@ import { Selection } from './affichage/selection.js';
 import { Edition } from './affichage/edition.js';
 import { Interactions } from './affichage/interactions.js';
 import { MiseEnForme } from './affichage/mise-en-forme.js';
+import { preparerFenetres } from './affichage/fenetres.js';
+import { installerMenu } from './affichage/menu.js';
+import { demanderStockagePersistant, ecrireClasseur, lireClasseur, mettreDeCote, preferences } from './services/stockage.js';
+import { SauvegardeAuto } from './services/sauvegarde-auto.js';
+import { demarrerServiceWorker } from './services/pwa.js';
 
 const CONFIG = self.CONFIG_APP;
 const element = (id) => document.getElementById(id);
@@ -23,6 +28,19 @@ const element = (id) => document.getElementById(id);
 // --- (a) Les données ---------------------------------------------------------
 const classeur = new Classeur();
 const feuille = classeur.feuilles[0];
+
+// On reprend le classeur enregistré sur l'appareil (s'il y en a un).
+let avertissementDemarrage = '';
+const enregistre = await lireClasseur();
+if (enregistre) {
+  try {
+    classeur.charger(enregistre);
+  } catch (erreur) {
+    console.warn('Classeur illisible :', erreur);
+    await mettreDeCote(enregistre);
+    avertissementDemarrage = 'Le classeur enregistré était illisible : il a été mis de côté et un classeur vide a été ouvert.';
+  }
+}
 
 // --- (b) Le calcul -------------------------------------------------------------
 const moteur = new MoteurCalcul(classeur, feuille);
@@ -132,6 +150,8 @@ boutonRetablir.addEventListener('click', () => commandes.retablir());
 
 // --- Titre du classeur -------------------------------------------------------
 const champTitre = element('titre');
+champTitre.value = classeur.titre;
+document.title = `${classeur.titre} – ${CONFIG.nom}`;
 champTitre.addEventListener('change', () => classeur.renommer(champTitre.value));
 champTitre.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' || e.key === 'Escape') {
@@ -190,7 +210,56 @@ classeur.abonner((evenement) => {
   }
 });
 
+// --- Sauvegarde automatique ---------------------------------------------------
+const etatSauvegarde = element('etat-sauvegarde');
+const TEXTES_SAUVEGARDE = {
+  modifie: 'Enregistrement…',
+  enregistrement: 'Enregistrement…',
+  enregistre: '✓ Enregistré',
+  erreur: '⚠ Non enregistré',
+};
+let premierEnregistrement = true;
+const sauvegarde = new SauvegardeAuto({
+  classeur,
+  enregistrer: (donnees) => ecrireClasseur(donnees),
+  surEtat(etat) {
+    etatSauvegarde.textContent = TEXTES_SAUVEGARDE[etat];
+    etatSauvegarde.classList.toggle('erreur', etat === 'erreur');
+    etatSauvegarde.title =
+      etat === 'erreur'
+        ? 'Le navigateur refuse l’enregistrement (stockage plein ou navigation privée). Une nouvelle tentative aura lieu à la prochaine modification.'
+        : 'Chaque modification est enregistrée automatiquement sur cet appareil.';
+    if (etat === 'enregistre' && premierEnregistrement) {
+      premierEnregistrement = false;
+      demanderStockagePersistant();
+    }
+  },
+});
+if (enregistre && !avertissementDemarrage) etatSauvegarde.textContent = TEXTES_SAUVEGARDE.enregistre;
+if (avertissementDemarrage) {
+  message.textContent = avertissementDemarrage;
+  message.classList.add('erreur');
+}
+
+// --- Menu, fenêtres et application installable ------------------------------
+preparerFenetres(() => interactions.focaliser());
+installerMenu({
+  classeur,
+  feuille,
+  preferences,
+  avantAction: () => interactions.validerEdition(null, { refocaliser: false }),
+});
+
+const bandeau = element('bandeau-mise-a-jour');
+demarrerServiceWorker({
+  surMiseAJour(appliquer) {
+    bandeau.hidden = false;
+    element('bouton-recharger').onclick = appliquer;
+  },
+  avantRechargement: () => sauvegarde.maintenant(),
+});
+
 interactions.focaliser();
 
 // Accès pour les tests automatiques et le débogage dans la console.
-window.tableur = { classeur, feuille, moteur, selection, grille, interactions, adresse };
+window.tableur = { classeur, feuille, moteur, selection, grille, interactions, sauvegarde, adresse };
