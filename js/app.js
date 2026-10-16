@@ -9,7 +9,8 @@
 import { Classeur } from './donnees/classeur.js';
 import { adresse } from './donnees/adresses.js';
 import { interpreterSaisie } from './donnees/saisie.js';
-import { presenter } from './affichage/format.js';
+import { MoteurCalcul } from './calcul/moteur.js';
+import { formaterNombre, presenter } from './affichage/format.js';
 import { Grille } from './affichage/grille.js';
 import { Selection } from './affichage/selection.js';
 import { Edition } from './affichage/edition.js';
@@ -22,15 +23,16 @@ const element = (id) => document.getElementById(id);
 const classeur = new Classeur();
 const feuille = classeur.feuilles[0];
 
+// --- (b) Le calcul -------------------------------------------------------------
+const moteur = new MoteurCalcul(classeur, feuille);
+
 // --- (c) L'affichage ---------------------------------------------------------
 
-/** Ce qu'affiche une cellule : texte, genre (nombre, texte…) et mise en forme. */
+/** Ce qu'affiche une cellule : valeur calculée mise en forme, gras, couleur de fond. */
 function presenterCellule(adr) {
   const cellule = feuille.cellule(adr);
   const saisie = interpreterSaisie(cellule?.brut);
-  // Étape 1 : les formules ne sont pas encore calculées, on montre leur texte.
-  const valeur = saisie.type === 'formule' ? saisie.formule : saisie.valeur;
-  return { ...presenter(valeur, saisie.style), gras: cellule?.gras, fond: cellule?.fond };
+  return { ...presenter(moteur.valeur(adr), saisie.style), gras: cellule?.gras, fond: cellule?.fond };
 }
 
 const zone = element('zone-grille');
@@ -46,6 +48,27 @@ const edition = new Edition({
 const boutonAnnuler = element('bouton-annuler');
 const boutonRetablir = element('bouton-retablir');
 const message = element('message');
+const statistiques = element('statistiques');
+
+/**
+ * Barre d'état : explication de l'erreur de la cellule active, et résumé
+ * (somme, moyenne, nombre) quand plusieurs cellules sont sélectionnées.
+ */
+function mettreAJourBarreEtat() {
+  const { ligne, colonne } = selection.active;
+  const vue = presenter(moteur.valeur(adresse(ligne, colonne)));
+  message.textContent = vue.explication ? `${vue.texte} — ${vue.explication}` : '';
+  message.classList.toggle('erreur', Boolean(vue.explication));
+
+  let resume = '';
+  if (!selection.unique) {
+    const { nombres, somme, moyenne } = moteur.resumer(selection.plage);
+    if (nombres > 0) {
+      resume = `Somme : ${formaterNombre(somme)} · Moyenne : ${formaterNombre(moyenne)} · Nombres : ${nombres}`;
+    }
+  }
+  statistiques.textContent = resume;
+}
 
 /** Actions partagées entre la barre d'outils et les raccourcis clavier. */
 const commandes = {
@@ -62,7 +85,7 @@ const commandes = {
     interactions.focaliser();
   },
   selectionChangee() {
-    message.textContent = '';
+    mettreAJourBarreEtat();
   },
 };
 
@@ -117,6 +140,10 @@ function redessiner(adresses) {
   });
 }
 
+// Le moteur annonce les cellules dont la valeur a changé (y compris celles
+// recalculées en cascade) ; le classeur annonce les changements de mise en forme.
+moteur.abonner((evenement) => redessiner(evenement.adresses));
+
 classeur.abonner((evenement) => {
   switch (evenement.type) {
     case 'cellules':
@@ -147,4 +174,4 @@ classeur.abonner((evenement) => {
 interactions.focaliser();
 
 // Accès pour les tests automatiques et le débogage dans la console.
-window.tableur = { classeur, feuille, selection, grille, interactions, adresse };
+window.tableur = { classeur, feuille, moteur, selection, grille, interactions, adresse };
