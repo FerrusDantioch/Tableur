@@ -8,11 +8,26 @@
     <meta name="description" content="Tableur : un tableur simple qui fonctionne hors ligne. Les données restent sur l'appareil." />
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#1d1929" />
+    <!-- Sécurité : la page ne charge que ses propres fichiers (rien d'internet). -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'" />
     <title>Tableur</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <!-- Polices principales chargées en avance (pas de saut de texte au démarrage). -->
+    <link rel="preload" href="fonts/oxanium-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="fonts/literata-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <script src="js/config.js"></script>
+    <!-- Applique le thème choisi avant l'affichage (aucun flash lumineux). -->
+    <script src="js/theme-initial.js"></script>
+    <link rel="stylesheet" href="css/polices.css" />
     <link rel="stylesheet" href="css/themes.css" />
     <link rel="stylesheet" href="css/base.css" />
     <link rel="stylesheet" href="css/grille.css" />
-    <script src="js/config.js"></script>
+    <link rel="stylesheet" href="css/fenetres.css" />
+    <link rel="stylesheet" href="css/impression.css" />
+    <!-- Bibliothèque de calcul des formules (fast-formula-parser, licence MIT). -->
+    <script defer src="vendor/fast-formula-parser/parser.min.js"></script>
     <script type="module" src="js/app.js"></script>
   </head>
   <body>
@@ -23,6 +38,11 @@
       <symbol id="i-retablir" viewBox="0 0 24 24"><path d="m15 15 5-5-5-5M20 10H10a6 6 0 0 0 0 12h3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
       <symbol id="i-valider" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" /></symbol>
       <symbol id="i-fermer" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" /></symbol>
+      <symbol id="i-gras" viewBox="0 0 24 24"><path d="M7 4.5h5.5a3.75 3.75 0 0 1 0 7.5H7zM7 12h6.5a3.75 3.75 0 0 1 0 7.5H7z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round" /></symbol>
+      <symbol id="i-fond" viewBox="0 0 24 24"><path d="M12 3.5c3 3.9 5.5 6.9 5.5 10.1a5.5 5.5 0 0 1-11 0C6.5 10.4 9 7.4 12 3.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /></symbol>
+      <symbol id="i-exporter" viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
+      <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" /></symbol>
+      <symbol id="i-largeur" viewBox="0 0 24 24"><path d="M4 5v14M20 5v14M7.5 12h9M10 9.5 7.5 12l2.5 2.5M14 9.5l2.5 2.5-2.5 2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
     </svg>
 
     <header class="entete">
@@ -31,6 +51,11 @@
         <span class="visuellement-cache">Titre du classeur</span>
         <input id="titre" type="text" value="Sans titre" maxlength="120" autocomplete="off" spellcheck="false" />
       </label>
+      <div class="entete-actions">
+        <button id="bouton-menu" class="outil" type="button" aria-haspopup="dialog" title="Menu : thème, aide, à propos…">
+          <svg aria-hidden="true"><use href="#i-menu" /></svg><span class="libelle">Menu</span>
+        </button>
+      </div>
     </header>
 
     <div class="barre-outils" role="toolbar" aria-label="Outils">
@@ -40,6 +65,48 @@
       <button id="bouton-retablir" class="outil" type="button" title="Rétablir (Ctrl+Y)" disabled>
         <svg aria-hidden="true"><use href="#i-retablir" /></svg><span class="libelle">Rétablir</span>
       </button>
+      <span class="separateur" aria-hidden="true"></span>
+      <button id="bouton-gras" class="outil" type="button" title="Gras (Ctrl+B)" aria-pressed="false">
+        <svg aria-hidden="true"><use href="#i-gras" /></svg><span class="libelle">Gras</span>
+      </button>
+      <button id="bouton-fond" class="outil" type="button" title="Couleur de fond" popovertarget="panneau-fond">
+        <span class="icone-fond" aria-hidden="true"><svg><use href="#i-fond" /></svg><span id="temoin-fond" class="temoin-fond"></span></span>
+        <span class="libelle">Fond</span>
+      </button>
+      <button id="bouton-largeur" class="outil" type="button" title="Largeur des colonnes" popovertarget="panneau-largeur">
+        <svg aria-hidden="true"><use href="#i-largeur" /></svg><span class="libelle">Largeur</span>
+      </button>
+      <span class="separateur" aria-hidden="true"></span>
+      <button id="bouton-exporter" class="outil" type="button" title="Exporter en PDF ou en CSV" popovertarget="panneau-exporter">
+        <svg aria-hidden="true"><use href="#i-exporter" /></svg><span class="libelle">Exporter</span>
+      </button>
+    </div>
+
+    <!-- Panneaux qui s'ouvrent sous les boutons « Fond » et « Largeur ». -->
+    <div id="panneau-fond" class="panneau" popover>
+      <p class="panneau-titre">Couleur de fond</p>
+      <div class="nuancier"></div>
+    </div>
+    <div id="panneau-largeur" class="panneau" popover>
+      <p class="panneau-titre">Largeur <span id="largeur-colonnes">de la colonne A</span></p>
+      <div class="reglage-largeur">
+        <button id="largeur-moins" class="outil" type="button" aria-label="Plus étroite">−</button>
+        <output id="largeur-valeur" class="largeur-valeur">100 px</output>
+        <button id="largeur-plus" class="outil" type="button" aria-label="Plus large">+</button>
+      </div>
+      <button id="largeur-ajuster" class="outil large" type="button">Ajuster au contenu</button>
+      <button id="largeur-normale" class="outil large" type="button">Largeur normale</button>
+      <p class="panneau-aide">Astuce : on peut aussi faire glisser le bord droit d'un en-tête (A, B, C…), ou le double-cliquer.</p>
+    </div>
+    <div id="panneau-exporter" class="panneau" popover>
+      <p class="panneau-titre">Exporter le classeur</p>
+      <button id="exporter-pdf" class="outil large choix-export" type="button">
+        <strong>PDF</strong><small>Pour imprimer ou envoyer un tableau figé</small>
+      </button>
+      <button id="exporter-csv" class="outil large choix-export" type="button">
+        <strong>CSV</strong><small>Pour Excel, LibreOffice ou Google Sheets</small>
+      </button>
+      <p class="panneau-aide">Le fichier porte le titre du classeur. Les formules sont exportées avec leur résultat.</p>
     </div>
 
     <div class="barre-formule">
@@ -62,6 +129,175 @@
     <footer class="barre-etat">
       <span id="message" class="message" aria-live="polite"></span>
       <span id="statistiques" class="statistiques"></span>
+      <span id="etat-sauvegarde" class="etat-sauvegarde" aria-live="polite"></span>
     </footer>
+
+    <!-- Bandeau affiché quand une nouvelle version de l'application est prête. -->
+    <div id="bandeau-mise-a-jour" class="bandeau" role="status" hidden>
+      <span>Une nouvelle version est disponible.</span>
+      <button id="bouton-recharger" class="outil" type="button">Recharger</button>
+    </div>
+
+    <!-- Bandeau affiché si Tableur est ouvert dans deux onglets ou fenêtres. -->
+    <div id="bandeau-onglets" class="bandeau" role="alert" hidden>
+      <span>Tableur est aussi ouvert ailleurs (autre onglet ou fenêtre). Gardez-en un seul ouvert, sinon des modifications pourraient être perdues.</span>
+      <button id="bouton-compris" class="outil" type="button">Compris</button>
+    </div>
+
+    <!-- ================= Fenêtres ================= -->
+
+    <dialog id="fenetre-menu" class="fenetre" aria-labelledby="titre-menu">
+      <div class="fenetre-tete">
+        <h2 id="titre-menu">Menu</h2>
+        <button class="outil-rond" type="button" data-fermer aria-label="Fermer le menu"><svg aria-hidden="true"><use href="#i-fermer" /></svg></button>
+      </div>
+      <div class="fenetre-corps">
+        <section aria-labelledby="titre-themes">
+          <h3 id="titre-themes">Thème</h3>
+          <div id="choix-theme" class="choix-themes" role="radiogroup" aria-labelledby="titre-themes"></div>
+        </section>
+        <section aria-labelledby="titre-tableau">
+          <h3 id="titre-tableau">Tableau</h3>
+          <div class="actions-menu">
+            <button id="menu-lignes" class="outil" type="button">+ 50 lignes</button>
+            <button id="menu-colonnes" class="outil" type="button">+ 5 colonnes</button>
+          </div>
+          <p id="taille-feuille" class="note"></p>
+        </section>
+        <section class="actions-menu colonne" aria-label="Autres actions">
+          <button id="menu-aide" class="outil" type="button">Aide : formules et raccourcis</button>
+          <button id="menu-installer" class="outil" type="button" hidden>Installer l'application sur cet appareil</button>
+          <button id="menu-a-propos" class="outil" type="button">À propos</button>
+          <button id="menu-nouveau" class="outil" type="button">Nouveau classeur (tout effacer)…</button>
+        </section>
+      </div>
+    </dialog>
+
+    <dialog id="fenetre-confirmation" class="fenetre" aria-labelledby="titre-confirmation">
+      <div class="fenetre-tete"><h2 id="titre-confirmation">Tout effacer ?</h2></div>
+      <div class="fenetre-corps">
+        <p>Tout le contenu du classeur sera effacé : textes, formules, mise en forme et largeurs.</p>
+        <p class="note">Tant que l'application reste ouverte, le bouton « Annuler » permet encore de tout récupérer.</p>
+        <div class="boutons-fenetre">
+          <button class="outil" type="button" data-fermer="garder">Garder mon classeur</button>
+          <button class="outil danger" type="button" data-fermer="effacer">Tout effacer</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="fenetre-aide-pdf" class="fenetre" aria-labelledby="titre-aide-pdf">
+      <div class="fenetre-tete"><h2 id="titre-aide-pdf">Exporter en PDF</h2></div>
+      <div class="fenetre-corps">
+        <p>La fenêtre d'impression va s'ouvrir. Pour obtenir un fichier PDF :</p>
+        <ol>
+          <li>dans « Imprimante » ou « Destination », choisissez <strong>« Enregistrer au format PDF »</strong> ;</li>
+          <li>appuyez sur <strong>« Enregistrer »</strong> (ou « Télécharger » sur téléphone).</li>
+        </ol>
+        <p class="note">Le tableau est imprimé de A1 jusqu'à la dernière cellule remplie, sur fond clair. Un tableau large passe automatiquement en format paysage.</p>
+        <label class="case"><input type="checkbox" /> Ne plus afficher cette explication</label>
+        <div class="boutons-fenetre">
+          <button class="outil" type="button" data-fermer="">Annuler</button>
+          <button class="outil principal" type="button" data-fermer="continuer">Continuer</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="fenetre-a-propos" class="fenetre" aria-labelledby="titre-a-propos">
+      <div class="fenetre-tete">
+        <h2 id="titre-a-propos">À propos</h2>
+        <button class="outil-rond" type="button" data-fermer aria-label="Fermer"><svg aria-hidden="true"><use href="#i-fermer" /></svg></button>
+      </div>
+      <div class="fenetre-corps">
+        <div class="a-propos-identite">
+          <img src="assets/logo-omni-systeme.webp" width="88" height="88" alt="Logo de l'Omni-système" />
+          <div>
+            <p class="nom-appli" data-config="nom">Tableur</p>
+            <p class="note">Version <span data-config="version"></span></p>
+          </div>
+        </div>
+        <p><strong>Application faite par <span data-config="auteurs">Ferrus Dantioch et Claude</span>.</strong></p>
+        <p>Tableur fait partie de la Suite bureautique de l'Omni-système, aux côtés de Plume (traitement de texte) et de L'Atelier (écriture de romans).</p>
+        <p>Vos classeurs restent sur cet appareil : aucun compte, rien n'est envoyé sur internet. L'application fonctionne aussi sans connexion, et chaque modification est enregistrée automatiquement.</p>
+        <p><a data-config-lien="siteOmni" href="https://ferrusdantioch.github.io/omni-systeme/" target="_blank" rel="noopener">Site de l'Omni-système</a></p>
+        <details>
+          <summary>Logiciels libres utilisés</summary>
+          <ul>
+            <li>fast-formula-parser, calcul des formules — <a href="licences/fast-formula-parser-MIT.txt" target="_blank">licence MIT</a></li>
+            <li>Chevrotain, inclus dans fast-formula-parser — <a href="licences/chevrotain-Apache-2.0.txt" target="_blank">licence Apache 2.0</a></li>
+            <li>jStat — <a href="licences/jstat-MIT.txt" target="_blank">licence MIT</a>, bessel — <a href="licences/bessel-Apache-2.0.txt" target="_blank">licence Apache 2.0</a>, bahttext — <a href="licences/bahttext-MIT.txt" target="_blank">licence MIT</a></li>
+            <li>Polices Oxanium, Literata et JetBrains Mono — licence SIL Open Font License 1.1 (<a href="licences/police-Oxanium-OFL.txt" target="_blank">Oxanium</a>, <a href="licences/police-Literata-OFL.txt" target="_blank">Literata</a>, <a href="licences/police-JetBrains-Mono-OFL.txt" target="_blank">JetBrains Mono</a>)</li>
+          </ul>
+        </details>
+      </div>
+    </dialog>
+
+    <dialog id="fenetre-aide" class="fenetre fenetre-large" aria-labelledby="titre-aide">
+      <div class="fenetre-tete">
+        <h2 id="titre-aide">Aide</h2>
+        <button class="outil-rond" type="button" data-fermer aria-label="Fermer l'aide"><svg aria-hidden="true"><use href="#i-fermer" /></svg></button>
+      </div>
+      <div class="fenetre-corps">
+        <section>
+          <h3>Saisir</h3>
+          <ul>
+            <li>Sélectionnez une cellule et tapez : le texte remplace son contenu. <strong>Entrée</strong> valide, <strong>Échap</strong> annule.</li>
+            <li>Pour modifier sans tout effacer : <strong>double-clic</strong>, touche <strong>F2</strong>, ou la barre « fx » en haut.</li>
+            <li>Au doigt : un appui sélectionne la cellule, un <strong>second appui</strong> ouvre le clavier.</li>
+            <li>Nombres : <code>3,5</code> ou <code>3.5</code>, <code>1 234</code>, <code>12,50 €</code>, <code>20 %</code>. Une apostrophe force le texte : <code>'0612</code>.</li>
+          </ul>
+        </section>
+        <section>
+          <h3>Se déplacer et sélectionner</h3>
+          <ul>
+            <li>Flèches, <strong>Tab</strong> (à droite), <strong>Entrée</strong> (en bas) ; avec <strong>Maj</strong>, dans l'autre sens.</li>
+            <li><strong>Ctrl + flèche</strong> : jusqu'au bord du tableau. <strong>Ctrl + Origine</strong> : retour en A1.</li>
+            <li>Plusieurs cellules : <strong>Maj + flèches</strong>, glisser à la souris, ou la poignée ronde au doigt. Un clic sur « A » ou « 1 » sélectionne toute la colonne ou la ligne.</li>
+            <li>Dans la case « A1 » en haut à gauche, tapez une adresse (<code>C12</code>) puis Entrée pour y aller.</li>
+          </ul>
+        </section>
+        <section>
+          <h3>Formules</h3>
+          <p>Une formule commence par <code>=</code>. On sépare les arguments par un point-virgule <code>;</code>, comme dans Excel en français. Opérations : <code>+ - * /</code>, puissance <code>^</code>, pourcentage <code>%</code>, texte assemblé <code>&amp;</code>, comparaisons <code>= &lt;&gt; &lt; &gt; &lt;= &gt;=</code>.</p>
+          <table class="tableau-aide">
+            <thead><tr><th>Fonction</th><th>Exemple</th><th>Résultat</th></tr></thead>
+            <tbody>
+              <tr><td>SOMME</td><td><code>=SOMME(A1:A10)</code></td><td>total des nombres de A1 à A10</td></tr>
+              <tr><td>MOYENNE</td><td><code>=MOYENNE(B2:B8)</code></td><td>moyenne des nombres</td></tr>
+              <tr><td>MIN, MAX</td><td><code>=MAX(C1:C20)</code></td><td>plus petit, plus grand nombre</td></tr>
+              <tr><td>NB</td><td><code>=NB(A1:A100)</code></td><td>combien de cellules contiennent un nombre</td></tr>
+              <tr><td>SI</td><td><code>=SI(A1&gt;100;"cher";"ok")</code></td><td>un résultat ou l'autre selon la condition</td></tr>
+              <tr><td>ET, OU, NON</td><td><code>=ET(A1&gt;0;A1&lt;10)</code></td><td>VRAI ou FAUX</td></tr>
+              <tr><td>SIERREUR</td><td><code>=SIERREUR(A1/B1;0)</code></td><td>0 si le calcul échoue</td></tr>
+              <tr><td>ARRONDI</td><td><code>=ARRONDI(A1;2)</code></td><td>arrondi à 2 décimales (aussi ARRONDI.SUP, ARRONDI.INF)</td></tr>
+              <tr><td>SOMME.SI</td><td><code>=SOMME.SI(A1:A10;"&gt;50")</code></td><td>total des nombres supérieurs à 50 (aussi MOYENNE.SI)</td></tr>
+              <tr><td>Autres</td><td colspan="2">ABS, ENT, MOD, PRODUIT, RACINE, PUISSANCE, NBCAR, CONCATENER</td></tr>
+            </tbody>
+          </table>
+          <p class="note">Une plage s'écrit <code>A1:B5</code> ; une colonne entière <code>A:A</code>. Le <code>$</code> fige une référence (<code>$A$1</code>). Les formules se recalculent toutes seules.</p>
+        </section>
+        <section>
+          <h3>Erreurs</h3>
+          <table class="tableau-aide">
+            <tbody>
+              <tr><td><code>#DIV/0!</code></td><td>division par zéro ou par une cellule vide</td></tr>
+              <tr><td><code>#VALEUR!</code></td><td>du texte là où un nombre est attendu</td></tr>
+              <tr><td><code>#REF!</code></td><td>cellule qui n'existe pas (au-delà de AZ ou de la ligne 1000)</td></tr>
+              <tr><td><code>#NOM?</code></td><td>fonction ou nom mal orthographié</td></tr>
+              <tr><td><code>#ERREUR!</code></td><td>formule mal écrite (parenthèse, point-virgule, guillemet…)</td></tr>
+              <tr><td><code>#CIRC!</code></td><td>la formule dépend d'elle-même</td></tr>
+              <tr><td><code>#NOMBRE!</code></td><td>calcul impossible (racine d'un nombre négatif…)</td></tr>
+            </tbody>
+          </table>
+          <p class="note">Sélectionnez une cellule en erreur : l'explication s'affiche en bas de l'écran.</p>
+        </section>
+        <section>
+          <h3>Raccourcis</h3>
+          <ul>
+            <li><strong>Ctrl + Z</strong> annuler, <strong>Ctrl + Y</strong> rétablir, <strong>Ctrl + B</strong> gras, <strong>Suppr</strong> vider les cellules, <strong>Ctrl + A</strong> tout sélectionner, <strong>Ctrl + P</strong> exporter en PDF.</li>
+            <li><strong>Ctrl + C</strong> copier, <strong>Ctrl + X</strong> couper, <strong>Ctrl + V</strong> coller. Une formule collée plus loin s'adapte (=A1*2 devient =A2*2 une ligne plus bas). Copier une cellule puis coller sur une plage la recopie partout.</li>
+          </ul>
+        </section>
+      </div>
+    </dialog>
   </body>
 </html>

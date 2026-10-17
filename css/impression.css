@@ -1,0 +1,99 @@
+/* ==========================================================================
+   Impression et export PDF.
+   À l'écran, la copie imprimable (#impression) est cachée. À l'impression,
+   on ne montre qu'elle : une feuille claire, texte noir, quadrillage fin.
+   Les couleurs d'impression sont dans themes.css (@media print).
+   ========================================================================== */
+
+.impression {
+  display: none;
+}
+
+@page {
+  size: A4 portrait;
+  margin: 12mm;
+}
+
+/* Page en largeur pour les tableaux larges (page nommée). */
+@page paysage {
+  size: A4 landscape;
+  margin: 12mm;
+}
+
+@media print {
+  html,
+  body {
+    height: auto;
+    background: var(--cellule);
+    color: var(--texte);
+  }
+
+  body {
+    display: block;
+    padding: 0;
+  }
+
+  /* Tout l'écran disparaît, sauf la copie imprimable. */
+  body > *:not(.impression) {
+    display: none !important;
+  }
+
+  .impression {
+    display: block;
+    font-family: var(--police-cellules);
+    /* Garde les couleurs de fond à l'impression. */
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .impression.paysage {
+    page: paysage;
+  }
+
+  .impression h1 {
+    margin: 0 0 4mm;
+    font-family: var(--police-interface);
+    font-size: 14pt;
+  }
+
+  .impression table {
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 9.5pt;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .impression.reduit table {
+    font-size: 8pt;
+  }
+
+  .impression td {
+    padding: 1.2mm 2mm;
+    border: 0.25pt solid var(--quadrillage);
+    background: var(--teinte, transparent);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .impression tr {
+    break-inside: avoid;
+  }
+
+  .impression td.nombre {
+    text-align: right;
+  }
+
+  .impression td.booleen,
+  .impression td.erreur {
+    text-align: center;
+  }
+
+  .impression td.erreur {
+    color: var(--erreur);
+  }
+
+  .impression td.gras {
+    font-weight: 700;
+  }
+}

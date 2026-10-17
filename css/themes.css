@@ -1,7 +1,15 @@
 /* ==========================================================================
    Thèmes de couleurs
    C'est le SEUL fichier qui contient des couleurs. Tout le reste du code
-   utilise ces variables.
+   utilise ces variables. Le thème actif est choisi par l'attribut
+   data-theme="omni" | "sombre" | "clair" posé sur <html>.
+
+   Un élément peut aussi porter son propre data-theme : c'est ainsi que les
+   pastilles d'aperçu du menu montrent les couleurs de chaque thème.
+
+   Contrastes : le texte respecte au moins 4,5:1 sur ses fonds (norme WCAG AA).
+   Le test tests/unitaires/contrastes.test.mjs le vérifie automatiquement.
+   Aucun blanc pur ni contraste violent, même dans le thème clair.
    ========================================================================== */
 
 /* --- Omni-système (thème par défaut) ---------------------------------------
@@ -19,6 +27,9 @@
   --halo: #d6c2ff;          /* contour de focus, liens */
   --accent-doux: #3b2e58;   /* fond d'un bouton activé */
   --survol: #2a2340;        /* fond d'un bouton survolé */
+  --voile: rgb(8 6 14 / 0.68);  /* derrière les fenêtres */
+  --danger: #ff8a93;        /* bouton « Tout effacer » */
+  --danger-texte: #1f0a0d;
 
   /* Grille */
   --cellule: #17131f;              /* fond des cellules */
@@ -30,6 +41,17 @@
   --selection: rgb(167 119 255 / 0.16);
   --selection-trait: #a777ff;
   --erreur: #ff8a93;               /* texte des cellules en erreur */
+  --ombre: 0 14px 36px rgb(0 0 0 / 0.45);
+
+  /* Couleurs de fond des cellules : teintes sourdes, le texte reste lisible */
+  --fond-jaune: #4a3f1c;
+  --fond-orange: #4f3018;
+  --fond-rouge: #522127;
+  --fond-rose: #4d2142;
+  --fond-violet: #3a2c5e;
+  --fond-bleu: #1d3557;
+  --fond-vert: #1d4230;
+  --fond-gris: #35313f;
 
   /* Polices (fournies avec l'application, voir css/polices.css) */
   --police-interface: "Oxanium", "Trebuchet MS", system-ui, sans-serif;
@@ -37,4 +59,111 @@
   --police-entetes: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
 
   color-scheme: dark;
+}
+
+/* --- Sombre classique (neutre, sans violet) ---------------------------------- */
+[data-theme="sombre"] {
+  --fond: #1c1c1e;
+  --surface: #2a2a2d;
+  --trait: #3d3d42;
+  --texte: #e6e6e6;
+  --discret: #a0a0a8;
+  --accent: #7aa7ff;
+  --accent-texte: #0e1726;
+  --halo: #b7cdff;
+  --accent-doux: #3c465b;
+  --survol: #36363a;
+  --voile: rgb(10 10 12 / 0.68);
+  --danger: #ff8f8f;
+  --danger-texte: #200b0b;
+
+  --cellule: #202023;
+  --quadrillage: #333338;
+  --entete: #2a2a2d;
+  --entete-texte: #a0a0a8;
+  --entete-surligne: #3c465b;
+  --entete-surligne-texte: #e6e6e6;
+  --selection: rgb(122 167 255 / 0.16);
+  --selection-trait: #7aa7ff;
+  --erreur: #ff8f8f;
+  --ombre: 0 14px 36px rgb(0 0 0 / 0.5);
+
+  --fond-jaune: #4a4320;
+  --fond-orange: #4d3420;
+  --fond-rouge: #4d2528;
+  --fond-rose: #4a2540;
+  --fond-violet: #3a3058;
+  --fond-bleu: #22384f;
+  --fond-vert: #234232;
+  --fond-gris: #3a3a3f;
+
+  /* Polices du système : sobres et familières. */
+  --police-interface: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --police-cellules: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --police-entetes: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  color-scheme: dark;
+}
+
+/* --- Clair (doux : pas de blanc pur) ------------------------------------------ */
+[data-theme="clair"] {
+  --fond: #eeecf2;
+  --surface: #f8f7fa;
+  --trait: #d6d3de;
+  --texte: #1c1a24;
+  --discret: #5e5a6d;
+  --accent: #5b3fd0;
+  --accent-texte: #ffffff;
+  --halo: #5b3fd0;
+  --accent-doux: #ddd6f7;
+  --survol: #e8e5ef;
+  --voile: rgb(28 26 36 / 0.4);
+  --danger: #b3261e;
+  --danger-texte: #ffffff;
+
+  --cellule: #fbfafc;
+  --quadrillage: #e1dee8;
+  --entete: #efedf3;
+  --entete-texte: #5e5a6d;
+  --entete-surligne: #ddd6f7;
+  --entete-surligne-texte: #1c1a24;
+  --selection: rgb(91 63 208 / 0.12);
+  --selection-trait: #5b3fd0;
+  --erreur: #b3261e;
+  --ombre: 0 14px 36px rgb(28 26 36 / 0.16);
+
+  --fond-jaune: #fbefc0;
+  --fond-orange: #fbe0c8;
+  --fond-rouge: #f8d7d7;
+  --fond-rose: #f7d9ea;
+  --fond-violet: #e4dcf8;
+  --fond-bleu: #d8e6f8;
+  --fond-vert: #d4eedc;
+  --fond-gris: #e6e5ea;
+
+  --police-interface: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --police-cellules: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --police-entetes: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  color-scheme: light;
+}
+
+/* --- Impression et PDF : toujours une feuille claire, texte noir ------------- */
+@media print {
+  :root,
+  [data-theme] {
+    --texte: #000000;
+    --cellule: #ffffff;
+    --quadrillage: #c4c4c4;
+    --erreur: #b3261e;
+    --fond-jaune: #fbefc0;
+    --fond-orange: #fbe0c8;
+    --fond-rouge: #f8d7d7;
+    --fond-rose: #f7d9ea;
+    --fond-violet: #e4dcf8;
+    --fond-bleu: #d8e6f8;
+    --fond-vert: #d4eedc;
+    --fond-gris: #e6e5ea;
+    color-scheme: light;
+  }
 }
