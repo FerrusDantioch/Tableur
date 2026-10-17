@@ -205,6 +205,11 @@ tests/                   vérifications automatiques
   dans `manifest.webmanifest` (un test vérifie que les deux correspondent).
 - **Ne change jamais** `idStockage: 'tableur'` dans `js/config.js` : les
   classeurs déjà enregistrés deviendraient invisibles.
+- **Ne change jamais** `"id": "/Tableur/"` dans `manifest.webmanifest`. Chrome
+  le lit à partir de la racine du site (`https://ferrusdantioch.github.io/`) :
+  `"./"` aurait donné à l'application l'identité de la racine, la même que
+  d'autres applications du site. Et une application déjà installée dont l'`id`
+  change devient, pour Chrome, une autre application.
 - **Couleurs** : uniquement dans `css/themes.css` (un bloc par thème). Le test
   `tests/unitaires/contrastes.test.mjs` vérifie que le texte reste lisible.
 - **Ajouter une fonction en français** : dans `js/calcul/traduction.js`,
