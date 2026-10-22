@@ -4,7 +4,7 @@
   "description": "Tableur hors ligne de la Suite bureautique de l'Omni-système",
   "private": true,
   "type": "module",
-  "license": "UNLICENSED",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "scripts": {
     "start": "node outils/serveur.mjs",
     "test": "node --test \"tests/unitaires/*.test.mjs\"",
