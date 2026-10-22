@@ -281,3 +281,18 @@ tests/                   vérifications automatiques
   majuscules (`="a"="A"` donne FAUX), une cellule vide n'est pas égale à `""`
   dans une comparaison, `SI` accepte trop d'arguments sans erreur.
 - Copier / coller : au clavier (Ctrl + C / X / V) ; pas encore de boutons pour le téléphone.
+
+---
+
+## 10. Licence
+
+Distribué sous licence **[PolyForm Noncommercial 1.0.0](LICENSE)** (texte
+officiel en anglais, suivi d'une traduction française à titre indicatif).
+
+Ce code peut être utilisé, modifié et partagé librement, à condition que ce ne
+soit pas dans un but commercial et que le fichier de licence l'accompagne
+toujours. Toute utilisation commerciale nécessite l'accord de l'auteur. Le
+logiciel est fourni « en l'état », sans aucune garantie.
+
+Les bibliothèques et polices d'autres auteurs gardent leur propre licence :
+voir [LICENCES.md](LICENCES.md).
