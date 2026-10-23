@@ -8,17 +8,29 @@
 //     accents s'affichent correctement ;
 //   - les formules sont exportées avec leur RÉSULTAT ;
 //   - les nombres sont écrits sans espace ni symbole (12,5 et non « 12,50 € »),
-//     pour rester des nombres dans le tableur qui ouvrira le fichier.
+//     pour rester des nombres dans le tableur qui ouvrira le fichier ;
+//   - les dates sont écrites jj/mm/aaaa (Excel les reconnaît comme des dates).
 
 import { adresse } from '../donnees/adresses.js';
+import { dateVersTexte, interpreterSaisie } from '../donnees/saisie.js';
 import { nombrePourFichier } from '../affichage/format.js';
 
 export const SEPARATEUR = ';';
 
+/** Vrai si la cellule s'affiche en date (date tapée, format « Date », ou =AUJOURDHUI()). */
+function estDate(cellule) {
+  if (!cellule) return false;
+  if (cellule.format) return cellule.format.type === 'date';
+  return interpreterSaisie(cellule.brut).style === 'date';
+}
+
 /** Texte d'une valeur de cellule pour le fichier. */
-function texteValeur(valeur) {
+function texteValeur(valeur, cellule) {
   if (valeur === null || valeur === undefined) return '';
-  if (typeof valeur === 'number') return nombrePourFichier(valeur);
+  if (typeof valeur === 'number') {
+    if (estDate(cellule) && valeur >= 1 && valeur <= 2958465) return dateVersTexte(valeur);
+    return nombrePourFichier(valeur);
+  }
   if (typeof valeur === 'boolean') return valeur ? 'VRAI' : 'FAUX';
   if (typeof valeur === 'object' && 'affichage' in valeur) return valeur.affichage; // erreur : #DIV/0!…
   return String(valeur);
@@ -42,7 +54,10 @@ export function genererCSV(feuille, moteur) {
   const texte = [];
   for (let l = 1; l <= lignes; l++) {
     const champs = [];
-    for (let c = 1; c <= colonnes; c++) champs.push(proteger(texteValeur(moteur.valeur(feuille, adresse(l, c)))));
+    for (let c = 1; c <= colonnes; c++) {
+      const adr = adresse(l, c);
+      champs.push(proteger(texteValeur(moteur.valeur(feuille, adr), feuille.cellule(adr))));
+    }
     texte.push(champs.join(SEPARATEUR));
   }
   return `﻿${texte.join('\r\n')}\r\n`;

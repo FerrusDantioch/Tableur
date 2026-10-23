@@ -104,6 +104,13 @@ describe('Import CSV', () => {
     }
   });
 
+  test('export CSV : les dates restent des dates (jj/mm/aaaa)', () => {
+    const t = creerTableur({ A1: '14/07/2026', B1: '46318', C1: '=A1+1', D1: '20 %' });
+    t.classeur.modifierCellules(t.feuille, [{ adresse: 'B1', format: { type: 'date', decimales: 0 } }, { adresse: 'C1', format: { type: 'date', decimales: 0 } }]);
+    const csv = genererCSV(t.feuille, t.moteur);
+    assert.equal(csv.replace(/^\uFEFF/, '').trim(), '14/07/2026;23/10/2026;15/07/2026;0,2');
+  });
+
   test('fichier trop grand : coupé à 1000 lignes et 52 colonnes', () => {
     const lignes = Array.from({ length: 1200 }, (_, i) => Array.from({ length: 60 }, (__, j) => `${i}-${j}`).join(';'));
     const resultat = feuilleDepuisCSV(lignes.join('\n'));

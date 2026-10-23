@@ -614,6 +614,22 @@ svg {
   color: var(--erreur);
 }
 
+/* Très petits téléphones : un peu plus de place pour le titre et les onglets. */
+@media (max-width: 380px) {
+  .marque {
+    display: none;
+  }
+  .entete {
+    gap: 6px;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  .onglet-outils {
+    padding: 6px 7px;
+    font-size: 0.9rem;
+  }
+}
+
 @media (max-width: 520px) {
   .statistiques {
     display: none;
