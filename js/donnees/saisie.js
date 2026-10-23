@@ -98,8 +98,10 @@ export function interpreterSaisie(brut) {
   if (texte.startsWith("'")) return { type: 'texte', valeur: texte.slice(1), style: 'general' };
 
   // Le signe « = » au début annonce une formule, calculée par le moteur de calcul.
+  // Comme dans Excel, =AUJOURDHUI() ou =DATE(…) s'affichent en date.
   if (sansEspaces.startsWith('=')) {
-    return { type: 'formule', valeur: null, style: 'general', formule: sansEspaces };
+    const style = /^=\s*(AUJOURDHUI|TODAY|DATE)\s*\(/i.test(sansEspaces) ? 'date' : 'general';
+    return { type: 'formule', valeur: null, style, formule: sansEspaces };
   }
 
   const majuscules = sansEspaces.toUpperCase();

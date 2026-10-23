@@ -36,6 +36,7 @@ const FICHIERS = [
   'js/donnees/recopie.js',
   'js/donnees/saisie.js',
   'js/calcul/bibliotheque.js',
+  'js/calcul/comparaisons.js',
   'js/calcul/erreurs.js',
   'js/calcul/fonctions.js',
   'js/calcul/moteur.js',

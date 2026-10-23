@@ -17,7 +17,8 @@ const ERREURS = {
   },
   '#REF!': {
     affichage: '#REF!',
-    explication: 'Référence invalide : la formule désigne une cellule qui n’existe pas (au-delà de la colonne AZ ou de la ligne 1000).',
+    explication:
+      'Référence invalide : la formule désigne une cellule qui n’existe pas (supprimée, au-delà de la colonne AZ ou de la ligne 1000, ou sur une feuille qui n’existe pas).',
   },
   '#NAME?': {
     affichage: '#NOM?',
@@ -29,7 +30,8 @@ const ERREURS = {
   },
   '#N/A': {
     affichage: '#N/A',
-    explication: 'Valeur non disponible.',
+    explication:
+      'Valeur introuvable : par exemple, RECHERCHEV n’a pas trouvé la valeur cherchée dans la première colonne du tableau (vérifiez l’orthographe, ou mettez FAUX en dernier argument pour une recherche exacte).',
   },
   '#NULL!': {
     affichage: '#NUL!',

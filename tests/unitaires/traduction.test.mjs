@@ -8,9 +8,10 @@ import { decalerReferences } from '../../js/donnees/formules.js';
 describe('Traduction vers la bibliothèque', () => {
   test('fonctions, séparateurs et nombres', () => {
     assert.equal(traduireFormule('=SOMME(A1:A10)'), 'SUM(A1:A10)');
-    assert.equal(traduireFormule('=si(A1>0;"oui";"non")'), 'IF(A1>0,"oui","non")');
+    assert.equal(traduireFormule('=si(A1>0;"oui";"non")'), 'IF(TABLEUR.COMPARER(A1,">",0),"oui","non")');
     assert.equal(traduireFormule('=ARRONDI(B2*1,5;2)'), 'ROUND(B2*1.5,2)');
-    assert.equal(traduireFormule('=NB.SI(A1:A3;">5")'), 'NB.SI(A1:A3,">5")'); // inconnue : laissée telle quelle
+    assert.equal(traduireFormule('=NB.SI(A1:A3;">5")'), 'COUNTIF(A1:A3,">5")');
+    assert.equal(traduireFormule('=INCONNUE(1)'), 'INCONNUE(1)'); // inconnue : laissée telle quelle
     assert.equal(traduireFormule('=SOMME.SI(A1:A3;">5")'), 'SUMIF(A1:A3,">5")');
     assert.equal(traduireFormule('=ET(VRAI;faux)'), 'AND(TRUE,FALSE)');
     assert.equal(traduireFormule('= 1E3 + 2,5e-1'), ' 1000 + 0.25');
@@ -18,8 +19,19 @@ describe('Traduction vers la bibliothèque', () => {
   });
 
   test('le texte entre guillemets n’est jamais modifié', () => {
-    assert.equal(traduireFormule('="SOMME;1,5 VRAI"&A1'), '"SOMME;1,5 VRAI"&A1');
+    assert.equal(traduireFormule('="SOMME;1,5 VRAI"&A1'), 'TABLEUR.CONCAT("SOMME;1,5 VRAI",A1)');
     assert.equal(traduireFormule('="il dit ""SI"""'), '"il dit ""SI"""');
+  });
+
+  test('« & » et comparaisons confiés aux fonctions françaises', () => {
+    assert.equal(traduireFormule('=A1&" €"'), 'TABLEUR.CONCAT(A1," €")');
+    assert.equal(traduireFormule('=A1<>B1'), 'TABLEUR.COMPARER(A1,"<>",B1)');
+    assert.equal(traduireFormule('=A1<=2&"x"'), 'TABLEUR.COMPARER(A1,"<=",TABLEUR.CONCAT(2,"x"))');
+    assert.equal(traduireFormule('=SI(ET(A1>=0;B1<5);"ok";A1&B1)'), 'IF(AND(TABLEUR.COMPARER(A1,">=",0),TABLEUR.COMPARER(B1,"<",5)),"ok",TABLEUR.CONCAT(A1,B1))');
+    assert.equal(traduireFormule('=(A1=1)=VRAI'), 'TABLEUR.COMPARER((TABLEUR.COMPARER(A1,"=",1)),"=",TRUE)');
+    // Formule mal écrite : laissée telle quelle (la bibliothèque affichera #ERREUR!).
+    assert.equal(traduireFormule('=&A1'), '&A1');
+    assert.equal(traduireFormule('=A1='), 'A1=');
   });
 
   test('recoller les morceaux redonne la formule', () => {
