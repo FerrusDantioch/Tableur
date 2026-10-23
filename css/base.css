@@ -125,8 +125,11 @@ svg {
 
 /* --- Boutons ----------------------------------------------------------------- */
 
-/* Boutons larges, faciles à toucher au doigt (au moins 44 × 44 pixels). */
+/* Boutons larges, faciles à toucher au doigt (au moins 44 × 44 pixels).
+   « relative » : le libellé caché (petits écrans) reste dans son bouton et
+   ne fait pas déborder la page. */
 .outil {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -172,7 +175,49 @@ svg {
   background: var(--survol);
 }
 
-/* --- Barre d'outils --------------------------------------------------------- */
+/* --- Barre d'outils en onglets ---------------------------------------------- */
+
+.outils {
+  background: var(--surface);
+  border-bottom: 1px solid var(--trait);
+}
+
+.onglets-outils {
+  display: flex;
+  gap: 2px;
+  padding: 0 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--trait);
+}
+
+.onglet-outils {
+  flex: none;
+  min-height: 40px;
+  padding: 6px 14px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: var(--discret);
+  font-weight: 500;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.onglet-outils:hover {
+  color: var(--texte);
+}
+
+.onglet-outils[aria-selected="true"] {
+  color: var(--texte);
+  border-bottom-color: var(--accent);
+  font-weight: 700;
+}
+
+/* Barre repliée : l'onglet choisi reste marqué, mais plus discrètement. */
+.outils.repliee .onglet-outils[aria-selected="true"] {
+  border-bottom-color: var(--trait);
+}
 
 .barre-outils {
   display: flex;
@@ -180,8 +225,10 @@ svg {
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--trait);
+}
+
+.barre-outils[hidden] {
+  display: none;
 }
 
 .separateur {
@@ -215,6 +262,10 @@ svg {
   }
   .barre-outils > * {
     flex: none;
+  }
+  .onglet-outils {
+    padding: 6px 10px;
+    font-size: 0.95rem;
   }
 }
 
@@ -251,6 +302,7 @@ svg {
   background: var(--surface);
   color: var(--texte);
   box-shadow: var(--ombre);
+  overflow-y: auto;
 }
 
 .panneau-titre {

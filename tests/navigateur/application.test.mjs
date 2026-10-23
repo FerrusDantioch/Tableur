@@ -2,7 +2,7 @@
 
 import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { demarrerServeur, lancerNavigateur, ouvrirApplication, texteCellule } from './outils.mjs';
+import { demarrerServeur, lancerNavigateur, ouvrirApplication, texteCellule, cliquerOutil } from './outils.mjs';
 
 const td = (ligne, colonne) => `td[data-ligne="${ligne}"][data-colonne="${colonne}"]`;
 const attendreEnregistrement = (page) =>
@@ -37,8 +37,8 @@ test('sauvegarde automatique : tout est retrouvé après fermeture', async () =>
   await page.keyboard.type('=B1*12');
   await page.keyboard.press('Enter');
   await page.click(td(1, 1));
-  await page.click('#bouton-gras');
-  await page.click('#bouton-fond');
+  await cliquerOutil(page, '#bouton-gras');
+  await cliquerOutil(page, '#bouton-fond');
   await page.click('#panneau-fond .pastille[data-fond="jaune"]');
   await page.evaluate(() => window.tableur.classeur.modifierLargeurs(window.tableur.feuille, [1], 180));
   await attendreEnregistrement(page);

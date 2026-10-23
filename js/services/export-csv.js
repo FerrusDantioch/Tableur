@@ -33,7 +33,7 @@ function proteger(champ) {
 /**
  * Crée le contenu du fichier CSV : de A1 jusqu'à la dernière cellule remplie.
  * @param {import('../donnees/classeur.js').Feuille} feuille
- * @param {{ valeur: (adresse: string) => * }} moteur
+ * @param {{ valeur: (feuille: object, adresse: string) => * }} moteur
  * @returns {string} contenu ('' si la feuille est vide)
  */
 export function genererCSV(feuille, moteur) {
@@ -42,7 +42,7 @@ export function genererCSV(feuille, moteur) {
   const texte = [];
   for (let l = 1; l <= lignes; l++) {
     const champs = [];
-    for (let c = 1; c <= colonnes; c++) champs.push(proteger(texteValeur(moteur.valeur(adresse(l, c)))));
+    for (let c = 1; c <= colonnes; c++) champs.push(proteger(texteValeur(moteur.valeur(feuille, adresse(l, c)))));
     texte.push(champs.join(SEPARATEUR));
   }
   return `﻿${texte.join('\r\n')}\r\n`;

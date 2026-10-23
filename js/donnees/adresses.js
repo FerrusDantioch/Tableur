@@ -4,6 +4,10 @@
 // la colonne A porte le numéro 1, la colonne B le numéro 2, etc.
 // Une « plage » est un rectangle de cellules, par exemple A1:C10.
 
+/** Taille maximale d'une feuille : 1000 lignes et 52 colonnes (jusqu'à AZ). */
+export const LIGNES_MAX = 1000;
+export const COLONNES_MAX = 52;
+
 /** Numéro de colonne → lettres : 1 → "A", 26 → "Z", 27 → "AA", 52 → "AZ". */
 export function lettresColonne(numero) {
   let lettres = '';

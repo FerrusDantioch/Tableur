@@ -4,6 +4,16 @@
 // Ce module ne fait aucun calcul : il reçoit une valeur déjà calculée et
 // renvoie le texte à montrer dans la cellule.
 
+import { dateVersTexte } from '../donnees/saisie.js';
+
+/** Plus grand numéro de date (31/12/9999). */
+const DERNIERE_DATE = 2958465;
+
+/** Numéro de série → « jj/mm/aaaa », ou « ##### » s'il ne correspond à aucune date (comme Excel). */
+function dateOuDieses(nombre) {
+  return nombre >= 1 && nombre <= DERNIERE_DATE ? dateVersTexte(nombre) : '#####';
+}
+
 const formatGeneral = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 10, useGrouping: false });
 const formatPourcent = new Intl.NumberFormat('fr-FR', { style: 'percent', maximumFractionDigits: 8 });
 const formatEuro = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
@@ -16,11 +26,12 @@ export function arrondiPropre(nombre) {
   return Number(nombre.toPrecision(15));
 }
 
-/** Nombre → texte français. Style : 'general', 'pourcent' ou 'euro'. */
+/** Nombre → texte français. Style : 'general', 'pourcent', 'euro' ou 'date'. */
 export function formaterNombre(nombre, style = 'general') {
   const propre = arrondiPropre(nombre) + 0; // « + 0 » transforme -0 en 0
   if (style === 'pourcent') return formatPourcent.format(propre);
   if (style === 'euro') return formatEuro.format(propre);
+  if (style === 'date') return dateOuDieses(propre);
   const taille = Math.abs(propre);
   // Très grands ou très petits nombres : notation scientifique, comme Excel (1,5E+20).
   if (taille !== 0 && (taille >= 1e15 || taille < 1e-9)) {

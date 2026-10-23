@@ -15,7 +15,9 @@
 //   - VRAI et FAUX deviennent TRUE et FALSE ;
 //   - le texte entre guillemets n'est jamais modifié.
 
-import { lettresColonne, numeroColonne } from '../donnees/adresses.js';
+import { decouper, segmenter } from '../donnees/formules.js';
+
+export { decouper };
 
 /** Fonctions disponibles : nom français → nom anglais de la bibliothèque. */
 export const FONCTIONS = Object.freeze({
@@ -45,92 +47,6 @@ export const FONCTIONS = Object.freeze({
   'SOMME.SI': 'SUMIF',
   'MOYENNE.SI': 'AVERAGEIF',
 });
-
-const LETTRE = /[A-Za-z_$À-ſ]/;
-const CARACTERE_NOM = /[A-Za-z0-9_.$À-ſ]/;
-const CHIFFRE = /[0-9]/;
-// Jetons après lesquels un « ,5 » ou « .5 » est un nombre (et pas un séparateur).
-const AVANT_NOMBRE = new Set(['debut', 'separateur', 'ouvrante', 'operateur']);
-
-/**
- * Découpe une formule (sans le « = ») en jetons :
- *   { type: 'texte', source }                   "entre guillemets"
- *   { type: 'feuille', source }                 'Nom de feuille'!
- *   { type: 'nombre', source, nombre }          12   3,5   1E3
- *   { type: 'nom', source, fonction }           A1, SOMME (fonction: vrai si suivi de « ( »), VRAI…
- *   { type: 'separateur', source }              ;  ou  ,
- *   { type: 'ouvrante' | 'fermante', source }   ( )
- *   { type: 'operateur', source }               + - * / ^ & = < > % :
- *   { type: 'espace' | 'autre', source }
- * En recollant les « source », on retrouve exactement le texte de départ.
- */
-export function decouper(formule) {
-  const jetons = [];
-  let i = 0;
-  let precedent = 'debut'; // type du dernier jeton qui n'est pas une espace
-
-  const ajouter = (jeton) => {
-    jetons.push(jeton);
-    if (jeton.type !== 'espace') precedent = jeton.type;
-  };
-
-  while (i < formule.length) {
-    const c = formule[i];
-    const suivant = formule[i + 1] ?? '';
-
-    // Texte entre guillemets ("" à l'intérieur = un guillemet).
-    if (c === '"' || c === "'") {
-      let j = i + 1;
-      while (j < formule.length) {
-        if (formule[j] === c && formule[j + 1] === c) j += 2;
-        else if (formule[j] === c) break;
-        else j++;
-      }
-      j = Math.min(j + 1, formule.length);
-      if (c === "'" && formule[j] === '!') j++;
-      ajouter({ type: c === '"' ? 'texte' : 'feuille', source: formule.slice(i, j) });
-      i = j;
-      continue;
-    }
-
-    // Nombre : 12   3,5   3.5   1E3   1,5E-2   et aussi ,5 ou .5 en début d'argument.
-    const debutDecimal = (c === ',' || c === '.') && CHIFFRE.test(suivant) && AVANT_NOMBRE.has(precedent);
-    if (CHIFFRE.test(c) || debutDecimal) {
-      let j = i;
-      while (CHIFFRE.test(formule[j] ?? '')) j++;
-      if ((formule[j] === ',' || formule[j] === '.') && CHIFFRE.test(formule[j + 1] ?? '')) {
-        j++;
-        while (CHIFFRE.test(formule[j] ?? '')) j++;
-      }
-      const exposant = /^[eE][+-]?[0-9]+/.exec(formule.slice(j));
-      if (exposant) j += exposant[0].length;
-      const source = formule.slice(i, j);
-      ajouter({ type: 'nombre', source, nombre: Number(source.replace(',', '.')) });
-      i = j;
-      continue;
-    }
-
-    // Nom : référence de cellule (A1, $B$2), fonction (SOMME, NB.SI), VRAI, FAUX…
-    if (LETTRE.test(c)) {
-      let j = i + 1;
-      while (CARACTERE_NOM.test(formule[j] ?? '')) j++;
-      let k = j;
-      while (formule[k] === ' ') k++;
-      ajouter({ type: 'nom', source: formule.slice(i, j), fonction: formule[k] === '(' });
-      i = j;
-      continue;
-    }
-
-    if (c === ';' || c === ',') ajouter({ type: 'separateur', source: c });
-    else if (c === '(') ajouter({ type: 'ouvrante', source: c });
-    else if (c === ')') ajouter({ type: 'fermante', source: c });
-    else if (/\s/.test(c)) ajouter({ type: 'espace', source: c });
-    else if ('+-*/^&=<>%:'.includes(c)) ajouter({ type: 'operateur', source: c });
-    else ajouter({ type: 'autre', source: c });
-    i++;
-  }
-  return jetons;
-}
 
 /** Retire le « = » du début (et les espaces autour). */
 function corps(formule) {
@@ -169,44 +85,14 @@ export function traduireFormule(formule) {
  * par exemple « total » dans =total*2. La formule affichera alors #NOM?.
  */
 export function nomsInconnus(formule) {
-  const jetons = decouper(corps(formule)).filter((jeton) => jeton.type !== 'espace');
+  const morceaux = segmenter(corps(formule)).filter((morceau) => morceau.reference || morceau.jeton.type !== 'espace');
   const inconnus = [];
-  jetons.forEach((jeton, i) => {
-    if (jeton.type !== 'nom' || jeton.fonction) return;
-    const nom = jeton.source.toUpperCase();
-    if (['VRAI', 'FAUX', 'TRUE', 'FALSE'].includes(nom)) return;
-    if (/^\$?[A-Z]{1,3}\$?[0-9]+$/.test(nom)) return; // cellule : B3, $B$3
-    if (jetons[i - 1]?.source === '#') return; // erreur écrite dans la formule : #REF!
-    // Colonne ou ligne entière : A:C, $1:$3
-    const deuxPoints = jetons[i - 1]?.source === ':' || jetons[i + 1]?.source === ':';
-    if (deuxPoints && /^\$?([A-Z]{1,3}|[0-9]+)$/.test(nom)) return;
+  morceaux.forEach((morceau, i) => {
+    const jeton = morceau.jeton;
+    if (!jeton || jeton.type !== 'nom' || jeton.fonction) return;
+    if (['VRAI', 'FAUX', 'TRUE', 'FALSE'].includes(jeton.source.toUpperCase())) return;
+    if (morceaux[i - 1]?.source === '#') return; // erreur écrite dans la formule : #REF!
     inconnus.push(jeton.source);
   });
   return inconnus;
-}
-
-const MOTIF_REFERENCE = /^(\$?)([A-Za-z]{1,3})(\$?)([0-9]+)$/;
-
-/**
- * Décale les références d'une formule, comme lors d'un copier-coller dans
- * Excel : =A1*2 copiée une ligne plus bas devient =A2*2.
- * Les parties précédées d'un « $ » ne bougent pas ($A$1 reste $A$1).
- * Une référence qui sortirait de la grille devient #REF!.
- */
-export function decalerReferences(formule, dLignes, dColonnes) {
-  const texte = String(formule).trim();
-  if (!texte.startsWith('=')) return formule;
-  const decalee = decouper(texte.slice(1))
-    .map((jeton) => {
-      if (jeton.type !== 'nom' || jeton.fonction) return jeton.source;
-      const ref = MOTIF_REFERENCE.exec(jeton.source);
-      if (!ref) return jeton.source;
-      const [, dollarColonne, lettres, dollarLigne, chiffres] = ref;
-      const ligne = Number(chiffres) + (dollarLigne ? 0 : dLignes);
-      const colonne = numeroColonne(lettres) + (dollarColonne ? 0 : dColonnes);
-      if (ligne < 1 || colonne < 1) return '#REF!';
-      return `${dollarColonne}${lettresColonne(colonne)}${dollarLigne}${ligne}`;
-    })
-    .join('');
-  return `=${decalee}`;
 }

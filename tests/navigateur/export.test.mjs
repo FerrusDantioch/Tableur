@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { demarrerServeur, lancerNavigateur, ouvrirApplication } from './outils.mjs';
+import { demarrerServeur, lancerNavigateur, ouvrirApplication, cliquerOutil } from './outils.mjs';
 
 const RESULTATS = fileURLToPath(new URL('../resultats/', import.meta.url));
 mkdirSync(RESULTATS, { recursive: true });
@@ -57,7 +57,7 @@ after(async () => {
 test('export CSV : fichier téléchargé, nommé d’après le titre', async () => {
   const { contexte, page } = await ouvrirApplication(navigateur, serveur.url, { acceptDownloads: true });
   await remplirBudget(page, BUDGET);
-  await page.click('#bouton-exporter');
+  await cliquerOutil(page, '#bouton-exporter');
   const [telechargement] = await Promise.all([page.waitForEvent('download'), page.click('#exporter-csv')]);
   assert.equal(telechargement.suggestedFilename(), 'Budget de test.csv');
   const chemin = `${RESULTATS}budget.csv`;
@@ -87,7 +87,7 @@ test('export PDF : explication, impression du tableau seul, nom du fichier', asy
       window.impressions.push({ titre: document.title, texte: lignes.join('\n'), classes: zone.className });
     };
   });
-  await page.click('#bouton-exporter');
+  await cliquerOutil(page, '#bouton-exporter');
   await page.click('#exporter-pdf');
   assert.ok(await page.isVisible('#fenetre-aide-pdf'), 'l’explication s’affiche la première fois');
   await page.check('#fenetre-aide-pdf input[type="checkbox"]');
@@ -159,10 +159,10 @@ test('export PDF : un tableau large passe en paysage', async () => {
 
 test('export d’un classeur vide : message clair', async () => {
   const { contexte, page } = await ouvrirApplication(navigateur, serveur.url);
-  await page.click('#bouton-exporter');
+  await cliquerOutil(page, '#bouton-exporter');
   await page.click('#exporter-csv');
   assert.match(await page.textContent('#message'), /vide/);
-  await page.click('#bouton-exporter');
+  await cliquerOutil(page, '#bouton-exporter');
   await page.click('#exporter-pdf');
   assert.equal(await page.isVisible('#fenetre-aide-pdf'), false);
   assert.match(await page.textContent('#message'), /vide/);

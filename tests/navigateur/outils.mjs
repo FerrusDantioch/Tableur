@@ -71,3 +71,23 @@ export function celluleActive(page) {
     return window.tableur.adresse(ligne, colonne);
   });
 }
+
+/**
+ * Clique (ou appuie au doigt) sur un bouton de la barre d'outils, après avoir
+ * ouvert l'onglet qui le contient (Édition, Mise en forme, Bordures, Données).
+ */
+export async function cliquerOutil(page, selecteur, { doigt = false } = {}) {
+  const groupe = await page.evaluate((s) => document.querySelector(s)?.closest('[role="tabpanel"]')?.id.replace('groupe-', ''), selecteur);
+  if (groupe) {
+    const ouvert = await page.evaluate(
+      (g) => !document.getElementById(`groupe-${g}`).hidden,
+      groupe,
+    );
+    if (!ouvert) {
+      if (doigt) await page.tap(`.onglet-outils[data-groupe="${groupe}"]`);
+      else await page.click(`.onglet-outils[data-groupe="${groupe}"]`);
+    }
+  }
+  if (doigt) await page.tap(selecteur);
+  else await page.click(selecteur);
+}

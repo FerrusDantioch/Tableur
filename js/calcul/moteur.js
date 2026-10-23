@@ -4,49 +4,67 @@
 // la valeur de chacune et la garde en mémoire. Il ne s'occupe pas de
 // l'affichage : il annonce seulement quelles cellules ont changé de valeur.
 //
+// Il connaît toutes les feuilles du classeur : une formule peut utiliser une
+// cellule d'une autre feuille (=Feuille2!A1, ='Mes ventes'!B2:B10).
+//
 // Recalcul automatique :
 //   1. pour chaque formule, on note les cellules et plages qu'elle utilise
 //      (ses « précédents ») grâce à l'analyseur de la bibliothèque ;
 //   2. quand une cellule change, on cherche toutes les formules qui en
-//      dépendent, directement ou en cascade ;
+//      dépendent, directement ou en cascade (même sur d'autres feuilles) ;
 //   3. on les recalcule dans le bon ordre (une formule après celles dont elle
 //      a besoin). S'il reste des formules qui s'attendent les unes les autres,
 //      c'est une boucle : elles affichent #CIRC!.
 //
-// Pour les futurs graphiques : `valeursPlage("A1:B10")` donne les valeurs
-// d'une plage, et `abonner()` prévient à chaque changement de valeur.
+// Chaque cellule est repérée par une « clé » : numéro de sa feuille + adresse
+// (ex. « 2:B3 »), car le nom d'une feuille peut changer.
+//
+// Pour les futurs graphiques : `valeursPlage(feuille, "A1:B10")` donne les
+// valeurs d'une plage, et `abonner()` prévient à chaque changement de valeur.
 
-import { adresse, dansPlage, lireAdresse, lirePlage } from '../donnees/adresses.js';
+import { COLONNES_MAX, LIGNES_MAX, adresse, dansPlage, lireAdresse, lirePlage } from '../donnees/adresses.js';
 import { interpreterSaisie } from '../donnees/saisie.js';
-import { COLONNES_MAX, LIGNES_MAX } from '../donnees/classeur.js';
 import { bibliothequeFormules } from './bibliotheque.js';
 import { ErreurCalcul } from './erreurs.js';
 import { completerFonctions } from './fonctions.js';
 import { nomsInconnus, traduireFormule } from './traduction.js';
 
+/** Nombre maximal d'analyses de formules gardées en mémoire (pour aller plus vite). */
+const TAILLE_CACHE = 5000;
+
+const cle = (feuille, adr) => `${feuille.id}:${adr}`;
+
+/** Clé → { idFeuille, adresse, ligne, colonne }. */
+function lireCle(texte) {
+  const separateur = texte.indexOf(':');
+  const adr = texte.slice(separateur + 1);
+  return { idFeuille: Number(texte.slice(0, separateur)), adresse: adr, ...lireAdresse(adr) };
+}
+
 export class MoteurCalcul {
-  #feuille;
+  #classeur;
   #bibliotheque;
   #parseur; // calcule une formule
   #analyseur; // trouve les cellules utilisées par une formule
-  /** @type {Map<string, *>} adresse → valeur calculée (cellules non vides seulement) */
+  /** @type {Map<string, *>} clé → valeur calculée (cellules non vides seulement) */
   #valeurs = new Map();
-  /** @type {Map<string, {traduite: string, inconnus: string[], cellules: string[], plages: object[]}>} formules de la feuille */
+  /** @type {Map<string, {feuille: object, traduite: string, inconnus: string[], cellules: string[], plages: object[]}>} */
   #formules = new Map();
-  /** @type {Map<string, Set<string>>} adresse → formules qui l'utilisent directement */
+  /** @type {Map<string, Set<string>>} clé → formules qui l'utilisent directement */
   #dependants = new Map();
   /** @type {Set<string>} formules qui utilisent au moins une plage (A1:B5) */
   #formulesAvecPlages = new Set();
+  /** @type {Map<string, Array>} analyses déjà faites : « feuille|formule » → références */
+  #cacheAnalyses = new Map();
   #abonnes = new Set();
 
   /**
    * @param {import('../donnees/classeur.js').Classeur} classeur
-   * @param {import('../donnees/classeur.js').Feuille} feuille
    * @param {object} [options]
    * @param {Function} [options.FormulaParser]  la bibliothèque (par défaut, la variable globale)
    */
-  constructor(classeur, feuille, { FormulaParser = bibliothequeFormules() } = {}) {
-    this.#feuille = feuille;
+  constructor(classeur, { FormulaParser = bibliothequeFormules() } = {}) {
+    this.#classeur = classeur;
     this.#bibliotheque = FormulaParser;
     this.#parseur = new FormulaParser({
       onCell: (reference) => this.#lireCellule(reference),
@@ -58,14 +76,13 @@ export class MoteurCalcul {
     this.#analyseur = new FormulaParser.DepParser();
 
     classeur.abonner((evenement) => {
-      if (evenement.feuille !== feuille) return;
-      if (evenement.type === 'cellules' && evenement.contenus.length) this.recalculer(evenement.contenus);
-      else if (evenement.type === 'feuille') this.toutRecalculer();
+      if (evenement.type === 'cellules' && evenement.contenus.length) this.recalculer(evenement.feuille, evenement.contenus);
+      else if (evenement.type === 'structure') this.toutRecalculer();
     });
     this.toutRecalculer();
   }
 
-  /** S'abonne aux changements de valeurs : fonction({ type: 'valeurs', adresses }). */
+  /** S'abonne aux changements de valeurs : fonction({ type: 'valeurs', feuille, adresses }). */
   abonner(fonction) {
     this.#abonnes.add(fonction);
     return () => this.#abonnes.delete(fonction);
@@ -74,26 +91,26 @@ export class MoteurCalcul {
   // --- Lecture des résultats ------------------------------------------------------
 
   /** Valeur d'une cellule : nombre, texte, booléen, ErreurCalcul, ou null si elle est vide. */
-  valeur(adr) {
-    return this.#valeurs.get(adr) ?? null;
+  valeur(feuille, adr) {
+    return this.#valeurs.get(cle(feuille, adr)) ?? null;
   }
 
   /** Vrai si la cellule contient une formule. */
-  estFormule(adr) {
-    return this.#formules.has(adr);
+  estFormule(feuille, adr) {
+    return this.#formules.has(cle(feuille, adr));
   }
 
   /**
    * Valeurs d'une plage, ligne par ligne (tableau de tableaux).
-   * Prévu pour les graphiques : valeursPlage("A1:B10").
+   * Prévu pour les graphiques : valeursPlage(feuille, "A1:B10").
    */
-  valeursPlage(plage) {
+  valeursPlage(feuille, plage) {
     const zone = typeof plage === 'string' ? lirePlage(plage) : plage;
     if (!zone) return [];
     const lignes = [];
     for (let l = zone.debut.ligne; l <= zone.fin.ligne; l++) {
       const ligne = [];
-      for (let c = zone.debut.colonne; c <= zone.fin.colonne; c++) ligne.push(this.valeur(adresse(l, c)));
+      for (let c = zone.debut.colonne; c <= zone.fin.colonne; c++) ligne.push(this.valeur(feuille, adresse(l, c)));
       lignes.push(ligne);
     }
     return lignes;
@@ -103,15 +120,17 @@ export class MoteurCalcul {
    * Résumé des nombres d'une plage (pour la barre d'état) :
    * { remplies, nombres, somme, moyenne, min, max }.
    */
-  resumer(plage) {
+  resumer(feuille, plage) {
     let remplies = 0;
     let nombres = 0;
     let somme = 0;
     let min = Infinity;
     let max = -Infinity;
-    for (const [adr, valeur] of this.#valeurs) {
+    for (const adr of feuille.adresses()) {
       const { ligne, colonne } = lireAdresse(adr);
       if (!dansPlage(plage, ligne, colonne)) continue;
+      const valeur = this.valeur(feuille, adr);
+      if (valeur === null) continue;
       remplies++;
       if (typeof valeur === 'number') {
         nombres++;
@@ -125,110 +144,153 @@ export class MoteurCalcul {
 
   // --- Recalcul -----------------------------------------------------------------
 
-  /** Recalcule toute la feuille (au chargement d'un classeur). */
+  /** Recalcule tout le classeur (au chargement, après une insertion de lignes, un tri…). */
   toutRecalculer() {
     const anciennes = [...this.#valeurs.keys()];
     this.#valeurs.clear();
     this.#formules.clear();
     this.#dependants.clear();
     this.#formulesAvecPlages.clear();
-    const adresses = this.#feuille.adresses();
-    for (const adr of adresses) this.#enregistrer(adr);
+    const cles = [];
+    for (const feuille of this.#classeur.feuilles) {
+      for (const adr of feuille.adresses()) {
+        const c = cle(feuille, adr);
+        cles.push(c);
+        this.#enregistrer(feuille, adr, c);
+      }
+    }
     this.#calculer(new Set(this.#formules.keys()));
-    this.#annoncer([...new Set([...anciennes, ...adresses])]);
+    this.#annoncer(new Set([...anciennes, ...cles]));
   }
 
-  /** Recalcule après la modification du texte de certaines cellules. */
-  recalculer(adressesModifiees) {
-    for (const adr of adressesModifiees) this.#enregistrer(adr);
-    const aRecalculer = this.#dependantsDe(adressesModifiees);
+  /** Recalcule après la modification du texte de certaines cellules d'une feuille. */
+  recalculer(feuille, adressesModifiees) {
+    const cles = adressesModifiees.map((adr) => cle(feuille, adr));
+    adressesModifiees.forEach((adr, i) => this.#enregistrer(feuille, adr, cles[i]));
+    const aRecalculer = this.#dependantsDe(cles);
     this.#calculer(aRecalculer);
-    this.#annoncer([...new Set([...adressesModifiees, ...aRecalculer])]);
+    this.#annoncer(new Set([...cles, ...aRecalculer]));
   }
 
-  #annoncer(adresses) {
-    if (adresses.length === 0) return;
-    for (const fonction of this.#abonnes) fonction({ type: 'valeurs', adresses });
+  /** Recalcule les formules qui utilisent AUJOURDHUI() (au changement de jour). */
+  recalculerVolatiles() {
+    const volatiles = new Set([...this.#formules].filter(([, formule]) => /\bTODAY\s*\(/i.test(formule.traduite)).map(([c]) => c));
+    if (volatiles.size === 0) return;
+    const aRecalculer = this.#dependantsDe([...volatiles]);
+    this.#calculer(aRecalculer);
+    this.#annoncer(aRecalculer);
+  }
+
+  /** Prévient les abonnés, feuille par feuille. */
+  #annoncer(cles) {
+    const parFeuille = new Map();
+    for (const c of cles) {
+      const { idFeuille, adresse: adr } = lireCle(c);
+      if (!parFeuille.has(idFeuille)) parFeuille.set(idFeuille, []);
+      parFeuille.get(idFeuille).push(adr);
+    }
+    for (const feuille of this.#classeur.feuilles) {
+      const adresses = parFeuille.get(feuille.id);
+      if (!adresses?.length) continue;
+      for (const fonction of this.#abonnes) fonction({ type: 'valeurs', feuille, adresses });
+    }
   }
 
   /** Lit le texte d'une cellule et met à jour sa valeur (constante) ou sa formule. */
-  #enregistrer(adr) {
-    this.#oublierFormule(adr);
-    const saisie = interpreterSaisie(this.#feuille.brut(adr));
+  #enregistrer(feuille, adr, c) {
+    this.#oublierFormule(c);
+    const saisie = interpreterSaisie(feuille.brut(adr));
     if (saisie.type === 'formule') {
       const traduite = traduireFormule(saisie.formule);
       const inconnus = nomsInconnus(saisie.formule);
-      const { cellules, plages } = this.#analyser(traduite, adr);
-      this.#formules.set(adr, { traduite, inconnus, cellules, plages });
+      const { cellules, plages } = this.#analyser(traduite, feuille, adr);
+      this.#formules.set(c, { feuille, traduite, inconnus, cellules, plages });
       for (const precedent of cellules) {
         if (!this.#dependants.has(precedent)) this.#dependants.set(precedent, new Set());
-        this.#dependants.get(precedent).add(adr);
+        this.#dependants.get(precedent).add(c);
       }
-      if (plages.length) this.#formulesAvecPlages.add(adr);
-      this.#valeurs.delete(adr); // calculée ensuite
+      if (plages.length) this.#formulesAvecPlages.add(c);
+      this.#valeurs.delete(c); // calculée ensuite
     } else if (saisie.type === 'vide') {
-      this.#valeurs.delete(adr);
+      this.#valeurs.delete(c);
     } else {
-      this.#valeurs.set(adr, saisie.valeur);
+      this.#valeurs.set(c, saisie.valeur);
     }
   }
 
-  #oublierFormule(adr) {
-    const formule = this.#formules.get(adr);
+  #oublierFormule(c) {
+    const formule = this.#formules.get(c);
     if (!formule) return;
     for (const precedent of formule.cellules) {
       const ensemble = this.#dependants.get(precedent);
-      ensemble?.delete(adr);
+      ensemble?.delete(c);
       if (ensemble?.size === 0) this.#dependants.delete(precedent);
     }
-    this.#formulesAvecPlages.delete(adr);
-    this.#formules.delete(adr);
+    this.#formulesAvecPlages.delete(c);
+    this.#formules.delete(c);
   }
 
-  /** Cellules et plages utilisées par une formule (déjà traduite). */
-  #analyser(traduite, adr) {
-    const cellules = [];
-    const plages = [];
-    if (!traduite.trim()) return { cellules, plages };
+  /** Références (cellules et plages, avec le nom de leur feuille) d'une formule déjà traduite. */
+  #references(traduite, feuille, adr) {
+    const cleCache = `${feuille.nom}|${traduite}`;
+    const connue = this.#cacheAnalyses.get(cleCache);
+    if (connue) return connue;
     const { ligne, colonne } = lireAdresse(adr);
     let references = [];
     try {
       // `true` : en cas de formule mal écrite, on garde ce qui a pu être lu.
-      references = this.#analyseur.parse(traduite, { sheet: this.#feuille.nom, row: ligne, col: colonne }, true);
+      references = this.#analyseur.parse(traduite, { sheet: feuille.nom, row: ligne, col: colonne }, true);
     } catch {
       references = [];
     }
-    for (const reference of references) {
+    if (this.#cacheAnalyses.size >= TAILLE_CACHE) this.#cacheAnalyses.clear();
+    this.#cacheAnalyses.set(cleCache, references);
+    return references;
+  }
+
+  /** Cellules (clés) et plages ({ idFeuille, plage }) utilisées par une formule. */
+  #analyser(traduite, feuille, adr) {
+    const cellules = [];
+    const plages = [];
+    if (!traduite.trim()) return { cellules, plages };
+    for (const reference of this.#references(traduite, feuille, adr)) {
+      const cible = reference.sheet ? this.#classeur.feuilleNommee(reference.sheet) : feuille;
+      if (!cible) continue; // feuille inconnue : la formule affichera #REF!
       if (reference.from) {
         plages.push({
-          debut: { ligne: reference.from.row, colonne: reference.from.col },
-          fin: { ligne: reference.to.row, colonne: reference.to.col },
+          idFeuille: cible.id,
+          plage: {
+            debut: { ligne: reference.from.row, colonne: reference.from.col },
+            fin: { ligne: reference.to.row, colonne: reference.to.col },
+          },
         });
       } else {
-        cellules.push(adresse(reference.row, reference.col));
+        cellules.push(cle(cible, adresse(reference.row, reference.col)));
       }
     }
     return { cellules, plages };
   }
 
   /** Toutes les formules à recalculer quand ces cellules changent (en cascade). */
-  #dependantsDe(adressesModifiees) {
+  #dependantsDe(clesModifiees) {
     const resultat = new Set();
-    for (const adr of adressesModifiees) if (this.#formules.has(adr)) resultat.add(adr);
-    const aVisiter = [...adressesModifiees];
+    for (const c of clesModifiees) if (this.#formules.has(c)) resultat.add(c);
+    const aVisiter = [...clesModifiees];
     while (aVisiter.length) {
-      const adr = aVisiter.pop();
+      const c = aVisiter.pop();
       const ajouter = (formule) => {
         if (resultat.has(formule)) return;
         resultat.add(formule);
         aVisiter.push(formule);
       };
-      for (const formule of this.#dependants.get(adr) ?? []) ajouter(formule);
-      const { ligne, colonne } = lireAdresse(adr);
+      for (const formule of this.#dependants.get(c) ?? []) ajouter(formule);
+      const { idFeuille, ligne, colonne } = lireCle(c);
       for (const formule of this.#formulesAvecPlages) {
-        if (!resultat.has(formule) && this.#formules.get(formule).plages.some((p) => dansPlage(p, ligne, colonne))) {
-          ajouter(formule);
-        }
+        if (resultat.has(formule)) continue;
+        const touchee = this.#formules
+          .get(formule)
+          .plages.some((p) => p.idFeuille === idFeuille && dansPlage(p.plage, ligne, colonne));
+        if (touchee) ajouter(formule);
       }
     }
     return resultat;
@@ -246,43 +308,43 @@ export class MoteurCalcul {
       if (!suivantes.has(precedent)) suivantes.set(precedent, []);
       suivantes.get(precedent).push(formule);
     };
-    const positions = new Map([...formules].map((adr) => [adr, lireAdresse(adr)]));
-    for (const adr of formules) attentes.set(adr, 0);
-    for (const adr of formules) {
-      const { cellules, plages } = this.#formules.get(adr);
-      for (const precedent of cellules) if (formules.has(precedent)) lien(precedent, adr);
-      for (const plage of plages) {
+    const positions = new Map([...formules].map((c) => [c, lireCle(c)]));
+    for (const c of formules) attentes.set(c, 0);
+    for (const c of formules) {
+      const { cellules, plages } = this.#formules.get(c);
+      for (const precedent of cellules) if (formules.has(precedent)) lien(precedent, c);
+      for (const { idFeuille, plage } of plages) {
         for (const [autre, position] of positions) {
-          if (dansPlage(plage, position.ligne, position.colonne)) lien(autre, adr);
+          if (position.idFeuille === idFeuille && dansPlage(plage, position.ligne, position.colonne)) lien(autre, c);
         }
       }
     }
 
-    const pretes = [...formules].filter((adr) => attentes.get(adr) === 0);
+    const pretes = [...formules].filter((c) => attentes.get(c) === 0);
     while (pretes.length) {
-      const adr = pretes.pop();
-      this.#valeurs.set(adr, this.#evaluer(adr));
-      attentes.delete(adr);
-      for (const suivante of suivantes.get(adr) ?? []) {
+      const c = pretes.pop();
+      this.#valeurs.set(c, this.#evaluer(c));
+      attentes.delete(c);
+      for (const suivante of suivantes.get(c) ?? []) {
         const reste = attentes.get(suivante) - 1;
         attentes.set(suivante, reste);
         if (reste === 0) pretes.push(suivante);
       }
     }
     // Formules jamais prêtes : elles dépendent d'elles-mêmes (boucle).
-    for (const adr of attentes.keys()) this.#valeurs.set(adr, new ErreurCalcul('#CIRC!'));
+    for (const c of attentes.keys()) this.#valeurs.set(c, new ErreurCalcul('#CIRC!'));
   }
 
   /** Calcule une formule avec la bibliothèque. */
-  #evaluer(adr) {
-    const { traduite, inconnus } = this.#formules.get(adr);
+  #evaluer(c) {
+    const { feuille, traduite, inconnus } = this.#formules.get(c);
     if (!traduite.trim()) return new ErreurCalcul('#ERROR!');
     if (inconnus.length) {
       return new ErreurCalcul('#NAME?', `« ${inconnus[0]} » n’est ni une cellule ni une fonction connue.`);
     }
-    const { ligne, colonne } = lireAdresse(adr);
+    const { ligne, colonne } = lireCle(c);
     try {
-      const resultat = this.#parseur.parse(traduite, { sheet: this.#feuille.nom, row: ligne, col: colonne });
+      const resultat = this.#parseur.parse(traduite, { sheet: feuille.nom, row: ligne, col: colonne });
       return this.#depuisBibliotheque(resultat);
     } catch (exception) {
       return this.#erreurDepuisException(exception);
@@ -291,23 +353,31 @@ export class MoteurCalcul {
 
   // --- Échanges avec la bibliothèque --------------------------------------------
 
+  /** Feuille désignée par la bibliothèque (par son nom), ou undefined si elle n'existe pas. */
+  #feuille(nom) {
+    return this.#classeur.feuilleNommee(nom);
+  }
+
   /** Valeur d'une cellule demandée par la bibliothèque pendant un calcul. */
-  #lireCellule({ row, col }) {
-    if (row > LIGNES_MAX || col > COLONNES_MAX) return this.#bibliotheque.FormulaError.REF;
-    return this.#versBibliotheque(this.#valeurs.get(adresse(row, col)));
+  #lireCellule({ sheet, row, col }) {
+    const feuille = this.#feuille(sheet);
+    if (!feuille || row > LIGNES_MAX || col > COLONNES_MAX) return this.#bibliotheque.FormulaError.REF;
+    return this.#versBibliotheque(this.#valeurs.get(cle(feuille, adresse(row, col))));
   }
 
   /** Valeurs d'une plage demandées par la bibliothèque (tableau de lignes). */
-  #lirePlage({ from, to }) {
+  #lirePlage({ sheet, from, to }) {
     const { MAX_ROW, MAX_COLUMN, FormulaError } = this.#bibliotheque;
+    const feuille = this.#feuille(sheet);
+    if (!feuille) throw FormulaError.REF;
     // Colonne entière (A:A) ou ligne entière (1:1) : limitée à la taille de la feuille.
-    const derniereLigne = to.row === MAX_ROW ? this.#feuille.lignes : to.row;
-    const derniereColonne = to.col === MAX_COLUMN ? this.#feuille.colonnes : to.col;
+    const derniereLigne = to.row === MAX_ROW ? feuille.lignes : to.row;
+    const derniereColonne = to.col === MAX_COLUMN ? feuille.colonnes : to.col;
     if (derniereLigne > LIGNES_MAX || derniereColonne > COLONNES_MAX) throw FormulaError.REF;
     const lignes = [];
     for (let l = from.row; l <= derniereLigne; l++) {
       const ligne = [];
-      for (let c = from.col; c <= derniereColonne; c++) ligne.push(this.#versBibliotheque(this.#valeurs.get(adresse(l, c))));
+      for (let c = from.col; c <= derniereColonne; c++) ligne.push(this.#versBibliotheque(this.#valeurs.get(cle(feuille, adresse(l, c)))));
       lignes.push(ligne);
     }
     return lignes.length ? lignes : [[null]];

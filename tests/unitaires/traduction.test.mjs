@@ -2,7 +2,8 @@
 
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { decalerReferences, decouper, nomsInconnus, traduireFormule } from '../../js/calcul/traduction.js';
+import { decouper, nomsInconnus, traduireFormule } from '../../js/calcul/traduction.js';
+import { decalerReferences } from '../../js/donnees/formules.js';
 
 describe('Traduction vers la bibliothèque', () => {
   test('fonctions, séparateurs et nombres', () => {

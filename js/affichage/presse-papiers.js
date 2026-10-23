@@ -1,9 +1,10 @@
-// Copier, couper, coller (Ctrl+C, Ctrl+X, Ctrl+V), comme dans Excel.
+// Copier, couper, coller, comme dans Excel : au clavier (Ctrl+C, Ctrl+X,
+// Ctrl+V) ou avec les boutons de la barre d'outils (pratique au doigt).
 //
 // - Copier met dans le presse-papiers le TEXTE affiché des cellules
 //   (séparé par des tabulations), ce qui permet de coller dans un autre
 //   logiciel. L'application garde aussi pour elle le contenu exact des
-//   cellules (formules, gras, couleur).
+//   cellules (formules, mise en forme, bordures).
 // - Coller ce qu'on vient de copier ici recopie les formules en décalant
 //   leurs références : =A1*2 collée une ligne plus bas devient =A2*2.
 //   Une seule cellule copiée puis collée sur une plage remplit toute la
@@ -12,10 +13,14 @@
 //   les cellules : tabulation = colonne suivante, retour à la ligne = ligne suivante.
 // - Couper vide tout de suite les cellules ; on peut les coller ailleurs
 //   (les formules gardent alors leurs références, comme pour un déplacement).
+//
+// Avec les boutons, le navigateur peut demander l'autorisation de lire le
+// presse-papiers (pour coller un texte venu d'une autre application). Sans
+// cette autorisation, « Coller » colle ce qui a été copié dans Tableur.
 
 import { adresse, plage as creerPlage, taillePlage } from '../donnees/adresses.js';
 import { COLONNES_MAX, LIGNES_MAX } from '../donnees/classeur.js';
-import { decalerReferences } from '../calcul/traduction.js';
+import { decalerReferences } from '../donnees/formules.js';
 
 /** Texte tabulé → tableau de lignes (gère les champs entre guillemets d'Excel). */
 export function lireTexteTabule(texte) {
@@ -73,30 +78,90 @@ function ecrireTexteTabule(lignes) {
 }
 
 export class PressePapiers {
-  #interne = null; // { texte, origine, cellules, couper }
+  #interne = null; // { texte, feuille, origine, cellules, couper }
 
   /**
    * @param {object} options
    * @param {import('../donnees/classeur.js').Classeur} options.classeur
-   * @param {import('../donnees/classeur.js').Feuille} options.feuille
    * @param {import('./selection.js').Selection} options.selection
-   * @param {(adresse: string) => {texte: string}} options.presenterCellule
+   * @param {(adresse: string) => {texte: string}} options.presenterCellule  (feuille active)
    * @param {() => boolean} options.estActif  vrai si la grille a le focus et qu'aucune saisie n'est en cours
+   * @param {(texte: string) => void} options.signaler  affiche un court message
    */
-  constructor({ classeur, feuille, selection, presenterCellule, estActif }) {
+  constructor({ classeur, selection, presenterCellule, estActif, signaler }) {
     this.classeur = classeur;
-    this.feuille = feuille;
     this.selection = selection;
     this.presenterCellule = presenterCellule;
     this.estActif = estActif;
-    document.addEventListener('copy', (e) => this.#copier(e, false));
-    document.addEventListener('cut', (e) => this.#copier(e, true));
-    document.addEventListener('paste', (e) => this.#coller(e));
+    this.signaler = signaler;
+    document.addEventListener('copy', (e) => this.#evenementCopier(e, false));
+    document.addEventListener('cut', (e) => this.#evenementCopier(e, true));
+    document.addEventListener('paste', (e) => this.#evenementColler(e));
   }
 
-  #copier(evenement, couper) {
+  get feuille() {
+    return this.classeur.feuilleActive;
+  }
+
+  /** Vrai si quelque chose a été copié dans Tableur. */
+  get contientQuelqueChose() {
+    return this.#interne !== null;
+  }
+
+  // --- Clavier (événements du navigateur) -------------------------------------------
+
+  #evenementCopier(evenement, couper) {
     if (!this.estActif()) return;
     evenement.preventDefault();
+    evenement.clipboardData.setData('text/plain', this.#preparer(couper));
+  }
+
+  #evenementColler(evenement) {
+    if (!this.estActif()) return;
+    evenement.preventDefault();
+    this.#collerTexte(evenement.clipboardData.getData('text/plain'));
+  }
+
+  // --- Boutons -----------------------------------------------------------------------
+
+  /** Bouton « Copier » (ou « Couper »). */
+  async copier(couper = false) {
+    const texte = this.#preparer(couper);
+    try {
+      await navigator.clipboard.writeText(texte);
+    } catch {
+      // Le navigateur refuse : la copie reste utilisable dans Tableur.
+    }
+    const { lignes, colonnes } = taillePlage(this.selection.plage);
+    const nombre = lignes * colonnes;
+    this.signaler(
+      `${nombre > 1 ? `${nombre} cellules ${couper ? 'coupées' : 'copiées'}` : `Cellule ${couper ? 'coupée' : 'copiée'}`}. Choisissez où coller, puis « Coller ».`,
+    );
+  }
+
+  /** Bouton « Coller » : texte du presse-papiers si le navigateur le permet, sinon la dernière copie faite ici. */
+  async coller() {
+    let texte = null;
+    try {
+      texte = await navigator.clipboard.readText();
+    } catch {
+      texte = null;
+    }
+    if (texte === null || texte === '') {
+      if (!this.#interne) {
+        this.signaler('Rien à coller : copiez d’abord des cellules.');
+        return;
+      }
+      texte = this.#interne.texte;
+    }
+    this.#collerTexte(texte);
+  }
+
+  // --- Copier ----------------------------------------------------------------------
+
+  /** Mémorise la sélection (et la vide si on coupe). Renvoie le texte pour le presse-papiers. */
+  #preparer(couper) {
+    const feuille = this.feuille;
     const zone = this.selection.plage;
     const textes = [];
     const cellules = [];
@@ -106,35 +171,30 @@ export class PressePapiers {
       for (let c = zone.debut.colonne; c <= zone.fin.colonne; c++) {
         const adr = adresse(l, c);
         ligneTextes.push(this.presenterCellule(adr).texte);
-        ligneCellules.push(this.feuille.cellule(adr));
+        ligneCellules.push(feuille.cellule(adr));
       }
       textes.push(ligneTextes);
       cellules.push(ligneCellules);
     }
     const texte = ecrireTexteTabule(textes);
-    evenement.clipboardData.setData('text/plain', texte);
-    this.#interne = { texte, origine: zone.debut, cellules, couper };
+    this.#interne = { texte, feuille, origine: zone.debut, cellules, couper };
     if (couper) {
       const modifications = [];
       for (const ligne of cellules.keys()) {
         for (const colonne of cellules[ligne].keys()) {
           if (!cellules[ligne][colonne]) continue;
-          modifications.push({
-            adresse: adresse(zone.debut.ligne + ligne, zone.debut.colonne + colonne),
-            brut: '',
-            gras: false,
-            fond: null,
-          });
+          modifications.push({ adresse: adresse(zone.debut.ligne + ligne, zone.debut.colonne + colonne), brut: '', remplacer: true });
         }
       }
-      this.classeur.modifierCellules(this.feuille, modifications, zone);
+      this.classeur.modifierCellules(feuille, modifications, zone);
     }
+    return texte;
   }
 
-  #coller(evenement) {
-    if (!this.estActif()) return;
-    evenement.preventDefault();
-    const texte = evenement.clipboardData.getData('text/plain');
+  // --- Coller ----------------------------------------------------------------------
+
+  #collerTexte(texte) {
+    const feuille = this.feuille;
     const interne = this.#interne && this.#interne.texte === texte.replace(/\r?\n$/, '') ? this.#interne : null;
     const source = interne ? interne.cellules : lireTexteTabule(texte).map((ligne) => ligne.map((brut) => ({ brut })));
     if (source.length === 0) return;
@@ -149,10 +209,10 @@ export class PressePapiers {
     // Agrandit la grille si besoin (dans la limite du maximum).
     const finLigne = Math.min(LIGNES_MAX, debut.ligne + taille.lignes - 1);
     const finColonne = Math.min(COLONNES_MAX, debut.colonne + taille.colonnes - 1);
-    if (finLigne > this.feuille.lignes || finColonne > this.feuille.colonnes) {
-      this.classeur.agrandir(this.feuille, {
-        lignes: Math.max(0, finLigne - this.feuille.lignes),
-        colonnes: Math.max(0, finColonne - this.feuille.colonnes),
+    if (finLigne > feuille.lignes || finColonne > feuille.colonnes) {
+      this.classeur.agrandir(feuille, {
+        lignes: Math.max(0, finLigne - feuille.lignes),
+        colonnes: Math.max(0, finColonne - feuille.colonnes),
       });
     }
 
@@ -171,15 +231,15 @@ export class PressePapiers {
         const colonneOrigine = interne.origine.colonne + j;
         const brut = cellule?.brut ?? '';
         modifications.push({
+          ...(cellule ?? {}),
           adresse: adresse(l, c),
           brut: interne.couper ? brut : decalerReferences(brut, l - ligneOrigine, c - colonneOrigine),
-          gras: cellule?.gras ?? false,
-          fond: cellule?.fond ?? null,
+          remplacer: true,
         });
       }
     }
     const collee = creerPlage(debut, { ligne: finLigne, colonne: finColonne });
-    this.classeur.modifierCellules(this.feuille, modifications, collee);
+    this.classeur.modifierCellules(feuille, modifications, collee);
     this.selection.choisirPlage(collee);
   }
 }

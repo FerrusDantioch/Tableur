@@ -287,6 +287,42 @@
   display: none;
 }
 
+/* Poignée de recopie (à la souris) : petit carré dans le coin de la
+   sélection, à tirer vers le bas, le haut, la droite ou la gauche. */
+.poignee-recopie {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  margin: -6px 0 0 -6px;
+  background: var(--selection-trait);
+  border: 2px solid var(--cellule);
+  box-sizing: content-box;
+  z-index: 1;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.mode-toucher .poignee-recopie,
+.en-edition .poignee-recopie {
+  display: none;
+}
+
+/* Zone qui sera remplie pendant qu'on tire la poignée de recopie. */
+.cadre-recopie {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  border: 2px dashed var(--selection-trait);
+  z-index: 1;
+}
+
+.cadre-recopie[hidden] {
+  display: none;
+}
+
 /* --- Champ de saisie sur la cellule ------------------------------------------- */
 
 .editeur-cellule {

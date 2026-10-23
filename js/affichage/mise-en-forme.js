@@ -26,16 +26,14 @@ export class MiseEnForme {
   /**
    * @param {object} options
    * @param {import('../donnees/classeur.js').Classeur} options.classeur
-   * @param {import('../donnees/classeur.js').Feuille} options.feuille
    * @param {import('./selection.js').Selection} options.selection
    * @param {import('./grille.js').Grille} options.grille
    * @param {() => void} options.avantAction  termine la saisie en cours
    * @param {() => void} options.apresAction  rend le focus à la grille
    * @param {() => void} options.redessinerSelection
    */
-  constructor({ classeur, feuille, selection, grille, avantAction, apresAction, redessinerSelection }) {
+  constructor({ classeur, selection, grille, avantAction, apresAction, redessinerSelection }) {
     this.classeur = classeur;
-    this.feuille = feuille;
     this.selection = selection;
     this.grille = grille;
     this.avantAction = avantAction;
@@ -81,21 +79,17 @@ export class MiseEnForme {
       this.panneauLargeur.hidePopover();
     });
 
-    // Les panneaux s'ouvrent juste sous leur bouton.
+    // À l'ouverture d'un panneau, ses boutons montrent l'état de la cellule active.
     for (const panneau of [this.panneauFond, this.panneauLargeur]) {
       panneau.addEventListener('beforetoggle', (e) => {
-        if (e.newState !== 'open') return;
-        this.avantAction();
-        this.actualiser();
-        const bouton = document.querySelector(`[popovertarget="${panneau.id}"]`);
-        const r = bouton.getBoundingClientRect();
-        panneau.style.top = `${r.bottom + 6}px`;
-        panneau.style.left = `${Math.max(8, Math.min(r.left, window.innerWidth - 300))}px`;
-      });
-      panneau.addEventListener('toggle', (e) => {
-        if (e.newState === 'closed') this.apresAction();
+        if (e.newState === 'open') this.actualiser();
       });
     }
+  }
+
+  /** La feuille affichée (onglet sélectionné). */
+  get feuille() {
+    return this.classeur.feuilleActive;
   }
 
   /** Met à jour l'état des boutons d'après la cellule active. */

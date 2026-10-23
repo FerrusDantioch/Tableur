@@ -7,7 +7,7 @@
 // Ce fichier est le seul à les connaître toutes les trois.
 
 import { Classeur } from './donnees/classeur.js';
-import { adresse } from './donnees/adresses.js';
+import { adresse, textePlage } from './donnees/adresses.js';
 import { interpreterSaisie } from './donnees/saisie.js';
 import { MoteurCalcul } from './calcul/moteur.js';
 import { formaterNombre, presenter } from './affichage/format.js';
@@ -16,6 +16,8 @@ import { Selection } from './affichage/selection.js';
 import { Edition } from './affichage/edition.js';
 import { Interactions } from './affichage/interactions.js';
 import { MiseEnForme } from './affichage/mise-en-forme.js';
+import { CommandesEdition } from './affichage/commandes-edition.js';
+import { installerBarreOutils } from './affichage/barre-outils.js';
 import { demander, preparerFenetres } from './affichage/fenetres.js';
 import { installerMenu } from './affichage/menu.js';
 import { PressePapiers } from './affichage/presse-papiers.js';
@@ -32,7 +34,6 @@ const element = (id) => document.getElementById(id);
 
 // --- (a) Les données ---------------------------------------------------------
 const classeur = new Classeur();
-const feuille = classeur.feuilles[0];
 
 // On reprend le classeur enregistré sur l'appareil (s'il y en a un).
 let avertissementDemarrage = '';
@@ -48,20 +49,24 @@ if (enregistre) {
 }
 
 // --- (b) Le calcul -------------------------------------------------------------
-const moteur = new MoteurCalcul(classeur, feuille);
+const moteur = new MoteurCalcul(classeur);
 
 // --- (c) L'affichage ---------------------------------------------------------
 
-/** Ce qu'affiche une cellule : valeur calculée mise en forme, gras, couleur de fond. */
+/** La feuille affichée (onglet sélectionné). */
+const feuilleActive = () => classeur.feuilleActive;
+
+/** Ce qu'affiche une cellule de la feuille active : valeur calculée mise en forme, gras, couleur de fond. */
 function presenterCellule(adr) {
+  const feuille = feuilleActive();
   const cellule = feuille.cellule(adr);
   const saisie = interpreterSaisie(cellule?.brut);
-  return { ...presenter(moteur.valeur(adr), saisie.style), gras: cellule?.gras, fond: cellule?.fond };
+  return { ...presenter(moteur.valeur(feuille, adr), saisie.style), gras: cellule?.gras, fond: cellule?.fond };
 }
 
 const zone = element('zone-grille');
-const grille = new Grille({ racine: zone, feuille, presenterCellule });
-const selection = new Selection(() => ({ lignes: feuille.lignes, colonnes: feuille.colonnes }));
+const grille = new Grille({ racine: zone, feuille: feuilleActive(), presenterCellule });
+const selection = new Selection(() => ({ lignes: feuilleActive().lignes, colonnes: feuilleActive().colonnes }));
 const edition = new Edition({
   champCellule: element('editeur-cellule'),
   champBarre: element('champ-formule'),
@@ -74,19 +79,32 @@ const boutonRetablir = element('bouton-retablir');
 const message = element('message');
 const statistiques = element('statistiques');
 
+// Message d'une action (« Colonne supprimée », « 2 cellules copiées »…) : il
+// reste affiché tant que la sélection ne change pas.
+let annonce = null; // { texte, erreur, cle }
+const cleSelection = () => `${feuilleActive().id}|${textePlage(selection.plage)}|${selection.active.ligne},${selection.active.colonne}`;
+
 /**
- * Barre d'état : explication de l'erreur de la cellule active, et résumé
- * (somme, moyenne, nombre) quand plusieurs cellules sont sélectionnées.
+ * Barre d'état : message de la dernière action, ou explication de l'erreur
+ * de la cellule active ; et résumé (somme, moyenne, nombre) quand plusieurs
+ * cellules sont sélectionnées.
  */
 function mettreAJourBarreEtat() {
+  const feuille = feuilleActive();
   const { ligne, colonne } = selection.active;
-  const vue = presenter(moteur.valeur(adresse(ligne, colonne)));
-  message.textContent = vue.explication ? `${vue.texte} — ${vue.explication}` : '';
-  message.classList.toggle('erreur', Boolean(vue.explication));
+  if (annonce && annonce.cle === cleSelection()) {
+    message.textContent = annonce.texte;
+    message.classList.toggle('erreur', annonce.erreur);
+  } else {
+    annonce = null;
+    const vue = presenter(moteur.valeur(feuille, adresse(ligne, colonne)));
+    message.textContent = vue.explication ? `${vue.texte} — ${vue.explication}` : '';
+    message.classList.toggle('erreur', Boolean(vue.explication));
+  }
 
   let resume = '';
   if (!selection.unique) {
-    const { nombres, somme, moyenne } = moteur.resumer(selection.plage);
+    const { nombres, somme, moyenne } = moteur.resumer(feuille, selection.plage);
     if (nombres > 0) {
       resume = `Somme : ${formaterNombre(somme)} · Moyenne : ${formaterNombre(moyenne)} · Nombres : ${nombres}`;
     }
@@ -94,32 +112,50 @@ function mettreAJourBarreEtat() {
   statistiques.textContent = resume;
 }
 
-// Créée plus bas (elle a besoin des interactions), mais utilisée dès maintenant.
+/** Court message dans la barre d'état (disparaît au prochain changement de sélection). */
+function signaler(texte, erreur = false) {
+  annonce = { texte, erreur, cle: cleSelection() };
+  message.textContent = texte;
+  message.classList.toggle('erreur', erreur);
+}
+
+// Créés plus bas (ils ont besoin des interactions), mais utilisés dès maintenant.
 let miseEnForme = null;
+let commandesEdition = null;
 
 /** Actions partagées entre la barre d'outils et les raccourcis clavier. */
 const commandes = {
   annuler() {
     interactions.validerEdition(null, { refocaliser: false });
-    const action = classeur.annuler();
-    if (action?.selection) selection.choisirPlage(action.selection);
+    montrerAction(classeur.annuler());
     interactions.focaliser();
   },
   retablir() {
     interactions.validerEdition(null, { refocaliser: false });
-    const action = classeur.retablir();
-    if (action?.selection) selection.choisirPlage(action.selection);
+    montrerAction(classeur.retablir());
     interactions.focaliser();
   },
   selectionChangee() {
     mettreAJourBarreEtat();
     miseEnForme?.actualiser();
   },
+  effacer: () => commandesEdition.effacer(),
+  recopier: (direction) => commandesEdition.recopier(direction),
+  recopierPoignee: (source, direction, nombre) => commandesEdition.recopierPoignee(source, direction, nombre),
 };
+
+/** Après Annuler / Rétablir : affiche la feuille concernée et sélectionne ce qui a changé. */
+function montrerAction(action) {
+  if (!action) return;
+  if (action.feuille && classeur.feuilles.includes(action.feuille)) classeur.activer(action.feuille);
+  if (action.selection) {
+    selection.choisirPlage(action.selection);
+    grille.rendreVisible(action.selection.debut.ligne, action.selection.debut.colonne);
+  }
+}
 
 const interactions = new Interactions({
   classeur,
-  feuille,
   selection,
   grille,
   edition,
@@ -129,13 +165,15 @@ const interactions = new Interactions({
   commandes,
 });
 
+const avantAction = () => interactions.validerEdition(null, { refocaliser: false });
+const apresAction = () => interactions.focaliser();
+
 miseEnForme = new MiseEnForme({
   classeur,
-  feuille,
   selection,
   grille,
-  avantAction: () => interactions.validerEdition(null, { refocaliser: false }),
-  apresAction: () => interactions.focaliser(),
+  avantAction,
+  apresAction,
   redessinerSelection: () => grille.afficherSelection(selection),
 });
 commandes.gras = () => miseEnForme.gras();
@@ -143,24 +181,31 @@ commandes.redimensionner = (evenement, colonne) => miseEnForme.redimensionner(ev
 commandes.ajusterLargeur = (colonnes) => miseEnForme.ajusterLargeur(colonnes);
 miseEnForme.actualiser();
 
-// Les boutons de la barre d'outils ne prennent pas le focus : la saisie en
-// cours reste ouverte et le clavier continue de piloter la grille.
-for (const bouton of document.querySelectorAll('.barre-outils button, .panneau button')) {
-  bouton.addEventListener('pointerdown', (e) => {
-    if (e.pointerType === 'mouse') e.preventDefault();
-  });
-}
+commandesEdition = new CommandesEdition({ classeur, selection, avantAction, apresAction, signaler });
+
+installerBarreOutils({ preferences, avantAction, apresAction, surChangement: () => interactions.actualiser() });
 boutonAnnuler.addEventListener('click', () => commandes.annuler());
 boutonRetablir.addEventListener('click', () => commandes.retablir());
 
-// Copier, couper, coller (Ctrl+C, Ctrl+X, Ctrl+V) quand la grille a le focus.
-new PressePapiers({
+// Copier, couper, coller : Ctrl+C, Ctrl+X, Ctrl+V quand la grille a le focus, ou boutons.
+const pressePapiers = new PressePapiers({
   classeur,
-  feuille,
   selection,
   presenterCellule,
   estActif: () => !edition.enCours && [edition.champCellule, zone].includes(document.activeElement),
+  signaler,
 });
+for (const [id, action] of [
+  ['bouton-copier', () => pressePapiers.copier(false)],
+  ['bouton-couper', () => pressePapiers.copier(true)],
+  ['bouton-coller', () => pressePapiers.coller()],
+]) {
+  element(id).addEventListener('click', async () => {
+    avantAction();
+    await action();
+    apresAction();
+  });
+}
 
 // --- Titre du classeur -------------------------------------------------------
 const champTitre = element('titre');
@@ -207,21 +252,34 @@ function redessiner(adresses) {
 
 // Le moteur annonce les cellules dont la valeur a changé (y compris celles
 // recalculées en cascade) ; le classeur annonce les changements de mise en forme.
-moteur.abonner((evenement) => redessiner(evenement.adresses));
+moteur.abonner((evenement) => {
+  if (evenement.feuille === feuilleActive()) redessiner(evenement.adresses);
+});
+
+/** Redessine toute la grille (autre feuille, lignes insérées…). */
+function reconstruireGrille() {
+  grille.changerFeuille(feuilleActive());
+  selection.reborner();
+}
 
 classeur.abonner((evenement) => {
   switch (evenement.type) {
     case 'cellules':
-      redessiner(evenement.adresses);
+      if (evenement.feuille === feuilleActive()) redessiner(evenement.adresses);
       break;
     case 'largeurs':
+      if (evenement.feuille !== feuilleActive()) break;
       grille.rafraichirLargeurs(evenement.colonnes);
       interactions.actualiser();
       break;
     case 'dimensions':
-    case 'feuille':
-      grille.construire();
-      selection.reborner();
+      if (evenement.feuille === feuilleActive()) reconstruireGrille();
+      break;
+    case 'structure':
+      if (evenement.feuilles.includes(feuilleActive())) reconstruireGrille();
+      break;
+    case 'active':
+      reconstruireGrille();
       break;
     case 'titre':
       if (document.activeElement !== champTitre) champTitre.value = classeur.titre;
@@ -262,31 +320,16 @@ const sauvegarde = new SauvegardeAuto({
   },
 });
 if (enregistre && !avertissementDemarrage) etatSauvegarde.textContent = TEXTES_SAUVEGARDE.enregistre;
-if (avertissementDemarrage) {
-  message.textContent = avertissementDemarrage;
-  message.classList.add('erreur');
-}
+if (avertissementDemarrage) signaler(avertissementDemarrage, true);
 
 // --- Menu, fenêtres et application installable ------------------------------
 preparerFenetres(() => interactions.focaliser());
-installerMenu({
-  classeur,
-  feuille,
-  preferences,
-  avantAction: () => interactions.validerEdition(null, { refocaliser: false }),
-});
+installerMenu({ classeur, preferences, avantAction });
 
 // --- Exports PDF et CSV --------------------------------------------------------
 
-/** Court message dans la barre d'état (disparaît au prochain changement de sélection). */
-function signaler(texte) {
-  message.textContent = texte;
-  message.classList.remove('erreur');
-}
-
 const exportPdf = new ExportPdf({
   classeur,
-  feuille,
   presenterCellule,
   preferences,
   fenetreAide: element('fenetre-aide-pdf'),
@@ -295,24 +338,20 @@ const exportPdf = new ExportPdf({
 });
 
 function exporterCsv() {
+  const feuille = feuilleActive();
   const contenu = genererCSV(feuille, moteur);
   if (!contenu) {
-    signaler('Le classeur est vide : il n’y a rien à exporter.');
+    signaler('La feuille est vide : il n’y a rien à exporter.');
     return;
   }
-  const nom = `${nomDeFichier(classeur.titre)}.csv`;
+  // Avec plusieurs feuilles, le nom de la feuille est ajouté au nom du fichier.
+  const suffixe = classeur.feuilles.length > 1 ? ` - ${feuille.nom}` : '';
+  const nom = `${nomDeFichier(classeur.titre + suffixe)}.csv`;
   telecharger(nom, contenu, 'text/csv;charset=utf-8');
   signaler(`Fichier « ${nom} » enregistré dans les téléchargements.`);
 }
 
 const panneauExporter = element('panneau-exporter');
-panneauExporter.addEventListener('beforetoggle', (e) => {
-  if (e.newState !== 'open') return;
-  interactions.validerEdition(null, { refocaliser: false });
-  const r = element('bouton-exporter').getBoundingClientRect();
-  panneauExporter.style.top = `${r.bottom + 6}px`;
-  panneauExporter.style.left = `${Math.max(8, Math.min(r.left, window.innerWidth - 300))}px`;
-});
 element('exporter-pdf').addEventListener('click', () => {
   panneauExporter.hidePopover();
   exportPdf.exporter();
@@ -331,6 +370,14 @@ commandes.exporterPdf = () => {
 
 // Taille de fenêtre modifiée (ou téléphone tourné) : le cadre de sélection est recalé.
 window.addEventListener('resize', () => interactions.actualiser());
+
+// Retour sur l'application un autre jour : AUJOURDHUI() est recalculée.
+let jourOuverture = new Date().toDateString();
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible' || new Date().toDateString() === jourOuverture) return;
+  jourOuverture = new Date().toDateString();
+  moteur.recalculerVolatiles();
+});
 
 // Avertissement si l'application est ouverte deux fois.
 const bandeauOnglets = element('bandeau-onglets');
@@ -354,4 +401,17 @@ demarrerServiceWorker({
 interactions.focaliser();
 
 // Accès pour les tests automatiques et le débogage dans la console.
-window.tableur = { classeur, feuille, moteur, selection, grille, interactions, sauvegarde, exportPdf, adresse };
+window.tableur = {
+  classeur,
+  get feuille() {
+    return classeur.feuilleActive;
+  },
+  moteur,
+  selection,
+  grille,
+  interactions,
+  sauvegarde,
+  exportPdf,
+  pressePapiers,
+  adresse,
+};

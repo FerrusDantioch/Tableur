@@ -43,6 +43,14 @@
       <symbol id="i-exporter" viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
       <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" /></symbol>
       <symbol id="i-largeur" viewBox="0 0 24 24"><path d="M4 5v14M20 5v14M7.5 12h9M10 9.5 7.5 12l2.5 2.5M14 9.5l2.5 2.5-2.5 2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
+      <symbol id="i-couper" viewBox="0 0 24 24"><circle cx="7" cy="17.5" r="2.8" fill="none" stroke="currentColor" stroke-width="2" /><circle cx="17" cy="17.5" r="2.8" fill="none" stroke="currentColor" stroke-width="2" /><path d="M9 15.5 16.5 3.5M15 15.5 7.5 3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></symbol>
+      <symbol id="i-copier" viewBox="0 0 24 24"><rect x="8.5" y="8" width="11" height="12.5" rx="2" fill="none" stroke="currentColor" stroke-width="2" /><path d="M5 15.5V6a2 2 0 0 1 2-2h8.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></symbol>
+      <symbol id="i-coller" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2" /><rect x="9" y="3" width="6" height="4" rx="1" fill="none" stroke="currentColor" stroke-width="2" /><path d="M9 12h6M9 16h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></symbol>
+      <symbol id="i-recopier-bas" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="2" /><path d="M12 11.5V21M8.5 17.5 12 21l3.5-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
+      <symbol id="i-recopier-droite" viewBox="0 0 24 24"><rect x="3" y="5" width="6" height="14" rx="1.5" fill="none" stroke="currentColor" stroke-width="2" /><path d="M11.5 12H21M17.5 8.5 21 12l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
+      <symbol id="i-inserer" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2.5" fill="none" stroke="currentColor" stroke-width="2" /><path d="M12 8v8M8 12h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></symbol>
+      <symbol id="i-supprimer" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2.5" fill="none" stroke="currentColor" stroke-width="2" /><path d="M8 12h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></symbol>
+      <symbol id="i-effacer" viewBox="0 0 24 24"><path d="M14.5 4.5 20 10l-8.5 8.5H7l-3-3a1.5 1.5 0 0 1 0-2.1z M9 10l5.5 5.5 M12 20.5h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
     </svg>
 
     <header class="entete">
@@ -52,34 +60,92 @@
         <input id="titre" type="text" value="Sans titre" maxlength="120" autocomplete="off" spellcheck="false" />
       </label>
       <div class="entete-actions">
+        <button id="bouton-annuler" class="outil" type="button" title="Annuler (Ctrl+Z)" disabled>
+          <svg aria-hidden="true"><use href="#i-annuler" /></svg><span class="libelle">Annuler</span>
+        </button>
+        <button id="bouton-retablir" class="outil" type="button" title="Rétablir (Ctrl+Y)" disabled>
+          <svg aria-hidden="true"><use href="#i-retablir" /></svg><span class="libelle">Rétablir</span>
+        </button>
         <button id="bouton-menu" class="outil" type="button" aria-haspopup="dialog" title="Menu : thème, aide, à propos…">
           <svg aria-hidden="true"><use href="#i-menu" /></svg><span class="libelle">Menu</span>
         </button>
       </div>
     </header>
 
-    <div class="barre-outils" role="toolbar" aria-label="Outils">
-      <button id="bouton-annuler" class="outil" type="button" title="Annuler (Ctrl+Z)" disabled>
-        <svg aria-hidden="true"><use href="#i-annuler" /></svg><span class="libelle">Annuler</span>
-      </button>
-      <button id="bouton-retablir" class="outil" type="button" title="Rétablir (Ctrl+Y)" disabled>
-        <svg aria-hidden="true"><use href="#i-retablir" /></svg><span class="libelle">Rétablir</span>
-      </button>
-      <span class="separateur" aria-hidden="true"></span>
-      <button id="bouton-gras" class="outil" type="button" title="Gras (Ctrl+B)" aria-pressed="false">
-        <svg aria-hidden="true"><use href="#i-gras" /></svg><span class="libelle">Gras</span>
-      </button>
-      <button id="bouton-fond" class="outil" type="button" title="Couleur de fond" popovertarget="panneau-fond">
-        <span class="icone-fond" aria-hidden="true"><svg><use href="#i-fond" /></svg><span id="temoin-fond" class="temoin-fond"></span></span>
-        <span class="libelle">Fond</span>
-      </button>
-      <button id="bouton-largeur" class="outil" type="button" title="Largeur des colonnes" popovertarget="panneau-largeur">
-        <svg aria-hidden="true"><use href="#i-largeur" /></svg><span class="libelle">Largeur</span>
-      </button>
-      <span class="separateur" aria-hidden="true"></span>
-      <button id="bouton-exporter" class="outil" type="button" title="Exporter en PDF ou en CSV" popovertarget="panneau-exporter">
-        <svg aria-hidden="true"><use href="#i-exporter" /></svg><span class="libelle">Exporter</span>
-      </button>
+    <!-- Barre d'outils en onglets : un onglet par thème. Toucher l'onglet
+         déjà ouvert replie la barre (plus de place pour la grille). -->
+    <div class="outils">
+      <div class="onglets-outils" role="tablist" aria-label="Groupes d'outils">
+        <button id="onglet-edition" class="onglet-outils" type="button" role="tab" aria-selected="true" aria-controls="groupe-edition" data-groupe="edition">Édition</button>
+        <button id="onglet-mise-en-forme" class="onglet-outils" type="button" role="tab" aria-selected="false" aria-controls="groupe-mise-en-forme" data-groupe="mise-en-forme">Mise en forme</button>
+        <button id="onglet-donnees" class="onglet-outils" type="button" role="tab" aria-selected="false" aria-controls="groupe-donnees" data-groupe="donnees">Données</button>
+      </div>
+
+      <div id="groupe-edition" class="barre-outils" role="tabpanel" aria-labelledby="onglet-edition">
+        <button id="bouton-couper" class="outil" type="button" title="Couper (Ctrl+X)">
+          <svg aria-hidden="true"><use href="#i-couper" /></svg><span class="libelle">Couper</span>
+        </button>
+        <button id="bouton-copier" class="outil" type="button" title="Copier (Ctrl+C)">
+          <svg aria-hidden="true"><use href="#i-copier" /></svg><span class="libelle">Copier</span>
+        </button>
+        <button id="bouton-coller" class="outil" type="button" title="Coller (Ctrl+V)">
+          <svg aria-hidden="true"><use href="#i-coller" /></svg><span class="libelle">Coller</span>
+        </button>
+        <span class="separateur" aria-hidden="true"></span>
+        <button id="bouton-recopier-bas" class="outil" type="button" title="Recopier vers le bas (Ctrl+D) : les premières lignes remplies de la sélection sont recopiées dans les lignes vides en dessous, les formules s'adaptent">
+          <svg aria-hidden="true"><use href="#i-recopier-bas" /></svg><span class="libelle">Recopier en bas</span>
+        </button>
+        <button id="bouton-recopier-droite" class="outil" type="button" title="Recopier vers la droite (Ctrl+R) : les premières colonnes remplies de la sélection sont recopiées dans les colonnes vides à droite">
+          <svg aria-hidden="true"><use href="#i-recopier-droite" /></svg><span class="libelle">Recopier à droite</span>
+        </button>
+        <span class="separateur" aria-hidden="true"></span>
+        <button id="bouton-inserer" class="outil" type="button" title="Insérer des lignes ou des colonnes" popovertarget="panneau-inserer">
+          <svg aria-hidden="true"><use href="#i-inserer" /></svg><span class="libelle">Insérer</span>
+        </button>
+        <button id="bouton-supprimer" class="outil" type="button" title="Supprimer des lignes ou des colonnes" popovertarget="panneau-supprimer">
+          <svg aria-hidden="true"><use href="#i-supprimer" /></svg><span class="libelle">Supprimer</span>
+        </button>
+        <button id="bouton-effacer" class="outil" type="button" title="Effacer le contenu des cellules sélectionnées (Suppr)">
+          <svg aria-hidden="true"><use href="#i-effacer" /></svg><span class="libelle">Effacer</span>
+        </button>
+      </div>
+
+      <div id="groupe-mise-en-forme" class="barre-outils" role="tabpanel" aria-labelledby="onglet-mise-en-forme" hidden>
+        <button id="bouton-gras" class="outil" type="button" title="Gras (Ctrl+B)" aria-pressed="false">
+          <svg aria-hidden="true"><use href="#i-gras" /></svg><span class="libelle">Gras</span>
+        </button>
+        <button id="bouton-fond" class="outil" type="button" title="Couleur de fond" popovertarget="panneau-fond">
+          <span class="icone-fond" aria-hidden="true"><svg><use href="#i-fond" /></svg><span id="temoin-fond" class="temoin-fond"></span></span>
+          <span class="libelle">Fond</span>
+        </button>
+        <span class="separateur" aria-hidden="true"></span>
+        <button id="bouton-largeur" class="outil" type="button" title="Largeur des colonnes" popovertarget="panneau-largeur">
+          <svg aria-hidden="true"><use href="#i-largeur" /></svg><span class="libelle">Largeur</span>
+        </button>
+      </div>
+
+      <div id="groupe-donnees" class="barre-outils" role="tabpanel" aria-labelledby="onglet-donnees" hidden>
+        <button id="bouton-exporter" class="outil" type="button" title="Exporter en PDF ou en CSV" popovertarget="panneau-exporter">
+          <svg aria-hidden="true"><use href="#i-exporter" /></svg><span class="libelle">Exporter</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Panneaux « Insérer » et « Supprimer » : les textes des boutons
+         s'adaptent à la sélection (ex. « 3 lignes au-dessus »). -->
+    <div id="panneau-inserer" class="panneau" popover>
+      <p class="panneau-titre">Insérer</p>
+      <button id="inserer-lignes-dessus" class="outil large" type="button">Ligne au-dessus</button>
+      <button id="inserer-lignes-dessous" class="outil large" type="button">Ligne en dessous</button>
+      <button id="inserer-colonnes-gauche" class="outil large" type="button">Colonne à gauche</button>
+      <button id="inserer-colonnes-droite" class="outil large" type="button">Colonne à droite</button>
+      <p class="panneau-aide">On insère autant de lignes (ou de colonnes) qu'il y en a de sélectionnées. Les formules s'adaptent.</p>
+    </div>
+    <div id="panneau-supprimer" class="panneau" popover>
+      <p class="panneau-titre">Supprimer</p>
+      <button id="supprimer-lignes" class="outil large" type="button">Supprimer la ligne</button>
+      <button id="supprimer-colonnes" class="outil large" type="button">Supprimer la colonne</button>
+      <p class="panneau-aide">Les cellules en dessous (ou à droite) se décalent. Une formule qui utilisait une cellule supprimée affiche #REF!. « Annuler » permet de revenir en arrière.</p>
     </div>
 
     <!-- Panneaux qui s'ouvrent sous les boutons « Fond » et « Largeur ». -->
@@ -259,6 +325,16 @@
           </ul>
         </section>
         <section>
+          <h3>Modifier le tableau (onglet « Édition »)</h3>
+          <ul>
+            <li><strong>Copier, Couper, Coller</strong> : boutons, ou <strong>Ctrl + C / X / V</strong>. Une formule collée plus loin s'adapte (=A1*2 devient =A2*2 une ligne plus bas). Copier une cellule puis coller sur une plage la recopie partout.</li>
+            <li><strong>Recopier</strong> : à la souris, tirez le petit carré en bas à droite de la sélection. Les formules s'adaptent et les suites continuent : 1, 2 → 3, 4… ; lundi → mardi… ; janvier → février… ; « Semaine 1 » → « Semaine 2 » ; une date → le jour suivant.</li>
+            <li>Au doigt (ou au clavier) : sélectionnez la cellule de départ et les cellules à remplir, puis <strong>Recopier en bas</strong> (<strong>Ctrl + D</strong>) ou <strong>Recopier à droite</strong> (<strong>Ctrl + R</strong>).</li>
+            <li><strong>Insérer</strong> des lignes ou des colonnes, ou les <strong>Supprimer</strong> : autant qu'il y en a de sélectionnées. Les formules suivent les cellules ; si une cellule utilisée par une formule est supprimée, la formule affiche <code>#REF!</code>.</li>
+            <li><strong>Effacer</strong> (ou la touche <strong>Suppr</strong>) vide les cellules sélectionnées, en gardant leur mise en forme.</li>
+          </ul>
+        </section>
+        <section>
           <h3>Formules</h3>
           <p>Une formule commence par <code>=</code>. On sépare les arguments par un point-virgule <code>;</code>, comme dans Excel en français. Opérations : <code>+ - * /</code>, puissance <code>^</code>, pourcentage <code>%</code>, texte assemblé <code>&amp;</code>, comparaisons <code>= &lt;&gt; &lt; &gt; &lt;= &gt;=</code>.</p>
           <table class="tableau-aide">
@@ -297,7 +373,7 @@
           <h3>Raccourcis</h3>
           <ul>
             <li><strong>Ctrl + Z</strong> annuler, <strong>Ctrl + Y</strong> rétablir, <strong>Ctrl + B</strong> gras, <strong>Suppr</strong> vider les cellules, <strong>Ctrl + A</strong> tout sélectionner, <strong>Ctrl + P</strong> exporter en PDF.</li>
-            <li><strong>Ctrl + C</strong> copier, <strong>Ctrl + X</strong> couper, <strong>Ctrl + V</strong> coller. Une formule collée plus loin s'adapte (=A1*2 devient =A2*2 une ligne plus bas). Copier une cellule puis coller sur une plage la recopie partout.</li>
+            <li><strong>Ctrl + C</strong> copier, <strong>Ctrl + X</strong> couper, <strong>Ctrl + V</strong> coller, <strong>Ctrl + D</strong> recopier vers le bas, <strong>Ctrl + R</strong> recopier vers la droite.</li>
           </ul>
         </section>
       </div>

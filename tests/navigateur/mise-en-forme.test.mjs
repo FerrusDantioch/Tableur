@@ -2,7 +2,7 @@
 
 import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { demarrerServeur, lancerNavigateur, ouvrirApplication } from './outils.mjs';
+import { demarrerServeur, lancerNavigateur, ouvrirApplication, cliquerOutil } from './outils.mjs';
 
 const td = (ligne, colonne) => `td[data-ligne="${ligne}"][data-colonne="${colonne}"]`;
 const largeurColonne = (page, colonne) =>
@@ -29,7 +29,7 @@ test('gras : bouton et Ctrl+B, sur une plage, annulable', async () => {
   await page.keyboard.press('Enter');
   await page.keyboard.press('Control+Home');
   await page.keyboard.press('Shift+ArrowRight');
-  await page.click('#bouton-gras');
+  await cliquerOutil(page, '#bouton-gras');
   assert.match(await page.getAttribute(td(1, 1), 'class'), /gras/);
   assert.match(await page.getAttribute(td(1, 2), 'class'), /gras/);
   assert.equal(await page.getAttribute('#bouton-gras', 'aria-pressed'), 'true');
@@ -51,7 +51,7 @@ test('gras : bouton et Ctrl+B, sur une plage, annulable', async () => {
 test('couleur de fond : nuancier, aucune couleur, annulation', async () => {
   const { contexte, page } = await ouvrirApplication(navigateur, serveur.url);
   await page.keyboard.press('Shift+ArrowDown');
-  await page.click('#bouton-fond');
+  await cliquerOutil(page, '#bouton-fond');
   assert.ok(await page.isVisible('#panneau-fond'));
   await page.click('#panneau-fond .pastille[data-fond="vert"]');
   assert.equal(await page.isVisible('#panneau-fond'), false);
@@ -70,7 +70,7 @@ test('couleur de fond : nuancier, aucune couleur, annulation', async () => {
   });
   assert.equal(couleur, attendue);
   // « Aucune » retire la couleur.
-  await page.click('#bouton-fond');
+  await cliquerOutil(page, '#bouton-fond');
   await page.click('#panneau-fond .pastille.aucune');
   assert.equal(await page.getAttribute(td(1, 1), 'data-fond'), null);
   await page.click('#bouton-annuler');
@@ -114,7 +114,7 @@ test('largeur des colonnes : glisser, double-clic, panneau', async () => {
   // Panneau « Largeur » : + et − sur deux colonnes sélectionnées.
   await page.click(td(1, 3));
   await page.click(td(1, 4), { modifiers: ['Shift'] });
-  await page.click('#bouton-largeur');
+  await cliquerOutil(page, '#bouton-largeur');
   assert.match(await page.textContent('#largeur-colonnes'), /C à D/);
   await page.click('#largeur-plus');
   await page.click('#largeur-plus');
@@ -133,7 +133,7 @@ test('largeur au doigt (téléphone)', async () => {
   const telephone = { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true };
   const { contexte, page } = await ouvrirApplication(navigateur, serveur.url, telephone);
   await page.tap(td(1, 2));
-  await page.tap('#bouton-largeur');
+  await cliquerOutil(page, '#bouton-largeur', { doigt: true });
   await page.tap('#largeur-plus');
   assert.equal(await largeurColonne(page, 2), 120);
   // Un appui en dehors du panneau le ferme.

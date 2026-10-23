@@ -9,11 +9,10 @@ import { demander, ouvrirFenetre } from './fenetres.js';
 /**
  * @param {object} options
  * @param {import('../donnees/classeur.js').Classeur} options.classeur
- * @param {import('../donnees/classeur.js').Feuille} options.feuille
  * @param {object} options.preferences
  * @param {() => void} options.avantAction  termine la saisie en cours
  */
-export function installerMenu({ classeur, feuille, preferences, avantAction }) {
+export function installerMenu({ classeur, preferences, avantAction }) {
   const element = (id) => document.getElementById(id);
   const fenetreMenu = element('fenetre-menu');
   const tailleFeuille = element('taille-feuille');
@@ -27,12 +26,13 @@ export function installerMenu({ classeur, feuille, preferences, avantAction }) {
   creerChoixTheme({ conteneur: element('choix-theme'), preferences });
 
   const afficherTaille = () => {
+    const feuille = classeur.feuilleActive;
     tailleFeuille.textContent = `Taille actuelle : ${feuille.lignes} lignes × ${feuille.colonnes} colonnes (au maximum ${LIGNES_MAX} × ${COLONNES_MAX}).`;
     element('menu-lignes').disabled = feuille.lignes >= LIGNES_MAX;
     element('menu-colonnes').disabled = feuille.colonnes >= COLONNES_MAX;
   };
   classeur.abonner((evenement) => {
-    if (evenement.type === 'dimensions' || evenement.type === 'feuille') afficherTaille();
+    if (['dimensions', 'structure', 'active'].includes(evenement.type)) afficherTaille();
   });
 
   const afficherInstallation = () => {
@@ -48,11 +48,11 @@ export function installerMenu({ classeur, feuille, preferences, avantAction }) {
   });
 
   element('menu-lignes').addEventListener('click', () => {
-    classeur.agrandir(feuille, { lignes: 50 });
+    classeur.agrandir(classeur.feuilleActive, { lignes: 50 });
     afficherTaille();
   });
   element('menu-colonnes').addEventListener('click', () => {
-    classeur.agrandir(feuille, { colonnes: 5 });
+    classeur.agrandir(classeur.feuilleActive, { colonnes: 5 });
     afficherTaille();
   });
 
@@ -73,7 +73,6 @@ export function installerMenu({ classeur, feuille, preferences, avantAction }) {
     fenetreMenu.close();
     const reponse = await demander(element('fenetre-confirmation'));
     if (reponse !== 'effacer') return;
-    classeur.viderFeuille(feuille);
-    classeur.renommer('Sans titre');
+    classeur.reinitialiser();
   });
 }

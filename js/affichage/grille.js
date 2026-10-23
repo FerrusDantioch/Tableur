@@ -51,7 +51,9 @@ export class Grille {
   #figee = false; // première ligne figée ?
   #couche; // couche figée (cadres et saisie de la ligne 1 quand elle est figée)
   #cadres; // { plage, actif, plageFige, actifFige }
-  #poignee;
+  #poignee; // poignée ronde (au doigt) : étend la sélection
+  #poigneeRecopie; // petit carré (à la souris) : recopie la sélection
+  #cadreRecopie; // contour pointillé pendant une recopie
   #plageSelection = null; // dernière plage dessinée (pour surligner les en-têtes)
 
   /**
@@ -178,7 +180,11 @@ export class Grille {
     this.#couche.append(this.#cadres.plageFige, this.#cadres.actifFige);
     this.#poignee = cadre('poignee-selection');
     this.#poignee.title = 'Glisser pour étendre la sélection';
-    contenu.append(this.#couche, table, this.#cadres.plage, this.#cadres.actif, this.#poignee);
+    this.#poigneeRecopie = cadre('poignee-recopie');
+    this.#poigneeRecopie.title = 'Glisser pour recopier (les formules s’adaptent, les suites continuent)';
+    this.#cadreRecopie = cadre('cadre-recopie');
+    this.#cadreRecopie.hidden = true;
+    contenu.append(this.#couche, table, this.#cadres.plage, this.#cadres.actif, this.#cadreRecopie, this.#poignee, this.#poigneeRecopie);
 
     // On garde l'éditeur de cellule (s'il est dans l'ancien tableau, avec son
     // focus) et on remplace l'ancien tableau.
@@ -463,10 +469,12 @@ export class Grille {
     const rActive = this.#rectangle(active.ligne, active.colonne);
     placer(this.#estFigee(active.ligne) ? actifFige : actif, rActive, rActive);
 
-    // Poignée ronde (au doigt) dans le coin en bas à droite.
+    // Poignées (ronde au doigt, carrée à la souris) dans le coin en bas à droite.
     const coin = this.#rectangle(fin.ligne, fin.colonne);
-    this.accueillir(this.#poignee, fin.ligne);
-    this.#poignee.style.transform = `translate(${coin.droite}px, ${coin.bas}px)`;
+    for (const poignee of [this.#poignee, this.#poigneeRecopie]) {
+      this.accueillir(poignee, fin.ligne);
+      poignee.style.transform = `translate(${coin.droite}px, ${coin.bas}px)`;
+    }
 
     // En-têtes des lignes et colonnes sélectionnées.
     this.#plageSelection = { debut: { ...debut }, fin: { ...fin } };
@@ -474,6 +482,22 @@ export class Grille {
       this.#surlignerEntete(this.#entetesColonnes[c], c >= debut.colonne && c <= fin.colonne);
     }
     for (const [l, { th }] of this.#lignes) this.#surlignerEntete(th, l >= debut.ligne && l <= fin.ligne);
+  }
+
+  /** Contour pointillé de la zone qui sera remplie par la recopie (null pour l'effacer). */
+  afficherRecopie(plage) {
+    const cadre = this.#cadreRecopie;
+    cadre.hidden = !plage;
+    if (!plage) return;
+    // Dessiné dans le contenu qui défile : la ligne l commence à l × hauteur
+    // (la ligne des en-têtes A, B, C… a la même hauteur).
+    const gauche = this.#positions[plage.debut.colonne];
+    const droite = this.#positions[plage.fin.colonne + 1];
+    const haut = this.#hauteur * plage.debut.ligne;
+    const bas = this.#hauteur * (plage.fin.ligne + 1);
+    cadre.style.transform = `translate(${gauche}px, ${haut}px)`;
+    cadre.style.width = `${droite - gauche}px`;
+    cadre.style.height = `${bas - haut}px`;
   }
 
   #surlignerEntete(th, oui) {
@@ -509,13 +533,14 @@ export class Grille {
   /**
    * Indique ce qui se trouve sous un élément cliqué :
    * { type: 'cellule', ligne, colonne } | { type: 'colonne', colonne } | { type: 'ligne', ligne }
-   * | { type: 'coin' } | { type: 'largeur', colonne } | { type: 'poignee' } | null
+   * | { type: 'coin' } | { type: 'largeur', colonne } | { type: 'poignee' } | { type: 'recopie' } | null
    */
   cible(element) {
     if (!(element instanceof Element)) return null;
     const poignee = element.closest('.poignee-largeur');
     if (poignee) return { type: 'largeur', colonne: Number(poignee.dataset.colonne) };
     if (element.closest('.poignee-selection')) return { type: 'poignee' };
+    if (element.closest('.poignee-recopie')) return { type: 'recopie' };
     const td = element.closest('td[data-ligne]');
     if (td) return { type: 'cellule', ligne: Number(td.dataset.ligne), colonne: Number(td.dataset.colonne) };
     const thColonne = element.closest('th.entete-colonne');

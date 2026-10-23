@@ -20,17 +20,15 @@ export class ExportPdf {
 
   /**
    * @param {object} options
-   * @param {import('../donnees/classeur.js').Classeur} options.classeur
-   * @param {import('../donnees/classeur.js').Feuille} options.feuille
+   * @param {import('../donnees/classeur.js').Classeur} options.classeur  (la feuille affichée est exportée)
    * @param {(adresse: string) => {texte: string, genre: string, gras?: boolean, fond?: string|null}} options.presenterCellule
    * @param {object} options.preferences
    * @param {HTMLDialogElement} options.fenetreAide  explication affichée avant la première impression
    * @param {(fenetre: HTMLDialogElement) => Promise<string>} options.demander
    * @param {(texte: string) => void} options.signaler  affiche un court message
    */
-  constructor({ classeur, feuille, presenterCellule, preferences, fenetreAide, demander, signaler }) {
+  constructor({ classeur, presenterCellule, preferences, fenetreAide, demander, signaler }) {
     this.classeur = classeur;
-    this.feuille = feuille;
     this.presenterCellule = presenterCellule;
     this.preferences = preferences;
     this.fenetreAide = fenetreAide;
@@ -41,10 +39,15 @@ export class ExportPdf {
     window.addEventListener('afterprint', () => this.terminer());
   }
 
+  /** La feuille exportée : celle qui est affichée. */
+  get feuille() {
+    return this.classeur.feuilleActive;
+  }
+
   /** Bouton « Exporter en PDF ». */
   async exporter() {
     if (this.feuille.etendue().lignes === 0) {
-      this.signaler('Le classeur est vide : il n’y a rien à exporter.');
+      this.signaler('La feuille est vide : il n’y a rien à exporter.');
       return;
     }
     if (!this.preferences.lire('aidePdfMasquee', false)) {

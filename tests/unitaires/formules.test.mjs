@@ -336,12 +336,12 @@ describe('Recalcul automatique', () => {
 
   test('valeurs d’une plage (pour les futurs graphiques)', () => {
     const t = creerTableur({ A1: 'Mois', B1: 'Total', A2: 'Janvier', B2: '=10*2', A3: 'Février', B3: '15' });
-    assert.deepEqual(t.moteur.valeursPlage('A1:B3'), [
+    assert.deepEqual(t.moteur.valeursPlage(t.feuille, 'A1:B3'), [
       ['Mois', 'Total'],
       ['Janvier', 20],
       ['Février', 15],
     ]);
-    const resume = t.moteur.resumer({ debut: { ligne: 1, colonne: 2 }, fin: { ligne: 3, colonne: 2 } });
+    const resume = t.moteur.resumer(t.feuille, { debut: { ligne: 1, colonne: 2 }, fin: { ligne: 3, colonne: 2 } });
     assert.deepEqual(resume, { remplies: 3, nombres: 2, somme: 35, moyenne: 17.5, min: 15, max: 20 });
   });
 });
