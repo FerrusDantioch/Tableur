@@ -294,3 +294,7 @@
 .bandeau[hidden] {
   display: none;
 }
+
+/* Adresse e-mail de la section « À propos » : un long mot sans espace,
+   qu'on autorise à passer à la ligne pour ne pas déborder sur un petit écran. */
+.adresse-mail { overflow-wrap: anywhere; }
