@@ -340,9 +340,7 @@ export class Interactions {
       case 'PageDown':
       case 'PageUp': {
         e.preventDefault();
-        const td = this.grille.td(1, 1);
-        const hauteur = td ? td.getBoundingClientRect().height : 32;
-        const pas = Math.max(1, Math.floor(this.grille.racine.clientHeight / hauteur) - 2);
+        const pas = Math.max(1, Math.floor(this.grille.racine.clientHeight / this.grille.hauteurLigne) - 2);
         selection.deplacer(e.key === 'PageDown' ? pas : -pas, 0, maj);
         break;
       }

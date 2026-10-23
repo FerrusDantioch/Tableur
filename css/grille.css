@@ -73,6 +73,38 @@
   font-weight: 700;
 }
 
+.grille td.italique {
+  font-style: italic;
+}
+
+/* Alignement choisi par la personne (il remplace l'alignement automatique). */
+.grille td[data-align="gauche"] { text-align: left; }
+.grille td[data-align="centre"] { text-align: center; }
+.grille td[data-align="droite"] { text-align: right; }
+
+/* Couleur du texte : l'attribut data-encre choisit la teinte du thème. */
+[data-encre="rouge"] { color: var(--encre-rouge); }
+[data-encre="orange"] { color: var(--encre-orange); }
+[data-encre="jaune"] { color: var(--encre-jaune); }
+[data-encre="vert"] { color: var(--encre-vert); }
+[data-encre="bleu"] { color: var(--encre-bleu); }
+[data-encre="violet"] { color: var(--encre-violet); }
+[data-encre="gris"] { color: var(--encre-gris); }
+
+/* Lignes d'espacement de la grille virtuelle : elles remplacent les lignes
+   qui ne sont pas dessinées (hors de l'écran). Des traits horizontaux
+   imitent les lignes pendant un défilement très rapide. */
+.grille tr.espace td {
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--cellule) 0 calc(var(--hauteur-ligne) - 1px),
+    var(--quadrillage) calc(var(--hauteur-ligne) - 1px) var(--hauteur-ligne)
+  );
+}
+
 /* Couleurs de fond : l'attribut data-fond choisit la teinte du thème, utilisée
    par les cellules, les pastilles du nuancier et le témoin du bouton « Fond ». */
 [data-fond="jaune"] { --teinte: var(--fond-jaune); }
@@ -100,21 +132,63 @@
   cursor: pointer;
 }
 
+/* Ordre d'empilement dans la grille (du dessous vers le dessus) :
+   cellules < cadres de sélection (1) < ligne figée (2) < couche figée et
+   champ de saisie (3) < en-têtes (4) < numéro de la ligne figée (5) < coin (6). */
 .grille thead th {
   position: sticky;
   top: 0;
-  z-index: 3;
+  z-index: 4;
 }
 
 .grille tbody th {
   position: sticky;
   left: 0;
-  z-index: 3;
+  z-index: 4;
 }
 
 .grille th.coin {
   left: 0;
-  z-index: 4;
+  z-index: 6;
+}
+
+/* --- Première ligne figée : collée sous les en-têtes A, B, C… --------------- */
+
+.grille tr.ligne-figee td {
+  position: sticky;
+  top: var(--hauteur-ligne);
+  z-index: 2;
+}
+
+.grille tr.ligne-figee th {
+  top: var(--hauteur-ligne);
+  z-index: 5;
+}
+
+/* Couche qui reste collée au-dessus de la ligne figée : elle porte les cadres
+   de sélection et le champ de saisie de la ligne 1. Hauteur nulle : elle ne
+   décale pas le tableau. */
+.couche-figee {
+  position: sticky;
+  top: var(--hauteur-ligne);
+  height: 0;
+  z-index: 3;
+}
+
+.couche-figee[hidden] {
+  display: none;
+}
+
+/* Trait plus épais sous la ligne figée, pour la repérer. */
+.couche-figee::after {
+  content: "";
+  position: absolute;
+  top: calc(var(--hauteur-ligne) - 2px);
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--trait);
+  pointer-events: none;
 }
 
 .grille th.surligne {
@@ -175,6 +249,20 @@
   border: 2px solid var(--selection-trait);
 }
 
+.cadre-plage[hidden],
+.cadre-actif[hidden] {
+  display: none;
+}
+
+/* Plage coupée en deux par la ligne figée : pas de trait à la jonction. */
+.cadre-plage.sans-haut {
+  border-top-width: 0;
+}
+
+.cadre-plage.sans-bas {
+  border-bottom-width: 0;
+}
+
 /* Poignée ronde pour étendre la sélection au doigt (seulement au toucher). */
 .poignee-selection {
   display: none;
@@ -187,7 +275,7 @@
   border-radius: 50%;
   background: var(--selection-trait);
   border: 3px solid var(--cellule);
-  z-index: 2;
+  z-index: 1;
   touch-action: none;
 }
 
@@ -205,7 +293,7 @@
   position: absolute;
   top: 0;
   left: 0;
-  z-index: 2;
+  z-index: 3;
   margin: 0;
   padding: 0 7px;
   border: 2px solid var(--selection-trait);

@@ -47,7 +47,10 @@ export async function ouvrirApplication(navigateur, url, options = {}) {
   return { contexte, page };
 }
 
-/** Texte affiché dans une cellule (ex. "B3"). */
+/**
+ * Texte affiché dans une cellule (ex. "B3"). La grille ne dessine que les
+ * lignes visibles : on fait donc d'abord défiler jusqu'à la cellule.
+ */
 export function texteCellule(page, adresse) {
   return page.evaluate((adr) => {
     const { ligne, colonne } = (() => {
@@ -56,6 +59,7 @@ export function texteCellule(page, adresse) {
       for (const l of m[1]) c = c * 26 + l.charCodeAt(0) - 64;
       return { ligne: Number(m[2]), colonne: c };
     })();
+    window.tableur.grille.rendreVisible(ligne, colonne);
     return window.tableur.grille.td(ligne, colonne).textContent;
   }, adresse);
 }

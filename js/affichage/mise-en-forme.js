@@ -4,7 +4,7 @@
 // colonne, double-cliquer dessus) appellent ces fonctions, qui modifient le
 // classeur. L'affichage se met ensuite à jour tout seul.
 
-import { adresse, adressesDePlage, lettresColonne } from '../donnees/adresses.js';
+import { adresse, adressesDePlage, lettresColonne, lireAdresse } from '../donnees/adresses.js';
 import { COULEURS_FOND, LARGEUR_MAX, LARGEUR_MIN, LARGEUR_PAR_DEFAUT } from '../donnees/classeur.js';
 
 /** Écart ajouté ou retiré par les boutons « − » et « + » de la largeur. */
@@ -166,18 +166,27 @@ export class MiseEnForme {
     this.#appliquerLargeur(colonnes, Math.min(LARGEUR_MAX, Math.max(LARGEUR_MIN, largeur)));
   }
 
-  /** Ajuste chaque colonne à son contenu le plus large. */
+  /**
+   * Ajuste chaque colonne à son contenu le plus large. Le texte de chaque
+   * cellule est mesuré d'après les données (les lignes hors de l'écran ne
+   * sont pas dessinées), avec la police des cellules.
+   */
   ajusterLargeur(colonnes) {
     this.avantAction();
     const mesureur = document.createElement('canvas').getContext('2d');
+    const style = getComputedStyle(this.grille.contenu.querySelector('table.grille'));
+    const parColonne = new Map(colonnes.map((colonne) => [colonne, []]));
+    for (const adr of this.feuille.adresses()) {
+      const position = lireAdresse(adr);
+      parColonne.get(position.colonne)?.push(position);
+    }
     for (const colonne of colonnes) {
       let largeurTexte = 0;
-      for (let ligne = 1; ligne <= this.feuille.lignes; ligne++) {
-        const td = this.grille.td(ligne, colonne);
-        if (!td?.textContent) continue;
-        const style = getComputedStyle(td);
-        mesureur.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
-        largeurTexte = Math.max(largeurTexte, mesureur.measureText(td.textContent).width);
+      for (const { ligne } of parColonne.get(colonne)) {
+        const vue = this.grille.presenterCellule(adresse(ligne, colonne), ligne, colonne);
+        if (!vue.texte) continue;
+        mesureur.font = `${vue.italique ? 'italic ' : ''}${vue.gras ? 700 : style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+        largeurTexte = Math.max(largeurTexte, mesureur.measureText(vue.texte).width);
       }
       // Marges intérieures de la cellule (8 px de chaque côté) et trait de séparation.
       const largeur = largeurTexte ? Math.ceil(largeurTexte) + 20 : LARGEUR_PAR_DEFAUT;

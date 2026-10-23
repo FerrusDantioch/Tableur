@@ -105,6 +105,9 @@ test('menu : lignes et colonnes en plus, aide, à propos', async () => {
   await page.click('#menu-lignes');
   await page.click('#menu-colonnes');
   assert.match(await page.textContent('#taille-feuille'), /150 lignes × 31 colonnes/);
+  assert.ok(await page.$('th.entete-colonne[data-colonne="31"]'));
+  // La ligne 150 n'est dessinée qu'une fois arrivée à l'écran (grille virtuelle).
+  await page.evaluate(() => window.tableur.grille.rendreVisible(150, 31));
   assert.ok(await page.$(td(150, 31)));
   await page.click('#menu-aide');
   assert.ok(await page.isVisible('#fenetre-aide'));
@@ -136,6 +139,8 @@ test('nouveau classeur : confirmation, puis annulable', async () => {
   await page.click('#bouton-menu');
   await page.click('#menu-nouveau');
   await page.click('#fenetre-confirmation [data-fermer="effacer"]');
+  // La fenêtre se ferme juste après le clic (événement « close ») : on attend l'effacement.
+  await page.waitForFunction(() => window.tableur.classeur.titre === 'Sans titre' && !window.tableur.classeur.feuilles[0].brut('A1'));
   assert.equal(await texteCellule(page, 'A1'), '');
   await page.click('#bouton-annuler');
   assert.equal(await texteCellule(page, 'A1'), 'précieux');
