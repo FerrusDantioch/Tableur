@@ -12,7 +12,7 @@ self.CONFIG_APP = Object.freeze({
   nom: 'Tableur',
 
   // Numéro de version : à augmenter à chaque publication (ex. 1.0.1).
-  version: '1.0.1',
+  version: '1.0.2',
 
   auteurs: 'Ferrus Dantioch et Claude',
   siteOmni: 'https://ferrusdantioch.github.io/omni-systeme/',
