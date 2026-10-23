@@ -14,7 +14,7 @@
 // fonctions : ils n'auront pas besoin de toucher à l'affichage.
 
 import { COLONNES_MAX, LIGNES_MAX, adresse as versAdresse, lireAdresse, lettresColonne, numeroColonne } from './adresses.js';
-import { ajusterReferences, oublierFeuilleDansFormule, renommerFeuilleDansFormule } from './formules.js';
+import { ajusterReferences, decalerReferences, oublierFeuilleDansFormule, renommerFeuilleDansFormule } from './formules.js';
 
 export { COLONNES_MAX, LIGNES_MAX };
 export const LIGNES_PAR_DEFAUT = 100;
@@ -497,7 +497,9 @@ export class Classeur {
       }
     }
     const action = { feuille, selection, faire: () => this.#restaurer(apres), defaire: () => this.#restaurer(avant) };
-    // Les abonnés sont prévenus comme pour un « Rétablir ».
+    // Les abonnés sont prévenus comme pour un « Rétablir » (la feuille active
+    // d'avant est remise un instant, pour que son changement soit annoncé).
+    this.#active = avant.active;
     action.faire();
     this.#executer(action, { dejaFaite: true });
     return true;
@@ -572,27 +574,31 @@ export class Classeur {
   }
 
   /**
-   * Réordonne des lignes (tri). `ordre[i]` est l'ancienne ligne qui vient se
-   * placer à la ligne `premiere + i`. Les cellules gardent leur mise en forme ;
-   * les formules déplacées s'adaptent comme lors d'un copier-coller
-   * (=A5*2 qui descend de 3 lignes devient =A8*2).
-   * @param {(brut: string, dLignes: number) => string} decaler  décalage des formules
+   * Réordonne les lignes d'une zone (tri). `ordre[i]` est l'ancienne ligne qui
+   * vient se placer à la ligne `zone.debut.ligne + i`. Seules les colonnes de
+   * la zone bougent. Les cellules gardent leur mise en forme ; les formules
+   * déplacées s'adaptent comme lors d'un copier-coller (=A5*2 qui descend de
+   * 3 lignes devient =A8*2).
+   * @returns {boolean} vrai si l'ordre a changé
    */
-  reordonnerLignes(feuille, premiere, ordre, decaler, selection = null) {
+  reordonnerLignes(feuille, zone, ordre, selection = null) {
+    const premiere = zone.debut.ligne;
     if (ordre.every((ancienne, i) => ancienne === premiere + i)) return false;
     const derniere = premiere + ordre.length - 1;
     const destination = new Map(ordre.map((ancienne, i) => [ancienne, premiere + i]));
+    const dansZone = (ligne, colonne) =>
+      ligne >= premiere && ligne <= derniere && colonne >= zone.debut.colonne && colonne <= zone.fin.colonne;
     return this.#modifierStructure({ feuille, selection }, () => {
       const deplacees = [];
       feuille.deplacerCellules((ligne, colonne) => {
-        if (ligne < premiere || ligne > derniere) return { ligne, colonne };
+        if (!dansZone(ligne, colonne)) return { ligne, colonne };
         const nouvelle = destination.get(ligne);
         if (nouvelle !== ligne) deplacees.push({ adresse: versAdresse(nouvelle, colonne), dLignes: nouvelle - ligne });
         return { ligne: nouvelle, colonne };
       });
       for (const { adresse, dLignes } of deplacees) {
         const cellule = feuille.cellule(adresse);
-        const brut = decaler(cellule.brut, dLignes);
+        const brut = decalerReferences(cellule.brut, dLignes, 0);
         if (brut !== cellule.brut) feuille.poser(adresse, { ...cellule, brut });
       }
     });

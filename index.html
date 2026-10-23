@@ -67,6 +67,10 @@
       <symbol id="i-bordures-aucune" viewBox="0 0 24 24"><use href="#i-bordure-fond" /></symbol>
       <symbol id="i-trait-fin" viewBox="0 0 24 24"><path d="M4 12h16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /></symbol>
       <symbol id="i-trait-epais" viewBox="0 0 24 24"><path d="M4 12h16" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" /></symbol>
+      <symbol id="i-trier" viewBox="0 0 24 24"><path d="M7 4v16M3.5 16.5 7 20l3.5-3.5M17 20V4M13.5 7.5 17 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
+      <symbol id="i-figer" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2.5" fill="none" stroke="currentColor" stroke-width="2" /><path d="M4 9.5h16" fill="none" stroke="currentColor" stroke-width="3" /><path d="M10 9.5V20M15 9.5V20M4 14.5h16" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.6" /></symbol>
+      <symbol id="i-importer" viewBox="0 0 24 24"><path d="M3 7.5a2 2 0 0 1 2-2h4.2l2 2.2H19a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" /></symbol>
       <symbol id="i-effacer" viewBox="0 0 24 24"><path d="M14.5 4.5 20 10l-8.5 8.5H7l-3-3a1.5 1.5 0 0 1 0-2.1z M9 10l5.5 5.5 M12 20.5h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
     </svg>
 
@@ -200,10 +204,38 @@
       </div>
 
       <div id="groupe-donnees" class="barre-outils" role="tabpanel" aria-labelledby="onglet-donnees" hidden>
+        <button id="bouton-trier" class="outil" type="button" title="Trier les lignes selon la colonne de la cellule active" popovertarget="panneau-trier">
+          <svg aria-hidden="true"><use href="#i-trier" /></svg><span class="libelle">Trier</span>
+        </button>
+        <button id="bouton-figer" class="outil" type="button" title="Figer la première ligne : elle reste visible quand on fait défiler" aria-pressed="false">
+          <svg aria-hidden="true"><use href="#i-figer" /></svg><span class="libelle">Figer la 1<sup>re</sup> ligne</span>
+        </button>
+        <span class="separateur" aria-hidden="true"></span>
+        <button id="bouton-importer" class="outil" type="button" title="Importer un fichier CSV dans une nouvelle feuille">
+          <svg aria-hidden="true"><use href="#i-importer" /></svg><span class="libelle">Importer CSV</span>
+        </button>
+        <input id="fichier-csv" type="file" accept=".csv,.txt,text/csv,text/plain" hidden />
         <button id="bouton-exporter" class="outil" type="button" title="Exporter en PDF ou en CSV" popovertarget="panneau-exporter">
           <svg aria-hidden="true"><use href="#i-exporter" /></svg><span class="libelle">Exporter</span>
         </button>
       </div>
+    </div>
+
+    <!-- Panneau « Trier » : il décrit ce qui va être trié avant de le faire. -->
+    <div id="panneau-trier" class="panneau" popover>
+      <p class="panneau-titre">Trier</p>
+      <p id="tri-description" class="panneau-texte">Trier les lignes 1 à 10 selon la colonne A.</p>
+      <label class="case case-panneau"><input id="tri-titres" type="checkbox" /> La première ligne contient des titres (elle ne bouge pas)</label>
+      <button id="trier-croissant" class="outil large choix-export" type="button"><strong>Croissant</strong><small>A → Z, 1 → 9, de la plus ancienne date à la plus récente</small></button>
+      <button id="trier-decroissant" class="outil large choix-export" type="button"><strong>Décroissant</strong><small>Z → A, 9 → 1, de la plus récente date à la plus ancienne</small></button>
+      <p class="panneau-aide">Pour trier une partie précise, sélectionnez-la d'abord (plusieurs lignes et colonnes). Les cellules vides vont à la fin. « Annuler » remet l'ordre d'avant.</p>
+    </div>
+
+    <!-- Panneau d'une feuille (appui sur l'onglet de la feuille affichée). -->
+    <div id="panneau-feuille" class="panneau" popover>
+      <p id="panneau-feuille-titre" class="panneau-titre">Feuille</p>
+      <button id="feuille-renommer" class="outil large" type="button">Renommer…</button>
+      <button id="feuille-supprimer" class="outil large" type="button">Supprimer…</button>
     </div>
 
     <!-- Panneaux « Insérer » et « Supprimer » : les textes des boutons
@@ -294,6 +326,14 @@
       <input id="editeur-cellule" class="editeur-cellule" type="text" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off" enterkeyhint="enter" aria-label="Saisie dans la cellule active" />
     </main>
 
+    <!-- Onglets des feuilles du classeur (Feuille1, Feuille2…) et bouton « + ». -->
+    <nav class="onglets-feuilles" aria-label="Feuilles du classeur">
+      <button id="ajouter-feuille" class="outil-rond ajouter-feuille" type="button" title="Ajouter une feuille" aria-label="Ajouter une feuille">
+        <svg aria-hidden="true"><use href="#i-plus" /></svg>
+      </button>
+      <div id="liste-feuilles" class="liste-feuilles" role="tablist" aria-label="Feuilles"></div>
+    </nav>
+
     <footer class="barre-etat">
       <span id="message" class="message" aria-live="polite"></span>
       <span id="statistiques" class="statistiques"></span>
@@ -349,6 +389,34 @@
         <div class="boutons-fenetre">
           <button class="outil" type="button" data-fermer="garder">Garder mon classeur</button>
           <button class="outil danger" type="button" data-fermer="effacer">Tout effacer</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="fenetre-renommer-feuille" class="fenetre" aria-labelledby="titre-renommer-feuille">
+      <div class="fenetre-tete"><h2 id="titre-renommer-feuille">Renommer la feuille</h2></div>
+      <div class="fenetre-corps">
+        <label class="champ-fenetre">
+          <span>Nouveau nom</span>
+          <input id="nom-feuille" type="text" maxlength="31" autocomplete="off" spellcheck="false" />
+        </label>
+        <p id="erreur-nom-feuille" class="erreur-champ" role="alert"></p>
+        <p class="note">Les formules qui utilisent cette feuille (=Feuille2!A1…) sont mises à jour toutes seules.</p>
+        <div class="boutons-fenetre">
+          <button class="outil" type="button" data-fermer="">Annuler</button>
+          <button id="valider-nom-feuille" class="outil principal" type="button">Renommer</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="fenetre-supprimer-feuille" class="fenetre" aria-labelledby="titre-supprimer-feuille">
+      <div class="fenetre-tete"><h2 id="titre-supprimer-feuille">Supprimer la feuille ?</h2></div>
+      <div class="fenetre-corps">
+        <p>La feuille <strong id="nom-feuille-supprimee">Feuille2</strong> et tout son contenu seront supprimés. Les formules des autres feuilles qui l'utilisaient afficheront #REF!.</p>
+        <p class="note">Tant que l'application reste ouverte, le bouton « Annuler » permet encore de la récupérer.</p>
+        <div class="boutons-fenetre">
+          <button class="outil" type="button" data-fermer="garder">Garder la feuille</button>
+          <button class="outil danger" type="button" data-fermer="supprimer">Supprimer</button>
         </div>
       </div>
     </dialog>
@@ -442,6 +510,15 @@
             <li>Onglet <strong>« Mise en forme »</strong> : gras (<strong>Ctrl + B</strong>), italique (<strong>Ctrl + I</strong>), couleur du texte, couleur de fond, alignement (gauche, centre, droite ; un second appui revient à l'automatique), largeur des colonnes.</li>
             <li><strong>Format</strong> des nombres : nombre (1 234,50), euros, pourcentage, date, et nombre de décimales (− et +). Le format change seulement l'affichage : les calculs gardent le nombre exact.</li>
             <li>Onglet <strong>« Bordures »</strong> : choisissez d'abord le trait (<strong>Fin</strong> ou <strong>Épais</strong>) et la <strong>Couleur</strong>, sélectionnez les cellules, puis <strong>Toutes</strong>, <strong>Extérieure</strong>, <strong>Haut</strong>, <strong>Bas</strong>, <strong>Gauche</strong>, <strong>Droite</strong> ou <strong>Aucune</strong>. Les bordures apparaissent aussi dans le PDF.</li>
+          </ul>
+        </section>
+        <section>
+          <h3>Feuilles et données</h3>
+          <ul>
+            <li><strong>Feuilles</strong> : les onglets en bas de l'écran. <strong>+</strong> ajoute une feuille ; un appui sur un onglet l'affiche ; un appui sur l'onglet affiché ouvre son menu (<strong>Renommer…</strong>, <strong>Supprimer…</strong>). À la souris, un double-clic renomme.</li>
+            <li>Onglet <strong>« Données »</strong> → <strong>Trier</strong> : placez-vous dans la colonne qui décide de l'ordre. Tableur trouve le tableau autour, reconnaît la ligne de titres (case à cocher), puis trie en ordre croissant ou décroissant. Les lignes restent entières.</li>
+            <li><strong>Figer la 1<sup>re</sup> ligne</strong> : la ligne des titres reste visible quand on fait défiler.</li>
+            <li><strong>Importer CSV</strong> : un fichier CSV (Excel, banque, Google Sheets…) arrive dans une nouvelle feuille. <strong>Exporter</strong> : la feuille affichée en PDF ou en CSV.</li>
           </ul>
         </section>
         <section>

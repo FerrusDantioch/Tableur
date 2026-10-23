@@ -118,6 +118,13 @@ export class Selection {
     this.#annoncer();
   }
 
+  /** Reprend une sélection mémorisée ({ ancre, bout }), par exemple en revenant sur une feuille. */
+  restaurer({ ancre, bout }) {
+    this.ancre = this.#borner(ancre);
+    this.bout = this.#borner(bout);
+    this.#annoncer();
+  }
+
   /** À appeler quand la feuille rétrécit (annulation d'un ajout de lignes). */
   reborner() {
     this.ancre = this.#borner(this.ancre);

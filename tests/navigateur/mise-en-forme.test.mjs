@@ -198,7 +198,7 @@ test('italique, couleur du texte et alignement', async () => {
 
 test('formats de nombre : euros, pourcentage, date, décimales', async () => {
   const { contexte, page } = await ouvrirApplication(navigateur, serveur.url);
-  const texte = (adr) => page.evaluate((a) => window.tableur.grille.td(1, a).textContent.replace(/[  ]/g, ' '), adr);
+  const texte = (adr) => page.evaluate((a) => window.tableur.grille.td(1, a).textContent.replace(/[\u202f\u00a0]/g, ' '), adr);
   for (const valeur of ['1234,5', '0,125', '46318', '2,567']) {
     await page.keyboard.type(valeur);
     await page.keyboard.press('Tab');

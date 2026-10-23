@@ -10,7 +10,7 @@ import { lirePlage } from '../../js/donnees/adresses.js';
 import { Classeur } from '../../js/donnees/classeur.js';
 
 /** Espaces fines insécables (séparateur des milliers en français) → espaces normales, pour comparer. */
-const texte = (valeur, format, style) => presenter(valeur, style, format).texte.replace(/[  ]/g, ' ');
+const texte = (valeur, format, style) => presenter(valeur, style, format).texte.replace(/[\u202f\u00a0]/g, ' ');
 
 describe('Formats de nombre', () => {
   test('nombre, euros, pourcentage, date, décimales', () => {

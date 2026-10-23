@@ -19,8 +19,10 @@ import { Interactions } from './affichage/interactions.js';
 import { MiseEnForme } from './affichage/mise-en-forme.js';
 import { CommandesEdition } from './affichage/commandes-edition.js';
 import { OutilsBordures } from './affichage/outils-bordures.js';
+import { OngletsFeuilles } from './affichage/onglets-feuilles.js';
+import { CommandesDonnees } from './affichage/commandes-donnees.js';
 import { installerBarreOutils } from './affichage/barre-outils.js';
-import { demander, preparerFenetres } from './affichage/fenetres.js';
+import { demander, ouvrirFenetre, preparerFenetres } from './affichage/fenetres.js';
 import { installerMenu } from './affichage/menu.js';
 import { PressePapiers } from './affichage/presse-papiers.js';
 import { demanderStockagePersistant, ecrireClasseur, lireClasseur, mettreDeCote, preferences } from './services/stockage.js';
@@ -199,6 +201,8 @@ miseEnForme.actualiser();
 
 commandesEdition = new CommandesEdition({ classeur, selection, avantAction, apresAction, signaler });
 new OutilsBordures({ classeur, selection, preferences, avantAction, apresAction });
+new OngletsFeuilles({ classeur, avantAction, apresAction, demander, ouvrirFenetre, signaler });
+new CommandesDonnees({ classeur, selection, valeur: (feuille, adr) => moteur.valeur(feuille, adr), avantAction, apresAction, signaler });
 
 installerBarreOutils({ preferences, avantAction, apresAction, surChangement: () => interactions.actualiser() });
 boutonAnnuler.addEventListener('click', () => commandes.annuler());
@@ -273,10 +277,37 @@ moteur.abonner((evenement) => {
   if (evenement.feuille === feuilleActive()) redessiner(evenement.adresses);
 });
 
-/** Redessine toute la grille (autre feuille, lignes insérées…). */
+/** Redessine toute la grille (lignes insérées, tri, ligne figée…). */
 function reconstruireGrille() {
   grille.changerFeuille(feuilleActive());
   selection.reborner();
+}
+
+// Chaque feuille garde sa sélection et sa position de défilement : en
+// revenant sur une feuille, on la retrouve comme on l'avait laissée.
+const memoiresFeuilles = new WeakMap();
+let feuilleAffichee = feuilleActive();
+
+/** Une autre feuille est affichée (onglet choisi, feuille ajoutée ou supprimée, Annuler…). */
+function changerDeFeuille() {
+  const nouvelle = feuilleActive();
+  if (nouvelle === feuilleAffichee) {
+    reconstruireGrille();
+    return;
+  }
+  memoiresFeuilles.set(feuilleAffichee, {
+    ancre: { ...selection.ancre },
+    bout: { ...selection.bout },
+    haut: zone.scrollTop,
+    gauche: zone.scrollLeft,
+  });
+  feuilleAffichee = nouvelle;
+  grille.changerFeuille(nouvelle);
+  const memoire = memoiresFeuilles.get(nouvelle) ?? { ancre: { ligne: 1, colonne: 1 }, bout: { ligne: 1, colonne: 1 }, haut: 0, gauche: 0 };
+  zone.scrollTop = memoire.haut;
+  zone.scrollLeft = memoire.gauche;
+  selection.restaurer(memoire);
+  miseEnForme.actualiser();
 }
 
 /**
@@ -310,7 +341,7 @@ classeur.abonner((evenement) => {
       if (evenement.feuilles.includes(feuilleActive())) reconstruireGrille();
       break;
     case 'active':
-      reconstruireGrille();
+      changerDeFeuille();
       break;
     case 'titre':
       if (document.activeElement !== champTitre) champTitre.value = classeur.titre;

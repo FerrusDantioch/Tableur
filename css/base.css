@@ -20,8 +20,9 @@ body {
   height: 100vh;
   height: 100dvh;
   display: grid;
-  /* en-tête, outils, barre de formule, grille (prend la place restante), barre d'état */
-  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+  /* en-tête, outils, barre de formule, grille (prend la place restante),
+     onglets des feuilles, barre d'état */
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto auto;
   /* Une seule colonne, jamais plus large que l'écran. */
   grid-template-columns: minmax(0, 1fr);
   background: var(--fond);
@@ -504,6 +505,68 @@ svg {
 
 .en-edition .barre-formule .outil-rond {
   display: inline-grid;
+}
+
+/* --- Onglets des feuilles (en bas) ------------------------------------------- */
+
+.onglets-feuilles {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  min-width: 0;
+  padding: 0 8px;
+  background: var(--surface);
+  border-top: 1px solid var(--trait);
+}
+
+.ajouter-feuille {
+  flex: none;
+  align-self: center;
+  width: 40px;
+  height: 36px;
+  margin: 3px 0;
+}
+
+.liste-feuilles {
+  display: flex;
+  gap: 2px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.onglet-feuille {
+  flex: none;
+  max-width: 14em;
+  min-height: 42px;
+  padding: 6px 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: 0;
+  border-top: 3px solid transparent;
+  background: transparent;
+  color: var(--discret);
+  font-weight: 500;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.onglet-feuille:hover {
+  color: var(--texte);
+  background: var(--survol);
+}
+
+/* Feuille affichée : on la voit au premier coup d'œil. */
+.onglet-feuille[aria-selected="true"] {
+  color: var(--texte);
+  font-weight: 700;
+  background: var(--cellule);
+  border-top-color: var(--accent);
+}
+
+.panneau-texte {
+  margin: 0 0 8px;
 }
 
 /* --- Barre d'état (en bas) -------------------------------------------------- */
