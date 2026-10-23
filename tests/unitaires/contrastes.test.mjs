@@ -46,7 +46,12 @@ const PAIRES = [
   ['--texte', '--accent-doux'],
   ...['jaune', 'orange', 'rouge', 'rose', 'violet', 'bleu', 'vert', 'gris'].map((c) => ['--texte', `--fond-${c}`]),
   ...['jaune', 'orange', 'rouge', 'rose', 'violet', 'bleu', 'vert', 'gris'].map((c) => ['--erreur', `--fond-${c}`]),
+  // Couleurs du texte choisies par la personne, sur le fond des cellules.
+  ...['rouge', 'orange', 'jaune', 'vert', 'bleu', 'violet', 'gris'].map((c) => [`--encre-${c}`, '--cellule']),
 ];
+
+// Bordures : un trait doit se voir (contraste d'au moins 3:1, norme WCAG pour les éléments graphiques).
+const TRAITS = ['--bordure-auto', ...['rouge', 'orange', 'jaune', 'vert', 'bleu', 'violet', 'gris'].map((c) => `--encre-${c}`)];
 
 test('les trois thèmes existent', () => {
   assert.deepEqual(Object.keys(lireThemes()).sort(), ['clair', 'omni', 'sombre']);
@@ -58,6 +63,14 @@ for (const [nom, variables] of Object.entries(lireThemes())) {
       assert.ok(variables[texte] && variables[fond], `${texte} ou ${fond} manque dans le thème ${nom}`);
       const rapport = contraste(variables[texte], variables[fond]);
       assert.ok(rapport >= 4.5, `${nom} : ${texte} sur ${fond} = ${rapport.toFixed(2)}:1 (minimum 4,5)`);
+    }
+  });
+
+  test(`thème « ${nom} » : bordures bien visibles`, () => {
+    for (const trait of TRAITS) {
+      assert.ok(variables[trait], `${trait} manque dans le thème ${nom}`);
+      const rapport = contraste(variables[trait], variables['--cellule']);
+      assert.ok(rapport >= 3, `${nom} : ${trait} sur --cellule = ${rapport.toFixed(2)}:1 (minimum 3)`);
     }
   });
 

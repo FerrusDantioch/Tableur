@@ -138,6 +138,12 @@
   accent-color: var(--accent);
 }
 
+/* Case à cocher dans un panneau (sous un bouton). */
+.case-panneau {
+  padding: 0 4px;
+  font-size: 0.92rem;
+}
+
 /* --- Choix du thème ----------------------------------------------------------- */
 
 .choix-themes {

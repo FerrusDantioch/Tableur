@@ -50,6 +50,23 @@
       <symbol id="i-recopier-droite" viewBox="0 0 24 24"><rect x="3" y="5" width="6" height="14" rx="1.5" fill="none" stroke="currentColor" stroke-width="2" /><path d="M11.5 12H21M17.5 8.5 21 12l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
       <symbol id="i-inserer" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2.5" fill="none" stroke="currentColor" stroke-width="2" /><path d="M12 8v8M8 12h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></symbol>
       <symbol id="i-supprimer" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2.5" fill="none" stroke="currentColor" stroke-width="2" /><path d="M8 12h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></symbol>
+      <symbol id="i-italique" viewBox="0 0 24 24"><path d="M10 4.5h8M6 19.5h8M14.5 4.5 9.5 19.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" /></symbol>
+      <symbol id="i-encre" viewBox="0 0 24 24"><path d="M6.5 16.5 12 3.5l5.5 13M8.6 11.5h6.8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
+      <symbol id="i-gauche" viewBox="0 0 24 24"><path d="M4 6h16M4 10h10M4 14h16M4 18h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></symbol>
+      <symbol id="i-centre" viewBox="0 0 24 24"><path d="M4 6h16M7 10h10M4 14h16M7 18h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></symbol>
+      <symbol id="i-droite" viewBox="0 0 24 24"><path d="M4 6h16M10 10h10M4 14h16M10 18h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></symbol>
+      <symbol id="i-format" viewBox="0 0 24 24"><circle cx="7" cy="7" r="2.6" fill="none" stroke="currentColor" stroke-width="2" /><circle cx="17" cy="17" r="2.6" fill="none" stroke="currentColor" stroke-width="2" /><path d="M18.5 4.5 5.5 19.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></symbol>
+      <!-- Bordures : quadrillage en pointillés, côtés concernés en trait plein. -->
+      <symbol id="i-bordure-fond" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM12 4v16M4 12h16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-dasharray="1.6 2.4" opacity="0.6" /></symbol>
+      <symbol id="i-bordures-toutes" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM12 4v16M4 12h16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" /></symbol>
+      <symbol id="i-bordures-exterieur" viewBox="0 0 24 24"><use href="#i-bordure-fond" /><path d="M4 4h16v16H4z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" /></symbol>
+      <symbol id="i-bordures-haut" viewBox="0 0 24 24"><use href="#i-bordure-fond" /><path d="M3.5 4h17" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" /></symbol>
+      <symbol id="i-bordures-bas" viewBox="0 0 24 24"><use href="#i-bordure-fond" /><path d="M3.5 20h17" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" /></symbol>
+      <symbol id="i-bordures-gauche" viewBox="0 0 24 24"><use href="#i-bordure-fond" /><path d="M4 3.5v17" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" /></symbol>
+      <symbol id="i-bordures-droite" viewBox="0 0 24 24"><use href="#i-bordure-fond" /><path d="M20 3.5v17" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" /></symbol>
+      <symbol id="i-bordures-aucune" viewBox="0 0 24 24"><use href="#i-bordure-fond" /></symbol>
+      <symbol id="i-trait-fin" viewBox="0 0 24 24"><path d="M4 12h16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /></symbol>
+      <symbol id="i-trait-epais" viewBox="0 0 24 24"><path d="M4 12h16" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" /></symbol>
       <symbol id="i-effacer" viewBox="0 0 24 24"><path d="M14.5 4.5 20 10l-8.5 8.5H7l-3-3a1.5 1.5 0 0 1 0-2.1z M9 10l5.5 5.5 M12 20.5h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
     </svg>
 
@@ -78,6 +95,7 @@
       <div class="onglets-outils" role="tablist" aria-label="Groupes d'outils">
         <button id="onglet-edition" class="onglet-outils" type="button" role="tab" aria-selected="true" aria-controls="groupe-edition" data-groupe="edition">Édition</button>
         <button id="onglet-mise-en-forme" class="onglet-outils" type="button" role="tab" aria-selected="false" aria-controls="groupe-mise-en-forme" data-groupe="mise-en-forme">Mise en forme</button>
+        <button id="onglet-bordures" class="onglet-outils" type="button" role="tab" aria-selected="false" aria-controls="groupe-bordures" data-groupe="bordures">Bordures</button>
         <button id="onglet-donnees" class="onglet-outils" type="button" role="tab" aria-selected="false" aria-controls="groupe-donnees" data-groupe="donnees">Données</button>
       </div>
 
@@ -114,13 +132,70 @@
         <button id="bouton-gras" class="outil" type="button" title="Gras (Ctrl+B)" aria-pressed="false">
           <svg aria-hidden="true"><use href="#i-gras" /></svg><span class="libelle">Gras</span>
         </button>
+        <button id="bouton-italique" class="outil" type="button" title="Italique (Ctrl+I)" aria-pressed="false">
+          <svg aria-hidden="true"><use href="#i-italique" /></svg><span class="libelle">Italique</span>
+        </button>
+        <button id="bouton-encre" class="outil" type="button" title="Couleur du texte" popovertarget="panneau-encre">
+          <span class="icone-fond" aria-hidden="true"><svg><use href="#i-encre" /></svg><span id="temoin-encre" class="temoin-fond temoin-encre"></span></span>
+          <span class="libelle">Texte</span>
+        </button>
         <button id="bouton-fond" class="outil" type="button" title="Couleur de fond" popovertarget="panneau-fond">
           <span class="icone-fond" aria-hidden="true"><svg><use href="#i-fond" /></svg><span id="temoin-fond" class="temoin-fond"></span></span>
           <span class="libelle">Fond</span>
         </button>
         <span class="separateur" aria-hidden="true"></span>
+        <button id="bouton-gauche" class="outil" type="button" title="Aligner à gauche" aria-pressed="false" data-alignement="gauche">
+          <svg aria-hidden="true"><use href="#i-gauche" /></svg><span class="libelle">Gauche</span>
+        </button>
+        <button id="bouton-centre" class="outil" type="button" title="Centrer" aria-pressed="false" data-alignement="centre">
+          <svg aria-hidden="true"><use href="#i-centre" /></svg><span class="libelle">Centre</span>
+        </button>
+        <button id="bouton-droite" class="outil" type="button" title="Aligner à droite" aria-pressed="false" data-alignement="droite">
+          <svg aria-hidden="true"><use href="#i-droite" /></svg><span class="libelle">Droite</span>
+        </button>
+        <span class="separateur" aria-hidden="true"></span>
+        <button id="bouton-format" class="outil" type="button" title="Format des nombres : décimales, euros, pourcentage, date" popovertarget="panneau-format">
+          <svg aria-hidden="true"><use href="#i-format" /></svg><span class="libelle">Format</span>
+        </button>
         <button id="bouton-largeur" class="outil" type="button" title="Largeur des colonnes" popovertarget="panneau-largeur">
           <svg aria-hidden="true"><use href="#i-largeur" /></svg><span class="libelle">Largeur</span>
+        </button>
+      </div>
+
+      <div id="groupe-bordures" class="barre-outils" role="tabpanel" aria-labelledby="onglet-bordures" hidden>
+        <button class="outil" type="button" data-bordures="toutes" title="Toutes les bordures : chaque cellule de la sélection est encadrée">
+          <svg aria-hidden="true"><use href="#i-bordures-toutes" /></svg><span class="libelle">Toutes</span>
+        </button>
+        <button class="outil" type="button" data-bordures="exterieur" title="Bordure extérieure : un cadre autour de la sélection">
+          <svg aria-hidden="true"><use href="#i-bordures-exterieur" /></svg><span class="libelle">Extérieure</span>
+        </button>
+        <button class="outil" type="button" data-bordures="haut" title="Bordure en haut de la sélection">
+          <svg aria-hidden="true"><use href="#i-bordures-haut" /></svg><span class="libelle">Haut</span>
+        </button>
+        <button class="outil" type="button" data-bordures="bas" title="Bordure en bas de la sélection">
+          <svg aria-hidden="true"><use href="#i-bordures-bas" /></svg><span class="libelle">Bas</span>
+        </button>
+        <button class="outil" type="button" data-bordures="gauche" title="Bordure à gauche de la sélection">
+          <svg aria-hidden="true"><use href="#i-bordures-gauche" /></svg><span class="libelle">Gauche</span>
+        </button>
+        <button class="outil" type="button" data-bordures="droite" title="Bordure à droite de la sélection">
+          <svg aria-hidden="true"><use href="#i-bordures-droite" /></svg><span class="libelle">Droite</span>
+        </button>
+        <button class="outil" type="button" data-bordures="aucune" title="Aucune bordure : retire les bordures de la sélection">
+          <svg aria-hidden="true"><use href="#i-bordures-aucune" /></svg><span class="libelle">Aucune</span>
+        </button>
+        <span class="separateur" aria-hidden="true"></span>
+        <span class="groupe-choix" role="group" aria-label="Trait des bordures">
+          <button id="trait-fin" class="outil" type="button" title="Trait fin" aria-pressed="true" data-trait="fin">
+            <svg aria-hidden="true"><use href="#i-trait-fin" /></svg><span class="libelle">Fin</span>
+          </button>
+          <button id="trait-epais" class="outil" type="button" title="Trait épais" aria-pressed="false" data-trait="epais">
+            <svg aria-hidden="true"><use href="#i-trait-epais" /></svg><span class="libelle">Épais</span>
+          </button>
+        </span>
+        <button id="bouton-couleur-bordure" class="outil" type="button" title="Couleur des bordures" popovertarget="panneau-couleur-bordure">
+          <span class="icone-fond" aria-hidden="true"><svg><use href="#i-bordures-exterieur" /></svg><span id="temoin-bordure" class="temoin-fond temoin-encre"></span></span>
+          <span class="libelle">Couleur</span>
         </button>
       </div>
 
@@ -153,6 +228,32 @@
       <p class="panneau-titre">Couleur de fond</p>
       <div class="nuancier"></div>
     </div>
+    <div id="panneau-encre" class="panneau" popover>
+      <p class="panneau-titre">Couleur du texte</p>
+      <div class="nuancier nuancier-encres"></div>
+    </div>
+    <div id="panneau-couleur-bordure" class="panneau" popover>
+      <p class="panneau-titre">Couleur des bordures</p>
+      <div class="nuancier nuancier-encres"></div>
+      <p class="panneau-aide">Choisissez la couleur, puis le type de bordure (Toutes, Extérieure…).</p>
+    </div>
+    <div id="panneau-format" class="panneau" popover>
+      <p class="panneau-titre">Format des nombres</p>
+      <div class="choix-formats" role="group" aria-label="Format">
+        <button class="outil large choix-format" type="button" data-format=""><strong>Automatique</strong><small>comme tapé : 12,5 ; 20 % ; 3 €</small></button>
+        <button class="outil large choix-format" type="button" data-format="nombre"><strong>Nombre</strong><small id="exemple-nombre">1 234,50</small></button>
+        <button class="outil large choix-format" type="button" data-format="euro"><strong>Euros</strong><small id="exemple-euro">1 234,50 €</small></button>
+        <button class="outil large choix-format" type="button" data-format="pourcent"><strong>Pourcentage</strong><small id="exemple-pourcent">12,50 %</small></button>
+        <button class="outil large choix-format" type="button" data-format="date"><strong>Date</strong><small>23/10/2026</small></button>
+      </div>
+      <p class="panneau-titre panneau-sous-titre">Décimales</p>
+      <div class="reglage-largeur">
+        <button id="decimales-moins" class="outil" type="button" aria-label="Une décimale de moins">−</button>
+        <output id="decimales-valeur" class="largeur-valeur">2 décimales</output>
+        <button id="decimales-plus" class="outil" type="button" aria-label="Une décimale de plus">+</button>
+      </div>
+      <p class="panneau-aide">Le format change seulement l'affichage : le nombre garde toute sa précision dans les calculs.</p>
+    </div>
     <div id="panneau-largeur" class="panneau" popover>
       <p class="panneau-titre">Largeur <span id="largeur-colonnes">de la colonne A</span></p>
       <div class="reglage-largeur">
@@ -165,10 +266,11 @@
       <p class="panneau-aide">Astuce : on peut aussi faire glisser le bord droit d'un en-tête (A, B, C…), ou le double-cliquer.</p>
     </div>
     <div id="panneau-exporter" class="panneau" popover>
-      <p class="panneau-titre">Exporter le classeur</p>
+      <p class="panneau-titre">Exporter la feuille affichée</p>
       <button id="exporter-pdf" class="outil large choix-export" type="button">
-        <strong>PDF</strong><small>Pour imprimer ou envoyer un tableau figé</small>
+        <strong>PDF</strong><small>Pour imprimer ou envoyer un tableau figé (avec la mise en forme et les bordures)</small>
       </button>
+      <label class="case case-panneau"><input id="quadrillage-pdf" type="checkbox" /> Quadrillage gris dans le PDF</label>
       <button id="exporter-csv" class="outil large choix-export" type="button">
         <strong>CSV</strong><small>Pour Excel, LibreOffice ou Google Sheets</small>
       </button>
@@ -335,6 +437,14 @@
           </ul>
         </section>
         <section>
+          <h3>Mise en forme et bordures</h3>
+          <ul>
+            <li>Onglet <strong>« Mise en forme »</strong> : gras (<strong>Ctrl + B</strong>), italique (<strong>Ctrl + I</strong>), couleur du texte, couleur de fond, alignement (gauche, centre, droite ; un second appui revient à l'automatique), largeur des colonnes.</li>
+            <li><strong>Format</strong> des nombres : nombre (1 234,50), euros, pourcentage, date, et nombre de décimales (− et +). Le format change seulement l'affichage : les calculs gardent le nombre exact.</li>
+            <li>Onglet <strong>« Bordures »</strong> : choisissez d'abord le trait (<strong>Fin</strong> ou <strong>Épais</strong>) et la <strong>Couleur</strong>, sélectionnez les cellules, puis <strong>Toutes</strong>, <strong>Extérieure</strong>, <strong>Haut</strong>, <strong>Bas</strong>, <strong>Gauche</strong>, <strong>Droite</strong> ou <strong>Aucune</strong>. Les bordures apparaissent aussi dans le PDF.</li>
+          </ul>
+        </section>
+        <section>
           <h3>Formules</h3>
           <p>Une formule commence par <code>=</code>. On sépare les arguments par un point-virgule <code>;</code>, comme dans Excel en français. Opérations : <code>+ - * /</code>, puissance <code>^</code>, pourcentage <code>%</code>, texte assemblé <code>&amp;</code>, comparaisons <code>= &lt;&gt; &lt; &gt; &lt;= &gt;=</code>.</p>
           <table class="tableau-aide">
@@ -380,7 +490,7 @@
         <section>
           <h3>Raccourcis</h3>
           <ul>
-            <li><strong>Ctrl + Z</strong> annuler, <strong>Ctrl + Y</strong> rétablir, <strong>Ctrl + B</strong> gras, <strong>Suppr</strong> vider les cellules, <strong>Ctrl + A</strong> tout sélectionner, <strong>Ctrl + P</strong> exporter en PDF.</li>
+            <li><strong>Ctrl + Z</strong> annuler, <strong>Ctrl + Y</strong> rétablir, <strong>Ctrl + B</strong> gras, <strong>Ctrl + I</strong> italique, <strong>Suppr</strong> vider les cellules, <strong>Ctrl + A</strong> tout sélectionner, <strong>Ctrl + P</strong> exporter en PDF.</li>
             <li><strong>Ctrl + C</strong> copier, <strong>Ctrl + X</strong> couper, <strong>Ctrl + V</strong> coller, <strong>Ctrl + D</strong> recopier vers le bas, <strong>Ctrl + R</strong> recopier vers la droite.</li>
           </ul>
         </section>

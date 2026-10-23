@@ -96,4 +96,17 @@
   .impression td.gras {
     font-weight: 700;
   }
+
+  .impression td.italique {
+    font-style: italic;
+  }
+
+  .impression td[data-align="gauche"] { text-align: left; }
+  .impression td[data-align="centre"] { text-align: center; }
+  .impression td[data-align="droite"] { text-align: right; }
+
+  /* Sans quadrillage : seules les bordures choisies se voient. */
+  .impression.sans-quadrillage td {
+    border-color: transparent;
+  }
 }

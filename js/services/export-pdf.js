@@ -7,7 +7,8 @@
 // page par css/impression.css : feuille claire, texte noir, couleurs de fond
 // adoucies, gras et largeurs de colonnes conservés.
 
-import { adresse } from '../donnees/adresses.js';
+import { adresse, lireAdresse } from '../donnees/adresses.js';
+import { couleurBordure } from '../affichage/grille.js';
 import { nomDeFichier } from './fichiers.js';
 
 // Largeur utile d'une page A4 à 96 points par pouce, marges de 12 mm comprises.
@@ -39,6 +40,19 @@ export class ExportPdf {
     window.addEventListener('afterprint', () => this.terminer());
   }
 
+  /**
+   * Imprimer le quadrillage gris ? Choix mémorisé ; par défaut, oui sauf si
+   * la feuille a des bordures (le tableau construit se lit alors mieux seul).
+   */
+  get quadrillage() {
+    const choix = this.preferences.lire('quadrillagePdf', null);
+    return typeof choix === 'boolean' ? choix : !zoneImprimee(this.feuille).bordures;
+  }
+
+  set quadrillage(oui) {
+    this.preferences.ecrire('quadrillagePdf', Boolean(oui));
+  }
+
   /** La feuille exportée : celle qui est affichée. */
   get feuille() {
     return this.classeur.feuilleActive;
@@ -46,7 +60,7 @@ export class ExportPdf {
 
   /** Bouton « Exporter en PDF ». */
   async exporter() {
-    if (this.feuille.etendue().lignes === 0) {
+    if (zoneImprimee(this.feuille).lignes === 0) {
       this.signaler('La feuille est vide : il n’y a rien à exporter.');
       return;
     }
@@ -70,7 +84,9 @@ export class ExportPdf {
     this.#titreOrigine = document.title;
     // Le navigateur nomme le fichier PDF d'après le titre de la page.
     document.title = nomDeFichier(this.classeur.titre);
-    this.#zone = construireImpression(this.classeur.titre, this.feuille, this.presenterCellule);
+    this.#zone = construireImpression(this.classeur.titre, this.feuille, this.presenterCellule, {
+      quadrillage: this.quadrillage,
+    });
     document.body.append(this.#zone);
   }
 
@@ -84,14 +100,43 @@ export class ExportPdf {
 }
 
 /**
- * Crée la section imprimable : le titre, puis le tableau des cellules utilisées.
- * (Fonction séparée pour pouvoir la tester.)
+ * Zone à imprimer : de A1 jusqu'à la dernière cellule qui contient du texte,
+ * une bordure ou une couleur de fond. Indique aussi s'il y a des bordures.
  */
-export function construireImpression(titre, feuille, presenterCellule) {
-  const { lignes, colonnes } = feuille.etendue();
+export function zoneImprimee(feuille) {
+  let lignes = 0;
+  let colonnes = 0;
+  let bordures = false;
+  for (const adr of feuille.adresses()) {
+    const cellule = feuille.cellule(adr);
+    if (cellule.bordures) bordures = true;
+    if (cellule.brut.trim() === '' && !cellule.bordures && !cellule.fond) continue;
+    const { ligne, colonne } = lireAdresse(adr);
+    lignes = Math.max(lignes, ligne);
+    colonnes = Math.max(colonnes, colonne);
+  }
+  return { lignes, colonnes, bordures };
+}
+
+/** Trait d'une bordure pour l'impression : 0,75 point (fin) ou 1,5 point (épais). */
+function traitImprime(bordure) {
+  return `${bordure.style === 'epais' ? 1.5 : 0.75}pt solid ${couleurBordure(bordure.couleur)}`;
+}
+
+/**
+ * Crée la section imprimable : le titre, puis le tableau des cellules utilisées,
+ * avec la mise en forme (gras, italique, couleurs, alignement, bordures).
+ * (Fonction séparée pour pouvoir la tester.)
+ * @param {object} [options]
+ * @param {boolean} [options.quadrillage]  traits gris clair entre toutes les cellules
+ *        (par défaut : seulement s'il n'y a aucune bordure choisie)
+ */
+export function construireImpression(titre, feuille, presenterCellule, { quadrillage } = {}) {
+  const { lignes, colonnes, bordures } = zoneImprimee(feuille);
   const zone = document.createElement('section');
   zone.id = 'impression';
   zone.className = 'impression';
+  if (!(quadrillage ?? !bordures)) zone.classList.add('sans-quadrillage');
 
   const entete = document.createElement('h1');
   entete.textContent = titre;
@@ -121,11 +166,20 @@ export function construireImpression(titre, feuille, presenterCellule) {
     const tr = document.createElement('tr');
     for (let c = 1; c <= colonnes; c++) {
       const td = document.createElement('td');
-      const vue = presenterCellule(adresse(l, c));
+      const vue = presenterCellule(adresse(l, c), l, c);
       td.textContent = vue.texte;
       if (vue.genre !== 'vide') td.className = vue.genre;
       if (vue.gras) td.classList.add('gras');
+      if (vue.italique) td.classList.add('italique');
       if (vue.fond) td.dataset.fond = vue.fond;
+      if (vue.couleur) td.dataset.encre = vue.couleur;
+      if (vue.alignement) td.dataset.align = vue.alignement;
+      // Bordures : le bas et la droite de chaque cellule (le haut et la gauche
+      // pour la première ligne et la première colonne).
+      const cotes = { bas: 'borderBottom', droite: 'borderRight', haut: 'borderTop', gauche: 'borderLeft' };
+      for (const [cote, propriete] of Object.entries(cotes)) {
+        if (vue.bordures?.[cote]) td.style[propriete] = traitImprime(vue.bordures[cote]);
+      }
       tr.append(td);
     }
     corps.append(tr);

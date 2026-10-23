@@ -342,6 +342,73 @@ svg {
   outline-offset: 1px;
 }
 
+/* Pastilles de couleur du texte (et des bordures) : « Abc » écrit dans la couleur. */
+.pastille-encre {
+  background: var(--cellule);
+  font-family: var(--police-cellules);
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.pastille-encre.aucune::before {
+  content: none;
+}
+
+.pastille-encre.aucune {
+  color: var(--texte);
+  font-weight: 500;
+  font-size: 0.85rem;
+  font-family: var(--police-interface);
+}
+
+/* Témoin sous l'icône « Texte » / « Couleur » des bordures : la couleur choisie. */
+.temoin-encre {
+  background: var(--bordure-auto);
+}
+
+.temoin-encre[data-encre] {
+  background: var(--encre, var(--bordure-auto));
+}
+
+[data-encre="rouge"] { --encre: var(--encre-rouge); }
+[data-encre="orange"] { --encre: var(--encre-orange); }
+[data-encre="jaune"] { --encre: var(--encre-jaune); }
+[data-encre="vert"] { --encre: var(--encre-vert); }
+[data-encre="bleu"] { --encre: var(--encre-bleu); }
+[data-encre="violet"] { --encre: var(--encre-violet); }
+[data-encre="gris"] { --encre: var(--encre-gris); }
+
+/* Panneau « Format » : un bouton par format, avec un exemple dessous. */
+.choix-formats {
+  display: grid;
+  gap: 6px;
+}
+
+.choix-format {
+  display: grid;
+  justify-items: start;
+  justify-content: stretch;
+  gap: 1px;
+  margin-top: 0;
+  padding: 8px 14px;
+  text-align: left;
+}
+
+.choix-format small {
+  color: var(--discret);
+  font-variant-numeric: tabular-nums;
+}
+
+.panneau-sous-titre {
+  margin-top: 14px;
+}
+
+/* Boutons « Fin » et « Épais » côte à côte (un seul choisi). */
+.groupe-choix {
+  display: inline-flex;
+  gap: 4px;
+}
+
 .reglage-largeur {
   display: flex;
   align-items: center;
@@ -369,6 +436,7 @@ svg {
 .choix-export {
   display: grid;
   justify-items: start;
+  justify-content: stretch;
   gap: 2px;
   padding: 10px 14px;
   text-align: left;

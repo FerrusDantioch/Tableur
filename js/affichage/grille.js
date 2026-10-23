@@ -587,5 +587,5 @@ export class Grille {
 
 /** Couleur CSS d'une bordure : « auto » suit la couleur du texte du thème. */
 export function couleurBordure(couleur) {
-  return !couleur || couleur === 'auto' ? 'var(--encre-auto)' : `var(--encre-${couleur})`;
+  return !couleur || couleur === 'auto' ? 'var(--bordure-auto)' : `var(--encre-${couleur})`;
 }

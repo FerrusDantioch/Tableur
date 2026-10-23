@@ -7,8 +7,9 @@
 // Ce fichier est le seul à les connaître toutes les trois.
 
 import { Classeur } from './donnees/classeur.js';
-import { adresse, textePlage } from './donnees/adresses.js';
+import { adresse, lireAdresse, textePlage } from './donnees/adresses.js';
 import { interpreterSaisie } from './donnees/saisie.js';
+import { borduresADessiner } from './donnees/bordures.js';
 import { MoteurCalcul } from './calcul/moteur.js';
 import { formaterNombre, presenter } from './affichage/format.js';
 import { Grille } from './affichage/grille.js';
@@ -17,6 +18,7 @@ import { Edition } from './affichage/edition.js';
 import { Interactions } from './affichage/interactions.js';
 import { MiseEnForme } from './affichage/mise-en-forme.js';
 import { CommandesEdition } from './affichage/commandes-edition.js';
+import { OutilsBordures } from './affichage/outils-bordures.js';
 import { installerBarreOutils } from './affichage/barre-outils.js';
 import { demander, preparerFenetres } from './affichage/fenetres.js';
 import { installerMenu } from './affichage/menu.js';
@@ -56,12 +58,24 @@ const moteur = new MoteurCalcul(classeur);
 /** La feuille affichée (onglet sélectionné). */
 const feuilleActive = () => classeur.feuilleActive;
 
-/** Ce qu'affiche une cellule de la feuille active : valeur calculée mise en forme, gras, couleur de fond. */
-function presenterCellule(adr) {
+/**
+ * Ce qu'affiche une cellule de la feuille active : valeur calculée mise en
+ * forme (format des nombres), gras, italique, couleurs, alignement et bordures.
+ */
+function presenterCellule(adr, ligne, colonne) {
   const feuille = feuilleActive();
   const cellule = feuille.cellule(adr);
   const saisie = interpreterSaisie(cellule?.brut);
-  return { ...presenter(moteur.valeur(feuille, adr), saisie.style), gras: cellule?.gras, fond: cellule?.fond };
+  const position = ligne ? { ligne, colonne } : lireAdresse(adr);
+  return {
+    ...presenter(moteur.valeur(feuille, adr), saisie.style, cellule?.format),
+    gras: cellule?.gras,
+    italique: cellule?.italique,
+    couleur: cellule?.couleur,
+    fond: cellule?.fond,
+    alignement: cellule?.alignement,
+    bordures: borduresADessiner((a) => feuille.cellule(a), position.ligne, position.colonne),
+  };
 }
 
 const zone = element('zone-grille');
@@ -172,16 +186,19 @@ miseEnForme = new MiseEnForme({
   classeur,
   selection,
   grille,
+  valeurCellule: (adr) => moteur.valeur(feuilleActive(), adr),
   avantAction,
   apresAction,
   redessinerSelection: () => grille.afficherSelection(selection),
 });
 commandes.gras = () => miseEnForme.gras();
+commandes.italique = () => miseEnForme.italique();
 commandes.redimensionner = (evenement, colonne) => miseEnForme.redimensionner(evenement, colonne);
 commandes.ajusterLargeur = (colonnes) => miseEnForme.ajusterLargeur(colonnes);
 miseEnForme.actualiser();
 
 commandesEdition = new CommandesEdition({ classeur, selection, avantAction, apresAction, signaler });
+new OutilsBordures({ classeur, selection, preferences, avantAction, apresAction });
 
 installerBarreOutils({ preferences, avantAction, apresAction, surChangement: () => interactions.actualiser() });
 boutonAnnuler.addEventListener('click', () => commandes.annuler());
@@ -262,10 +279,24 @@ function reconstruireGrille() {
   selection.reborner();
 }
 
+/**
+ * Cellules à redessiner quand des cellules changent : elles-mêmes, et leurs
+ * voisines du dessus et de gauche (qui dessinent leurs bordures du haut et de gauche).
+ */
+function avecVoisines(adresses) {
+  const resultat = new Set(adresses);
+  for (const adr of adresses) {
+    const { ligne, colonne } = lireAdresse(adr);
+    if (ligne > 1) resultat.add(adresse(ligne - 1, colonne));
+    if (colonne > 1) resultat.add(adresse(ligne, colonne - 1));
+  }
+  return resultat;
+}
+
 classeur.abonner((evenement) => {
   switch (evenement.type) {
     case 'cellules':
-      if (evenement.feuille === feuilleActive()) redessiner(evenement.adresses);
+      if (evenement.feuille === feuilleActive()) redessiner(avecVoisines(evenement.adresses));
       break;
     case 'largeurs':
       if (evenement.feuille !== feuilleActive()) break;
@@ -352,6 +383,14 @@ function exporterCsv() {
 }
 
 const panneauExporter = element('panneau-exporter');
+// Case « Quadrillage gris dans le PDF » : montre le choix actuel, le mémorise si on la change.
+const caseQuadrillage = element('quadrillage-pdf');
+panneauExporter.addEventListener('beforetoggle', (e) => {
+  if (e.newState === 'open') caseQuadrillage.checked = exportPdf.quadrillage;
+});
+caseQuadrillage.addEventListener('change', () => {
+  exportPdf.quadrillage = caseQuadrillage.checked;
+});
 element('exporter-pdf').addEventListener('click', () => {
   panneauExporter.hidePopover();
   exportPdf.exporter();
