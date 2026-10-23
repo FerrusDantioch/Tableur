@@ -64,6 +64,30 @@ export function installerMenu({ classeur, preferences, avantAction }) {
     fenetreMenu.close();
     ouvrirFenetre(element('fenetre-a-propos'));
   });
+  // « À propos » est aussi directement dans la barre du haut.
+  element('bouton-a-propos').addEventListener('click', () => {
+    avantAction();
+    element('adresse-copiee').textContent = '';
+    ouvrirFenetre(element('fenetre-a-propos'));
+  });
+
+  // « Copier l'adresse » : dans le presse-papiers si le navigateur le permet,
+  // sinon l'adresse est sélectionnée pour être copiée à la main.
+  element('copier-adresse').addEventListener('click', async () => {
+    const adresse = element('adresse-contact').textContent.trim();
+    const etat = element('adresse-copiee');
+    try {
+      await navigator.clipboard.writeText(adresse);
+      etat.textContent = 'Adresse copiée : vous pouvez la coller dans votre messagerie.';
+    } catch {
+      const choix = document.createRange();
+      choix.selectNodeContents(element('adresse-contact'));
+      const selectionTexte = window.getSelection();
+      selectionTexte.removeAllRanges();
+      selectionTexte.addRange(choix);
+      etat.textContent = 'Adresse sélectionnée : copiez-la (Ctrl+C, ou appui long puis « Copier »).';
+    }
+  });
   boutonInstaller.addEventListener('click', async () => {
     fenetreMenu.close();
     await installer();
