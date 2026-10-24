@@ -31,6 +31,12 @@ des données d'avant le renommage (`stockage.js`, `theme-initial.js`,
 - `js/affichage/` : grille **virtuelle** (seules les lignes visibles existent :
   `grille.td(l, c)` peut renvoyer `undefined`), barre d'outils en onglets.
 - `js/app.js` relie tout ; `window.omniTableur` sert aux tests.
+- Fichier de sauvegarde `.json` : `donnees/fichier-classeur.js` (format
+  `omni-tableur/classeur`, `version: 1` ; vérification complète avant import).
+  `Classeur.remplacer` (import, annulable) ; `Classeur.modifierFeuilles`
+  (plusieurs feuilles en une seule annulation, « Tout remplacer »).
+- Zoom : `affichage/zoom.js` + `Grille.changerZoom` ; les largeurs enregistrées
+  restent à 100 % (`#largeurEcran` multiplie à l'affichage).
 
 ## Tests
 
@@ -54,6 +60,13 @@ Ne pas annoncer un travail terminé avant que les deux passent.
   de classe sans `[hidden]` correspondant (`.barre-outils[hidden]`…).
 - Playwright : `setInputFiles` avec un chemin contenant des accents échoue en
   silence ; donner le fichier sous forme `{ name, mimeType, buffer }`.
+- `.outil { display: inline-flex }` l'emporterait sur `hidden` : la règle
+  `.outil[hidden]` existe pour ça (même piège pour tout nouveau composant).
+- Pincement : redessiner la grille retire de la page la case touchée, et le
+  navigateur continue d'envoyer les événements tactiles à cette case retirée
+  (ils ne remontent plus) : `zoom.js` écoute donc les cases touchées.
+- Tests navigateur : le serveur démarre avec `PORT=0` (port libre choisi par
+  le système) ; un port tiré au hasard entrait parfois en conflit.
 
 ## Licence
 
