@@ -14,12 +14,15 @@
 //     "titre": "Budget",
 //     "feuilleActive": 0,
 //     "affichage": { "zoom": 100, "theme": "omni" },
-//     "feuilles": [ { "nom", "lignes", "colonnes", "figee", "largeurs", "cellules", "fusions" } ]
+//     "feuilles": [ { "nom", "lignes", "colonnes", "figee", "largeurs", "cellules",
+//                     "fusions", "reglesConditionnelles" } ]
 //   }
 // Chaque feuille garde les noms et l'ordre des feuilles, le texte et les
 // formules des cellules, toute la mise en forme et les bordures, la largeur
-// des colonnes, la ligne figée et les cellules fusionnées (« fusions » :
-// ["A1:D1", …], facultatif) (voir Feuille.versJSON dans classeur.js).
+// des colonnes, la ligne figée, les cellules fusionnées (« fusions » :
+// ["A1:D1", …]) et les règles de mise en forme conditionnelle (voir
+// donnees/regles.js) ; ces deux derniers champs sont facultatifs (voir
+// Feuille.versJSON dans classeur.js).
 //
 // Si le format change un jour, on augmentera VERSION_FICHIER et on gardera
 // ici la lecture des anciennes versions : les anciens fichiers resteront lisibles.
@@ -30,6 +33,7 @@
 
 import { COLONNES_MAX, LIGNES_MAX, lireAdresse, lirePlage, numeroColonne } from './adresses.js';
 import { nombreCellules, seChevauchent } from './fusions.js';
+import { REGLES_MAX, verifierRegle } from './regles.js';
 import {
   ALIGNEMENTS,
   COTES,
@@ -100,7 +104,7 @@ function verifierCellule(cellule, ou) {
       throw abime(`${ou} a une valeur inconnue (« ${nom} »)`);
     }
   };
-  for (const nom of ['gras', 'italique']) {
+  for (const nom of ['gras', 'italique', 'retour']) {
     if (cellule[nom] !== undefined && typeof cellule[nom] !== 'boolean') throw abime(`${ou} a une valeur inconnue (« ${nom} »)`);
   }
   choix('couleur', ENCRES);
@@ -164,6 +168,16 @@ function verifierFeuille(feuille, numero) {
         plage && nombreCellules(plage) >= 2 && plage.fin.ligne <= LIGNES_MAX && plage.fin.colonne <= COLONNES_MAX && !vues.some((autre) => seChevauchent(autre, plage));
       if (!valable) throw abime(`${ici} a des cellules fusionnées impossibles`);
       vues.push(plage);
+    }
+  }
+  if (feuille.reglesConditionnelles !== undefined) {
+    const regles = feuille.reglesConditionnelles;
+    if (!Array.isArray(regles) || regles.length > REGLES_MAX) throw abime(`les règles de mise en forme conditionnelle de ${ici} sont illisibles`);
+    const numeros = new Set();
+    for (const regle of regles) {
+      const valable = estObjet(regle) && estEntier(regle.id, 1, 1e9) && !numeros.has(regle.id) && verifierRegle(regle) === null;
+      if (!valable) throw abime(`${ici} a une règle de mise en forme conditionnelle impossible`);
+      numeros.add(regle.id);
     }
   }
   if (!estObjet(feuille.cellules)) throw abime(`les cellules de ${ici} sont illisibles`);

@@ -73,7 +73,12 @@
       <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2" /><path d="M12 11v5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" /><circle cx="12" cy="7.8" r="1.3" fill="currentColor" /></symbol>
       <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" /></symbol>
       <symbol id="i-rechercher" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2.2" /><path d="m15 15 5 5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" /></symbol>
+      <symbol id="i-graphique" viewBox="0 0 24 24"><path d="M4 4v16h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /><path d="M8.5 16v-4M12.5 16V8M16.5 16v-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" /></symbol>
+      <symbol id="i-courbe" viewBox="0 0 24 24"><path d="M4 4v16h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /><path d="m7.5 14.5 3.5-4 3 2.5 4.5-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
+      <symbol id="i-secteurs" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2" /><path d="M12 3.5V12l6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
+      <symbol id="i-retour" viewBox="0 0 24 24"><path d="M4 6h16M4 12h12.5a3.25 3.25 0 0 1 0 6.5H12M14.5 16l-2.5 2.5 2.5 2.5M4 18.5h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
       <symbol id="i-fusionner" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2" /><path d="M6.5 12h4M8.5 10l2 2-2 2M17.5 12h-4M15.5 10l-2 2 2 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></symbol>
+      <symbol id="i-conditions" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2.5" fill="none" stroke="currentColor" stroke-width="2" /><path d="M3 12h18M12 4v16" fill="none" stroke="currentColor" stroke-width="1.4" opacity="0.6" /><rect x="13" y="13" width="7" height="6" rx="1" fill="currentColor" opacity="0.55" /><path d="m5.5 8 1.6 1.6L10 6.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></symbol>
       <symbol id="i-moins" viewBox="0 0 24 24"><path d="M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" /></symbol>
       <symbol id="i-effacer" viewBox="0 0 24 24"><path d="M14.5 4.5 20 10l-8.5 8.5H7l-3-3a1.5 1.5 0 0 1 0-2.1z M9 10l5.5 5.5 M12 20.5h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
     </svg>
@@ -168,6 +173,9 @@
         <button id="bouton-droite" class="outil" type="button" title="Aligner à droite" aria-pressed="false" data-alignement="droite">
           <svg aria-hidden="true"><use href="#i-droite" /></svg><span class="libelle">Droite</span>
         </button>
+        <button id="bouton-retour" class="outil" type="button" title="Retour à la ligne : un texte trop long continue sur plusieurs lignes dans la cellule (la ligne du tableau s'agrandit)" aria-pressed="false">
+          <svg aria-hidden="true"><use href="#i-retour" /></svg><span class="libelle">À la ligne</span>
+        </button>
         <button id="bouton-fusionner" class="outil" type="button" title="Fusionner les cellules sélectionnées en une seule (idéal pour un titre)" aria-pressed="false">
           <svg aria-hidden="true"><use href="#i-fusionner" /></svg><span class="libelle">Fusionner</span>
         </button>
@@ -177,6 +185,9 @@
         </button>
         <button id="bouton-largeur" class="outil" type="button" title="Largeur des colonnes" popovertarget="panneau-largeur">
           <svg aria-hidden="true"><use href="#i-largeur" /></svg><span class="libelle">Largeur</span>
+        </button>
+        <button id="bouton-conditions" class="outil" type="button" title="Mise en forme conditionnelle : colorer les cellules selon leur valeur" aria-haspopup="dialog">
+          <svg aria-hidden="true"><use href="#i-conditions" /></svg><span class="libelle">Conditions</span>
         </button>
       </div>
 
@@ -223,6 +234,9 @@
         </button>
         <button id="bouton-figer" class="outil" type="button" title="Figer la première ligne : elle reste visible quand on fait défiler" aria-pressed="false">
           <svg aria-hidden="true"><use href="#i-figer" /></svg><span class="libelle">Figer la 1<sup>re</sup> ligne</span>
+        </button>
+        <button id="bouton-graphique" class="outil" type="button" title="Graphique des cellules sélectionnées (colonnes, courbe ou secteurs), à enregistrer en image" aria-haspopup="dialog">
+          <svg aria-hidden="true"><use href="#i-graphique" /></svg><span class="libelle">Graphique</span>
         </button>
         <span class="separateur" aria-hidden="true"></span>
         <button id="bouton-importer" class="outil" type="button" title="Importer un classeur (.json) ou un fichier CSV" popovertarget="panneau-importer">
@@ -460,6 +474,90 @@
       </div>
     </dialog>
 
+    <dialog id="fenetre-conditions" class="fenetre fenetre-large" aria-labelledby="titre-conditions">
+      <div class="fenetre-tete">
+        <h2 id="titre-conditions">Mise en forme conditionnelle</h2>
+        <button class="outil-rond" type="button" data-fermer aria-label="Fermer"><svg aria-hidden="true"><use href="#i-fermer" /></svg></button>
+      </div>
+      <div class="fenetre-corps">
+        <p class="note">Colorer automatiquement des cellules selon leur valeur. Les couleurs changent toutes seules quand les valeurs changent, et apparaissent dans le PDF.</p>
+        <section class="a-propos-bloc" aria-labelledby="titre-liste-regles">
+          <h3 id="titre-liste-regles">Règles de la feuille</h3>
+          <ol id="liste-regles" class="liste-regles"></ol>
+          <p id="aucune-regle" class="note">Aucune règle pour l'instant.</p>
+          <p class="note">Si plusieurs règles colorent la même cellule, la première de la liste l'emporte.</p>
+          <p id="etat-regles" class="note" role="status"></p>
+        </section>
+        <section class="a-propos-bloc formulaire-regle" aria-labelledby="titre-formulaire-regle">
+          <h3 id="titre-formulaire-regle">Nouvelle règle</h3>
+          <label class="champ-fenetre">
+            <span>Cellules concernées</span>
+            <input id="regle-plage" type="text" autocomplete="off" spellcheck="false" autocapitalize="characters" placeholder="ex. B2:B20" />
+          </label>
+          <div class="regle-condition">
+            <label class="champ-fenetre">
+              <span>Si la valeur est</span>
+              <select id="regle-type"></select>
+            </label>
+            <label id="bloc-valeur" class="champ-fenetre">
+              <span>Valeur</span>
+              <input id="regle-valeur" type="text" autocomplete="off" spellcheck="false" />
+            </label>
+            <label id="bloc-valeur2" class="champ-fenetre" hidden>
+              <span>et</span>
+              <input id="regle-valeur2" type="text" autocomplete="off" spellcheck="false" placeholder="nombre (ex. 200)" />
+            </label>
+          </div>
+          <div class="regle-couleurs">
+            <div>
+              <p class="etiquette-nuancier">Alors, couleur de fond</p>
+              <div id="regle-fond" class="nuancier" role="group" aria-label="Couleur de fond"></div>
+            </div>
+            <div>
+              <p class="etiquette-nuancier">et/ou couleur du texte</p>
+              <div id="regle-encre" class="nuancier nuancier-encres" role="group" aria-label="Couleur du texte"></div>
+            </div>
+          </div>
+          <p id="erreur-regle" class="erreur-champ" role="alert"></p>
+          <div class="boutons-fenetre">
+            <button id="regle-abandonner" class="outil" type="button" hidden>Abandonner la modification</button>
+            <button id="regle-enregistrer" class="outil principal" type="button">Ajouter la règle</button>
+          </div>
+        </section>
+      </div>
+    </dialog>
+
+    <!-- Graphique des cellules sélectionnées (voir js/affichage/graphique.js). -->
+    <dialog id="fenetre-graphique" class="fenetre fenetre-large" aria-labelledby="titre-graphique">
+      <div class="fenetre-tete">
+        <h2 id="titre-graphique">Graphique</h2>
+        <button class="outil-rond" type="button" data-fermer aria-label="Fermer"><svg aria-hidden="true"><use href="#i-fermer" /></svg></button>
+      </div>
+      <div class="fenetre-corps">
+        <div class="choix-graphique" role="group" aria-label="Type de graphique">
+          <button class="outil" type="button" data-type-graphique="colonnes" aria-pressed="true"><svg aria-hidden="true"><use href="#i-graphique" /></svg><span>Colonnes</span></button>
+          <button class="outil" type="button" data-type-graphique="courbe" aria-pressed="false"><svg aria-hidden="true"><use href="#i-courbe" /></svg><span>Courbe</span></button>
+          <button class="outil" type="button" data-type-graphique="secteurs" aria-pressed="false"><svg aria-hidden="true"><use href="#i-secteurs" /></svg><span>Secteurs</span></button>
+        </div>
+        <div class="reglages-graphique">
+          <label class="champ-fenetre">
+            <span>Cellules</span>
+            <input id="graphique-plage" type="text" autocomplete="off" spellcheck="false" autocapitalize="characters" placeholder="ex. A1:B6" />
+          </label>
+          <label class="champ-fenetre">
+            <span>Titre</span>
+            <input id="graphique-titre" type="text" autocomplete="off" maxlength="80" placeholder="(facultatif)" />
+          </label>
+        </div>
+        <div id="zone-graphique" class="zone-graphique"></div>
+        <p id="note-graphique" class="note" role="status"></p>
+        <p class="note">Noms dans la 1<sup>re</sup> colonne, nombres à côté ; la 1<sup>re</sup> ligne peut donner le nom de chaque série. Le graphique n'est pas gardé dans le classeur : rouvrez cette fenêtre pour le mettre à jour.</p>
+        <div class="boutons-fenetre">
+          <button id="graphique-image" class="outil principal" type="button">Enregistrer l'image (.png)</button>
+        </div>
+      </div>
+    </dialog>
+
     <dialog id="fenetre-fusion" class="fenetre" aria-labelledby="titre-fusion">
       <div class="fenetre-tete"><h2 id="titre-fusion">Fusionner les cellules ?</h2></div>
       <div class="fenetre-corps">
@@ -626,7 +724,9 @@
           <h3>Mise en forme et bordures</h3>
           <ul>
             <li>Onglet <strong>« Mise en forme »</strong> : gras (<strong>Ctrl + B</strong>), italique (<strong>Ctrl + I</strong>), couleur du texte, couleur de fond, alignement (gauche, centre, droite ; un second appui revient à l'automatique), largeur des colonnes.</li>
+            <li><strong>À la ligne</strong> (retour à la ligne) : un texte trop long pour sa colonne continue sur plusieurs lignes au lieu d'être coupé, et la ligne du tableau s'agrandit toute seule (elle se réajuste si le texte ou la largeur de la colonne change). Un second appui l'enlève. Le PDF le respecte aussi.</li>
             <li><strong>Fusionner</strong> : sélectionnez plusieurs cellules (par exemple A1 à D1 pour un titre) puis « Fusionner » : elles n'en font plus qu'une, au texte centré. Seul le contenu de la cellule en haut à gauche est gardé (une question est posée si d'autres cellules sont remplies) ; ses couleurs et ses bordures s'appliquent à toute la zone. Une formule qui vise une case de la zone (<code>=B1</code>) utilise la cellule en haut à gauche. Sur une cellule fusionnée, le même bouton devient « Défusionner ». On ne peut pas trier des lignes qui contiennent des cellules fusionnées.</li>
+            <li><strong>Conditions</strong> (mise en forme conditionnelle) : colorer des cellules selon leur valeur. Choisissez les cellules (ex. <code>B2:B20</code>), la condition (supérieure à, inférieure à, égale à, entre, négative, contient le texte) et une couleur de fond et/ou de texte. Plusieurs règles possibles ; la liste permet de les modifier ou de les supprimer. Les couleurs se mettent à jour toutes seules.</li>
             <li><strong>Format</strong> des nombres : nombre (1 234,50), euros, pourcentage, date, et nombre de décimales (− et +). Le format change seulement l'affichage : les calculs gardent le nombre exact.</li>
             <li>Onglet <strong>« Bordures »</strong> : choisissez d'abord le trait (<strong>Fin</strong> ou <strong>Épais</strong>) et la <strong>Couleur</strong>, sélectionnez les cellules, puis <strong>Toutes</strong>, <strong>Extérieure</strong>, <strong>Haut</strong>, <strong>Bas</strong>, <strong>Gauche</strong>, <strong>Droite</strong> ou <strong>Aucune</strong>. Les bordures apparaissent aussi dans le PDF.</li>
           </ul>
@@ -637,6 +737,7 @@
             <li><strong>Feuilles</strong> : les onglets en bas de l'écran. <strong>+</strong> ajoute une feuille ; un appui sur un onglet l'affiche ; un appui sur l'onglet affiché ouvre son menu (<strong>Renommer…</strong>, <strong>Supprimer…</strong>). À la souris, un double-clic renomme.</li>
             <li>Onglet <strong>« Données »</strong> → <strong>Trier</strong> : placez-vous dans la colonne qui décide de l'ordre. Omni-Tableur trouve le tableau autour, reconnaît la ligne de titres (case à cocher), puis trie en ordre croissant ou décroissant. Les lignes restent entières.</li>
             <li><strong>Figer la 1<sup>re</sup> ligne</strong> : la ligne des titres reste visible quand on fait défiler.</li>
+            <li><strong>Graphique</strong> : sélectionnez un tableau (ou touchez simplement une de ses cellules), puis « Graphique ». Choisissez <strong>Colonnes</strong>, <strong>Courbe</strong> ou <strong>Secteurs</strong> (camembert), ajoutez un titre si vous voulez. Les noms viennent de la 1<sup>re</sup> colonne, les nombres des colonnes suivantes, et la 1<sup>re</sup> ligne donne le nom de chaque série. <strong>Enregistrer l'image (.png)</strong> le télécharge, sur fond blanc. Le graphique n'est pas gardé dans le classeur : rouvrez la fenêtre pour le mettre à jour.</li>
             <li><strong>Importer</strong> → <strong>Importer un CSV</strong> : un fichier CSV (Excel, banque, Google Sheets…) arrive dans une nouvelle feuille.</li>
             <li><strong>Exporter</strong> → <strong>Exporter la feuille (.csv)</strong> ou <strong>(.pdf)</strong> : la feuille affichée, pour un autre tableur ou pour l'imprimer.</li>
           </ul>
@@ -647,6 +748,7 @@
             <li>Le classeur est enregistré automatiquement, mais seulement <strong>dans ce navigateur</strong> : si vous effacez ses données ou changez d'appareil, il disparaît.</li>
             <li>Pour le garder en lieu sûr : onglet « Données » → <strong>Exporter</strong> → <strong>Exporter le classeur (.json)</strong>. Le fichier <code>omni-tableur-AAAA-MM-JJ.json</code> arrive dans les téléchargements ; rangez-le où vous voulez (clé USB, cloud, e-mail…).</li>
             <li>Pour le rouvrir (ici ou sur un autre appareil) : <strong>Importer</strong> → <strong>Importer un classeur (.json)</strong>. Il remplace le classeur actuel, après confirmation ; « Annuler » permet de revenir en arrière.</li>
+            <li><strong>Conseil</strong> : faites un export .json régulièrement (par exemple chaque semaine) et rangez-le ailleurs que sur l'appareil. L'export <strong>CSV</strong>, lui, ne garde que les valeurs d'une feuille (sans formules ni mise en forme) : il sert à ouvrir le tableau dans un autre tableur.</li>
           </ul>
         </section>
         <section>
@@ -665,6 +767,9 @@
               <tr><td>ARRONDI</td><td><code>=ARRONDI(A1;2)</code></td><td>arrondi à 2 décimales (aussi ARRONDI.SUP, ARRONDI.INF)</td></tr>
               <tr><td>NB.SI</td><td><code>=NB.SI(B2:B20;"&gt;10")</code></td><td>combien de cellules respectent le critère</td></tr>
               <tr><td>SOMME.SI</td><td><code>=SOMME.SI(A2:A9;"Loyer";B2:B9)</code></td><td>total de B pour les lignes où A vaut « Loyer » (aussi MOYENNE.SI)</td></tr>
+              <tr><td>NB.SI.ENS</td><td><code>=NB.SI.ENS(A2:A9;"Courses";B2:B9;"&gt;50")</code></td><td>combien de lignes respectent toutes les conditions</td></tr>
+              <tr><td>SOMME.SI.ENS</td><td><code>=SOMME.SI.ENS(C2:C9;A2:A9;"mars";B2:B9;"Courses")</code></td><td>total de C pour les lignes « mars » <em>et</em> « Courses » (la plage à additionner vient en premier ; aussi MOYENNE.SI.ENS)</td></tr>
+              <tr><td>MEDIANE</td><td><code>=MEDIANE(B2:B8)</code></td><td>la valeur du milieu (moins sensible qu'une moyenne à une valeur extrême)</td></tr>
               <tr><td>RECHERCHEV</td><td><code>=RECHERCHEV("Poire";A2:C9;3;FAUX)</code></td><td>cherche « Poire » dans la 1<sup>re</sup> colonne et donne la valeur de la 3<sup>e</sup> colonne</td></tr>
               <tr><td>MAJUSCULE, MINUSCULE</td><td><code>=MAJUSCULE(A1)</code></td><td>le texte en majuscules (ou en minuscules)</td></tr>
               <tr><td>CONCATENER, &amp;</td><td><code>=A1&amp;" "&amp;B1</code></td><td>assemble des textes</td></tr>
@@ -673,7 +778,7 @@
             </tbody>
           </table>
           <p class="note">Une plage s'écrit <code>A1:B5</code> ; une colonne entière <code>A:A</code>. Le <code>$</code> fige une référence (<code>$A$1</code>). Une cellule d'une autre feuille : <code>=Feuille2!A1</code>, ou <code>='Mes ventes'!B3</code> si le nom contient une espace. Les formules se recalculent toutes seules.</p>
-          <p class="note">Critères de NB.SI et SOMME.SI : <code>"&gt;5"</code>, <code>"&lt;=2,5"</code>, <code>"&lt;&gt;0"</code> (différent de 0), <code>"pomme"</code>, <code>"P*"</code> (commence par P), <code>""</code> (cellules vides). Les majuscules ne comptent pas : <code>"oui"</code> = <code>"Oui"</code>.</p>
+          <p class="note">Critères de NB.SI, SOMME.SI et des fonctions .ENS :<code>"&gt;5"</code>, <code>"&lt;=2,5"</code>, <code>"&lt;&gt;0"</code> (différent de 0), <code>"pomme"</code>, <code>"P*"</code> (commence par P), <code>""</code> (cellules vides). Les majuscules ne comptent pas : <code>"oui"</code> = <code>"Oui"</code>.</p>
           <p class="note">Dates : tapez <code>23/10/2026</code>. Une date est un nombre de jours : <code>=B1-A1</code> donne l'écart en jours, <code>=A1+7</code> la date une semaine plus tard.</p>
         </section>
         <section>
@@ -681,7 +786,7 @@
           <table class="tableau-aide">
             <tbody>
               <tr><td><code>#DIV/0!</code></td><td>division par zéro ou par une cellule vide</td></tr>
-              <tr><td><code>#VALEUR!</code></td><td>du texte là où un nombre est attendu</td></tr>
+              <tr><td><code>#VALEUR!</code></td><td>du texte là où un nombre est attendu (ou des plages de tailles différentes dans une fonction .ENS)</td></tr>
               <tr><td><code>#REF!</code></td><td>cellule qui n'existe pas (supprimée, au-delà de AZ ou de la ligne 1000, ou feuille inconnue)</td></tr>
               <tr><td><code>#N/A</code></td><td>valeur introuvable (RECHERCHEV n'a rien trouvé)</td></tr>
               <tr><td><code>#NOM?</code></td><td>fonction ou nom mal orthographié</td></tr>

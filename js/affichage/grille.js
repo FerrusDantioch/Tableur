@@ -13,8 +13,10 @@
 // garde ainsi sa taille normale. Quand on fait défiler, les lignes qui
 // sortent de la zone sont retirées et celles qui arrivent sont dessinées.
 //
-// Toutes les lignes ont la même hauteur : la position d'une cellule se
-// calcule donc directement (ligne × hauteur), sans la chercher dans la page.
+// Les lignes ont toutes la même hauteur, sauf celles qui contiennent du texte
+// « renvoyé à la ligne » : elles grandissent pour le montrer en entier. Le
+// haut de chaque ligne est calculé une fois pour toutes (#hauts) : la
+// position d'une cellule se lit donc directement, sans la chercher dans la page.
 //
 // Cellules fusionnées : chacune est dessinée par-dessus les cellules qu'elle
 // couvre (un bloc posé sur la grille, avec le texte et la mise en forme de
@@ -65,7 +67,12 @@ export class Grille {
   #poigneeRecopie; // petit carré (à la souris) : recopie la sélection
   #cadreRecopie; // contour pointillé pendant une recopie
   #plageSelection = null; // dernière plage dessinée (pour surligner les en-têtes)
+  #selection = null; // dernière sélection dessinée (redessinée quand une ligne change de hauteur)
   #blocsFusion = []; // blocs qui dessinent les cellules fusionnées
+  /** @type {Map<number, number>} lignes plus hautes que les autres (retour à la ligne) : ligne → hauteur, zoom compris */
+  #hauteursLignes = new Map();
+  #hauts = [0, 0]; // #hauts[l] = haut de la ligne l dans le contenu ; #hauts[nombre de lignes + 1] = bas du tableau
+  #mesureur = null; // zone invisible où le navigateur mesure le texte renvoyé à la ligne
 
   /**
    * @param {object} options
@@ -79,6 +86,10 @@ export class Grille {
     this.#racine = racine;
     this.feuille = feuille;
     this.presenterCellule = presenterCellule;
+    this.#mesureur = document.createElement('div');
+    this.#mesureur.className = 'mesure-retour';
+    this.#mesureur.setAttribute('aria-hidden', 'true');
+    racine.append(this.#mesureur);
 
     // Le défilement dessine les lignes qui arrivent à l'écran.
     racine.addEventListener('scroll', () => this.#mettreAJourFenetre(), { passive: true });
@@ -98,9 +109,14 @@ export class Grille {
     return this.#contenu;
   }
 
-  /** Hauteur d'une ligne en pixels. */
+  /** Hauteur d'une ligne ordinaire en pixels (zoom compris). */
   get hauteurLigne() {
     return this.#hauteur;
+  }
+
+  /** Hauteur à l'écran d'une ligne précise (plus grande si elle contient du texte renvoyé à la ligne). */
+  hauteurDe(ligne) {
+    return this.#hauteursLignes.get(ligne) ?? this.#hauteur;
   }
 
   /** Zoom actuel (1 = 100 %). */
@@ -250,6 +266,9 @@ export class Grille {
     this.#premiere = 1;
     this.#derniere = 0;
     this.#calculerPositions();
+    this.#mesurerLignes();
+    this.#calculerHauts();
+    this.#couche.style.setProperty('--hauteur-figee', `${this.hauteurDe(1)}px`);
 
     // Ligne 1 figée : toujours dessinée, en premier.
     if (this.#figee) corps.prepend(this.#creerLigne(1).tr);
@@ -273,6 +292,7 @@ export class Grille {
   #creerLigne(l) {
     const tr = document.createElement('tr');
     if (this.#figee && l === 1) tr.className = 'ligne-figee';
+    if (this.#hauteursLignes.has(l)) tr.style.height = `${this.#hauteursLignes.get(l)}px`;
     const th = document.createElement('th');
     th.className = 'entete-ligne';
     th.scope = 'row';
@@ -305,11 +325,10 @@ export class Grille {
     if (!this.#corps) return;
     const total = this.feuille.lignes;
     const debutFeuille = this.#figee ? 2 : 1; // la ligne 1 figée est dessinée à part
-    const h = this.#hauteur;
     const haut = this.#racine.scrollTop;
     const hauteurVue = this.#racine.clientHeight || 800;
-    const premiereVisible = Math.max(debutFeuille, Math.floor(haut / h) + 1);
-    const derniereVisible = Math.min(total, Math.ceil((haut + hauteurVue) / h));
+    const premiereVisible = Math.max(debutFeuille, this.#ligneA(haut));
+    const derniereVisible = Math.min(total, this.#ligneA(haut + hauteurVue));
 
     const assez =
       !forcer &&
@@ -345,12 +364,92 @@ export class Grille {
 
     this.#premiere = premiere;
     this.#derniere = derniere;
-    const lignesAuDessus = premiere - debutFeuille;
-    const lignesEnDessous = total - derniere;
-    this.#espaceHaut.hidden = lignesAuDessus <= 0;
-    this.#espaceHaut.style.height = `${Math.max(0, lignesAuDessus) * h}px`;
-    this.#espaceBas.hidden = lignesEnDessous <= 0;
-    this.#espaceBas.style.height = `${Math.max(0, lignesEnDessous) * h}px`;
+    // Les lignes d'espacement ont la hauteur des lignes qu'elles remplacent.
+    this.#espaceHaut.hidden = premiere <= debutFeuille;
+    this.#espaceHaut.style.height = `${Math.max(0, this.#hauts[premiere] - this.#hauts[debutFeuille])}px`;
+    this.#espaceBas.hidden = derniere >= total;
+    this.#espaceBas.style.height = `${Math.max(0, this.#hauts[total + 1] - this.#hauts[derniere + 1])}px`;
+  }
+
+  /** Numéro de la ligne qui se trouve à la hauteur `y` du contenu (recherche par dichotomie). */
+  #ligneA(y) {
+    let bas = 1;
+    let haut = this.feuille.lignes;
+    while (bas < haut) {
+      const milieu = Math.ceil((bas + haut) / 2);
+      if (this.#hauts[milieu] <= y) bas = milieu;
+      else haut = milieu - 1;
+    }
+    return bas;
+  }
+
+  // --- Hauteur des lignes (retour à la ligne) --------------------------------------------
+
+  /** Calcule le haut de chaque ligne : la ligne 1 commence sous les en-têtes A, B, C… */
+  #calculerHauts() {
+    const total = this.feuille.lignes;
+    const hauts = new Array(total + 2);
+    hauts[0] = 0;
+    hauts[1] = this.#hauteur;
+    for (let l = 1; l <= total; l++) hauts[l + 1] = hauts[l] + this.hauteurDe(l);
+    this.#hauts = hauts;
+  }
+
+  /**
+   * Mesure les cellules « retour à la ligne » des lignes données (toutes si
+   * `lignes` vaut null) : le navigateur écrit leur texte dans une zone
+   * invisible, à la largeur de leur colonne, et la ligne prend la hauteur
+   * du texte le plus haut (jamais moins qu'une ligne ordinaire). Une cellule
+   * fusionnée ne fait pas grandir ses lignes (comme dans Excel).
+   * Renvoie vrai si une hauteur a changé.
+   */
+  #mesurerLignes(lignes = null) {
+    const feuille = this.feuille;
+    const boites = [];
+    for (const adr of feuille.adresses()) {
+      if (!feuille.cellule(adr)?.retour) continue;
+      const { ligne, colonne } = lireAdresse(adr);
+      if ((lignes && !lignes.has(ligne)) || ligne > feuille.lignes || colonne > feuille.colonnes) continue;
+      if (feuille.fusionEn(ligne, colonne)) continue;
+      const vue = this.presenterCellule(adr, ligne, colonne);
+      if (!vue.texte) continue;
+      const boite = document.createElement('div');
+      boite.textContent = vue.texte;
+      if (vue.genre === 'erreur') boite.classList.add('erreur');
+      if (vue.gras) boite.classList.add('gras');
+      if (vue.italique) boite.classList.add('italique');
+      boite.style.width = this.#colonnes[colonne].style.width;
+      boite.dataset.ligne = ligne;
+      boites.push(boite);
+    }
+    // Toutes les boîtes sont mesurées d'un coup (une seule mise en page).
+    const mesurees = new Map();
+    if (boites.length) {
+      this.#mesureur.replaceChildren(...boites);
+      for (const boite of boites) {
+        const ligne = Number(boite.dataset.ligne);
+        const hauteur = Math.ceil(boite.getBoundingClientRect().height);
+        if (hauteur > (mesurees.get(ligne) ?? this.#hauteur)) mesurees.set(ligne, hauteur);
+      }
+      this.#mesureur.replaceChildren();
+    }
+    const avant = this.#hauteursLignes;
+    const apres = new Map(lignes ? [...avant].filter(([l]) => !lignes.has(l)) : []);
+    for (const [l, hauteur] of mesurees) apres.set(l, hauteur);
+    this.#hauteursLignes = apres;
+    return apres.size !== avant.size || [...apres].some(([l, hauteur]) => avant.get(l) !== hauteur);
+  }
+
+  /** Après un changement de hauteur : replace les lignes dessinées, les fusions et la sélection. */
+  #appliquerHauteurs() {
+    this.#calculerHauts();
+    for (const [l, { tr }] of this.#lignes) {
+      tr.style.height = this.#hauteursLignes.has(l) ? `${this.#hauteursLignes.get(l)}px` : '';
+    }
+    this.#couche.style.setProperty('--hauteur-figee', `${this.hauteurDe(1)}px`);
+    this.#mettreAJourFenetre(true);
+    this.#dessinerFusions();
+    if (this.#selection) this.afficherSelection(this.#selection);
   }
 
   /** Le <td> d'une cellule, ou undefined si sa ligne n'est pas dessinée (hors de l'écran). */
@@ -368,9 +467,16 @@ export class Grille {
     if (td) this.#remplir(td, position.ligne, position.colonne);
   }
 
+  /** Redessine des cellules ; leurs lignes changent de hauteur si un texte renvoyé à la ligne a changé. */
   rafraichirCellules(adresses) {
-    for (const adr of adresses) this.rafraichirCellule(adr);
-    this.#dessinerFusions();
+    const lignes = new Set();
+    for (const adr of adresses) {
+      this.rafraichirCellule(adr);
+      const position = lireAdresse(adr);
+      if (position) lignes.add(position.ligne);
+    }
+    if (this.#mesurerLignes(lignes)) this.#appliquerHauteurs();
+    else this.#dessinerFusions();
   }
 
   /** Redessine toutes les cellules dessinées (après un changement de thème de bordures, etc.). */
@@ -378,7 +484,8 @@ export class Grille {
     for (const [l, { tds }] of this.#lignes) {
       for (let c = 1; c < tds.length; c++) this.#remplir(tds[c], l, c);
     }
-    this.#dessinerFusions();
+    if (this.#mesurerLignes()) this.#appliquerHauteurs();
+    else this.#dessinerFusions();
   }
 
   /**
@@ -402,6 +509,7 @@ export class Grille {
       if (vue.genre !== 'vide') bloc.classList.add(vue.genre);
       if (vue.gras) bloc.classList.add('gras');
       if (vue.italique) bloc.classList.add('italique');
+      if (vue.retour) bloc.classList.add('retour');
       if (vue.fond) bloc.dataset.fond = vue.fond;
       if (vue.couleur) bloc.dataset.encre = vue.couleur;
       if (vue.alignement) bloc.dataset.align = vue.alignement;
@@ -432,6 +540,7 @@ export class Grille {
     td.className = vue.genre === 'vide' ? '' : vue.genre;
     if (vue.gras) td.classList.add('gras');
     if (vue.italique) td.classList.add('italique');
+    if (vue.retour) td.classList.add('retour');
     const attribut = (nom, valeur) => {
       if (valeur) td.dataset[nom] = valeur;
       else delete td.dataset[nom];
@@ -473,14 +582,18 @@ export class Grille {
     this.#table.style.width = `${this.#positions.at(-1)}px`;
   }
 
-  /** Applique les largeurs de colonnes enregistrées dans la feuille. */
+  /**
+   * Applique les largeurs de colonnes enregistrées dans la feuille. Le texte
+   * renvoyé à la ligne occupe alors plus ou moins de lignes : on le remesure.
+   */
   rafraichirLargeurs(colonnes = null) {
     const liste = colonnes ?? this.#colonnes.keys();
     for (const c of liste) {
       if (this.#colonnes[c]) this.#colonnes[c].style.width = `${this.#largeurEcran(this.feuille.largeur(c))}px`;
     }
     this.#calculerPositions();
-    this.#dessinerFusions();
+    if (this.#mesurerLignes()) this.#appliquerHauteurs();
+    else this.#dessinerFusions();
   }
 
   /** Largeur provisoire d'une colonne pendant qu'on la fait glisser (largeur à 100 %). */
@@ -502,10 +615,10 @@ export class Grille {
    * figée, dans le contenu qui défile sinon.
    */
   #rectangle(ligne, colonne) {
-    const haut = this.#estFigee(ligne) ? 0 : this.#hauteur * ligne; // la ligne d'en-tête a la même hauteur
+    const haut = this.#estFigee(ligne) ? 0 : (this.#hauts[ligne] ?? this.#hauteur * ligne);
     const gauche = this.#positions[colonne] ?? 0;
     const droite = this.#positions[colonne + 1] ?? gauche;
-    return { gauche, haut, droite, bas: haut + this.#hauteur };
+    return { gauche, haut, droite, bas: haut + this.hauteurDe(ligne) };
   }
 
   /**
@@ -522,8 +635,8 @@ export class Grille {
       couche,
       gauche,
       droite: this.#positions[fin.colonne + 1] ?? gauche,
-      haut: couche ? 0 : this.#hauteur * debut.ligne,
-      bas: couche ? this.#hauteur : this.#hauteur * (fin.ligne + 1),
+      haut: couche ? 0 : this.#hauts[debut.ligne],
+      bas: couche ? this.hauteurDe(1) : this.#hauts[fin.ligne + 1],
     };
   }
 
@@ -559,6 +672,7 @@ export class Grille {
 
   /** Dessine la sélection : cadre de la plage, cadre de la cellule active, en-têtes surlignés. */
   afficherSelection(selection) {
+    this.#selection = selection;
     const { debut, fin } = selection.plage;
     const active = selection.active;
     const placer = (element, a, b, sansHaut = false, sansBas = false) => {
@@ -607,12 +721,11 @@ export class Grille {
     const cadre = this.#cadreRecopie;
     cadre.hidden = !plage;
     if (!plage) return;
-    // Dessiné dans le contenu qui défile : la ligne l commence à l × hauteur
-    // (la ligne des en-têtes A, B, C… a la même hauteur).
+    // Dessiné dans le contenu qui défile (sous les en-têtes A, B, C…).
     const gauche = this.#positions[plage.debut.colonne];
     const droite = this.#positions[plage.fin.colonne + 1];
-    const haut = this.#hauteur * plage.debut.ligne;
-    const bas = this.#hauteur * (plage.fin.ligne + 1);
+    const haut = this.#hauts[plage.debut.ligne];
+    const bas = this.#hauts[plage.fin.ligne + 1];
     cadre.style.transform = `translate(${gauche}px, ${haut}px)`;
     cadre.style.width = `${droite - gauche}px`;
     cadre.style.height = `${bas - haut}px`;
@@ -627,9 +740,9 @@ export class Grille {
     const zone = this.#racine;
     const h = this.#hauteur;
     if (ligne >= 1 && ligne <= this.feuille.lignes && !this.#estFigee(ligne)) {
-      const haut = h * ligne;
-      const bas = haut + h;
-      const hautVisible = zone.scrollTop + h + (this.#figee ? h : 0);
+      const haut = this.#hauts[ligne];
+      const bas = haut + this.hauteurDe(ligne);
+      const hautVisible = zone.scrollTop + h + (this.#figee ? this.hauteurDe(1) : 0);
       const basVisible = zone.scrollTop + zone.clientHeight;
       if (haut < hautVisible) zone.scrollTop -= hautVisible - haut;
       else if (bas > basVisible) zone.scrollTop += bas - basVisible;
@@ -683,9 +796,8 @@ export class Grille {
 
     let ligne = null;
     if (vy >= h) {
-      if (this.#figee && vy < 2 * h) ligne = 1;
-      else ligne = Math.floor((vy + zone.scrollTop) / h);
-      ligne = Math.min(this.feuille.lignes, Math.max(1, ligne));
+      if (this.#figee && vy < h + this.hauteurDe(1)) ligne = 1;
+      else ligne = this.#ligneA(vy + zone.scrollTop);
     }
     let colonne = null;
     if (vx >= this.#largeurNumeros) {

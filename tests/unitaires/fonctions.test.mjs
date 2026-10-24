@@ -72,6 +72,81 @@ describe('Conditions', () => {
   });
 });
 
+// Un petit budget pour les fonctions à plusieurs critères (« .ENS »).
+const BUDGET = {
+  A1: 'Mois', B1: 'Catégorie', C1: 'Montant',
+  A2: 'janvier', B2: 'Courses', C2: '120',
+  A3: 'janvier', B3: 'Loyer', C3: '600',
+  A4: 'février', B4: 'Courses', C4: '95,5',
+  A5: 'février', B5: 'Courses', C5: '30',
+  A6: 'mars', B6: 'Loisirs', C6: 'gratuit',
+  A7: 'mars', B7: 'courses', C7: '=C2/2',
+};
+
+describe('MEDIANE et fonctions à plusieurs critères (initiative)', () => {
+  test('MEDIANE : la valeur du milieu', () => {
+    verifier(
+      [
+        ['=MEDIANE(1;2;100)', '2'], // la moyenne donnerait 34,33
+        ['=MEDIANE(4;1;3;2)', '2,5'], // nombre pair : moyenne des deux du milieu
+        ['=MEDIANE(C2:C7)', '95,5'], // 30 ; 60 ; 95,5 ; 120 ; 600 (le texte est ignoré)
+        ['=MEDIANE(C2;Y9;C3)', '360'], // une cellule vide est ignorée, pas comptée comme 0
+        ['=MEDIANE(A2:A3)', '#NOMBRE!'], // aucun nombre
+        ['=MEDIANE(C2:C7;1/0)', '#DIV/0!'], // une erreur remonte
+      ],
+      BUDGET,
+    );
+  });
+
+  test('NB.SI.ENS : toutes les conditions à la fois', () => {
+    verifier(
+      [
+        ['=NB.SI.ENS(B2:B7;"courses")', '4'], // majuscules ignorées
+        ['=NB.SI.ENS(B2:B7;"Courses";C2:C7;">50")', '3'], // 120 ; 95,5 ; 60 (pas 30)
+        ['=NB.SI.ENS(A2:A7;"f*";B2:B7;"courses")', '2'], // jokers
+        ['=NB.SI.ENS(C2:C7;">=30";C2:C7;"<=120")', '4'], // une même plage, deux bornes
+        ['=NB.SI.ENS(Y1:Y5;"")', '5'], // cellules vides
+        ['=nb.si.ens(b2:b7;"loyer")', '1'], // en minuscules, la fonction est reconnue
+      ],
+      BUDGET,
+    );
+  });
+
+  test('SOMME.SI.ENS et MOYENNE.SI.ENS : la plage à calculer vient en premier', () => {
+    verifier(
+      [
+        ['=SOMME.SI.ENS(C2:C7;B2:B7;"courses")', '305,5'],
+        ['=SOMME.SI.ENS(C2:C7;A2:A7;"février";B2:B7;"Courses")', '125,5'],
+        ['=SOMME.SI.ENS(C2:C7;A2:A7;"mars")', '60'], // « gratuit » (texte) n'est pas additionné
+        ['=MOYENNE.SI.ENS(C2:C7;B2:B7;"courses")', '76,375'],
+        ['=MOYENNE.SI.ENS(C2:C7;B2:B7;"Voyage")', '#DIV/0!'], // rien ne correspond
+      ],
+      BUDGET,
+    );
+  });
+
+  test('erreurs claires : plages de tailles différentes, critère manquant', () => {
+    verifier(
+      [
+        ['=SOMME.SI.ENS(C2:C7;B2:B6;"courses")', '#VALEUR!'],
+        ['=NB.SI.ENS(B2:B7;"courses";C2:C3;">0")', '#VALEUR!'],
+        ['=NB.SI.ENS(B2:B7)', '#N/A'],
+        ['=SOMME.SI.ENS(C2:C7;B2:B7;1/0)', '#DIV/0!'],
+      ],
+      BUDGET,
+    );
+    const t = creerClasseurDeTest({ ...BUDGET, E1: '=SOMME.SI.ENS(C2:C7;B2:B6;"courses")', E2: '=NB.SI.ENS(B2:B7)' });
+    assert.match(t.explication('E1'), /plages de tailles différentes/);
+    assert.match(t.explication('E2'), /Il manque un argument/);
+    // Recalcul : un montant change, la somme suit.
+    assert.equal(t.affiche('E1'), '#VALEUR!');
+    t.remplir({ E3: '=SOMME.SI.ENS(C2:C7;B2:B7;"Courses";A2:A7;"janvier")' });
+    assert.equal(t.affiche('E3'), '120');
+    t.remplir({ C2: '200' });
+    assert.equal(t.affiche('E3'), '200');
+  });
+});
+
 describe('Recherche : RECHERCHEV', () => {
   test('recherche exacte (FAUX)', () => {
     verifier(

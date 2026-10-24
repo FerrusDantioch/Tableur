@@ -18,137 +18,268 @@ L'application s'appelait « Tableur » jusqu'à la version 2.0.0. L'adresse et l
 nom du dépôt sont gardés tels quels : les changer casserait les favoris et
 l'application déjà installée sur les appareils (voir partie 6).
 
+**Le plus important** : la partie 1 explique comment ne jamais perdre un
+classeur (faire régulièrement un export .json).
+
 ---
 
-## 1. Ce que l'application sait faire
+## 1. Ne pas perdre ses classeurs : les trois façons d'enregistrer
+
+| | **Sauvegarde automatique** | **Export .json** (copie complète) | **Export CSV** (valeurs seulement) |
+|---|---|---|---|
+| **Comment** | Rien à faire : à chaque modification | Onglet « Données » → **Exporter** → **Exporter le classeur (.json)** | Onglet « Données » → **Exporter** → **Exporter la feuille (.csv)** |
+| **Où** | Dans le navigateur de l'appareil | Un fichier `omni-tableur-AAAA-MM-JJ.json` dans les téléchargements, à ranger où tu veux | Un fichier `.csv` dans les téléchargements |
+| **Ce qu'il garde** | Tout | **Tout** : toutes les feuilles (noms et ordre), textes et **formules**, mise en forme, bordures, largeurs, ligne figée, cellules fusionnées, règles de couleurs, feuille affichée, thème et zoom | **Une seule feuille**, et seulement les **valeurs** : les formules sont remplacées par leur résultat, sans mise en forme |
+| **Pour quoi faire** | Retrouver son travail en rouvrant l'application | Copie de sécurité ; passer d'un appareil à l'autre | Ouvrir le tableau dans Excel, LibreOffice ou Google Sheets |
+| **Disparaît si…** | …on efface les données du navigateur, on désinstalle, ou on change d'appareil | …on supprime le fichier soi-même | …on supprime le fichier soi-même |
+| **Pour le rouvrir** | Automatique | **Importer** → **Importer un classeur (.json)** | **Importer** → **Importer un CSV** (dans une nouvelle feuille) |
+
+(L'export **PDF**, lui, sert à imprimer ou envoyer un tableau figé : il ne se rouvre pas dans l'application.)
+
+> **Conseil de sécurité** : la sauvegarde automatique reste dans le
+> navigateur. Fais **régulièrement un export .json** — par exemple chaque
+> semaine, et toujours après une grosse séance de travail — et range le
+> fichier **ailleurs que sur l'appareil** (clé USB, cloud, e-mail à
+> toi-même). C'est ta vraie copie de secours : avec elle, rien n'est perdu si
+> le navigateur est vidé ou si le téléphone change.
+
+**Bon à savoir**
+
+- La sauvegarde automatique a lieu moins d'une seconde après chaque
+  modification, et aussitôt quand l'application passe en arrière-plan. L'état
+  est indiqué en bas à droite (« ✓ Enregistré »).
+- Importer un classeur .json **remplace** le classeur ouvert, après la
+  question « Cela remplacera votre classeur actuel. Continuer ? ». Juste
+  après, le bouton « Annuler » permet encore de revenir au classeur d'avant.
+  Pour garder les deux, exporte d'abord le classeur ouvert.
+- Un fichier abîmé, vide, venant d'une autre application ou d'une version
+  plus récente d'Omni-Tableur est refusé avec un message clair : le classeur
+  ouvert ne change pas.
+- Le fichier .json porte un numéro de version de format (`"version": 1`) :
+  les versions futures de l'application sauront relire les anciens fichiers.
+- Le classeur d'un téléphone et celui d'un ordinateur sont indépendants (pas
+  de synchronisation) : le fichier .json sert à passer de l'un à l'autre.
+- Rien ne quitte l'appareil sans toi : aucun compte, aucun serveur.
+- Les classeurs des versions précédentes (« Tableur » 1.x et 2.0) s'ouvrent
+  normalement : au premier lancement d'Omni-Tableur, ils sont copiés sous le
+  nouveau nom, vérifiés, puis l'ancien exemplaire est effacé.
+- Ouvre Omni-Tableur dans **un seul onglet à la fois** : un bandeau prévient
+  si ce n'est pas le cas (sinon un onglet pourrait écraser le travail de l'autre).
+- Sur Firefox, une question peut apparaître (« stocker des données de façon
+  persistante ») : réponds « Autoriser ».
+- « Menu → Nouveau classeur » efface tout, après confirmation ; « Annuler »
+  permet encore de tout récupérer tant que l'application reste ouverte.
+
+---
+
+## 2. Toutes les fonctions
 
 La barre d'outils est rangée en quatre onglets : **Édition**, **Mise en
 forme**, **Bordures**, **Données**. Toucher l'onglet déjà ouvert replie la
 barre (plus de place pour la grille sur téléphone). **Annuler**,
-**Rétablir**, **À propos** et **Menu** restent toujours visibles en haut.
+**Rétablir**, **À propos** et **Menu** restent toujours visibles en haut ; le
+**zoom** et les **onglets des feuilles** sont en bas.
 
-**Saisie et déplacements**
+### Saisir et se déplacer
 
 - Grille de 100 lignes × 26 colonnes (A à Z) au départ, agrandissable depuis
   le menu jusqu'à 1000 lignes × 52 colonnes (AZ). Seules les lignes visibles
   sont dessinées : même une grande feuille reste fluide sur téléphone.
 - Texte et nombres à la française : `3,5` (ou `3.5`), `1 234`, `12,50 €`,
   `20 %`, `VRAI` / `FAUX`, dates `23/10/2026`. Une apostrophe force le texte : `'0612`.
-- Clavier : flèches, **Tab** (à droite), **Entrée** (en bas), avec **Maj** dans
-  l'autre sens ; **F2** ou double-clic pour modifier ; **Échap** pour annuler ;
-  **Suppr** pour vider ; **Ctrl + flèche** pour aller au bord.
+- Clavier : flèches, **Tab** (à droite), **Entrée** (en bas), avec **Maj**
+  dans l'autre sens ; **F2** ou double-clic pour modifier ; **Échap** pour
+  annuler la saisie ; **Ctrl + flèche** pour aller au bord ; case « A1 » en
+  haut à gauche : taper une adresse puis Entrée pour y aller.
 - Au doigt : un appui sélectionne, un second appui ouvre le clavier ; la
   poignée ronde étend la sélection ; la barre « fx » permet aussi d'écrire.
-- Sélection de plages (Maj + flèches, glisser). Toucher ou cliquer un en-tête
-  (A, B, C… ou 1, 2, 3…) sélectionne toute la colonne ou toute la ligne : la
-  mise en forme, Copier/Coller, Insérer et Supprimer s'appliquent alors à
-  elle (les panneaux « Insérer » et « Supprimer » ne proposent plus que des
-  colonnes, ou que des lignes).
-- Annuler / Rétablir (boutons, **Ctrl + Z**, **Ctrl + Y**), pour toutes les actions.
-- **Zoom** de 50 % à 200 % (par pas de 10 %) : boutons **−** et **+** en bas
-  à droite (un appui sur le pourcentage revient à 100 %), pincement à deux
-  doigts sur la grille, ou **Ctrl + molette**. Il est mémorisé sur l'appareil
-  et ne change que l'affichage (ni le classeur, ni les largeurs enregistrées,
-  ni le PDF).
+- Sélectionner : Maj + flèches, glisser, ou toucher un **en-tête** (A, B…
+  ou 1, 2…) pour toute la colonne ou toute la ligne (Maj + clic : plusieurs).
+  Les panneaux « Insérer » et « Supprimer » ne proposent alors que des
+  colonnes, ou que des lignes.
+- **Annuler / Rétablir** pour toutes les actions (boutons, **Ctrl + Z**, **Ctrl + Y**).
+- **Zoom** de 50 % à 200 % (pas de 10 %) : boutons **−** et **+** en bas à
+  droite (un appui sur le pourcentage revient à 100 %), pincement à deux
+  doigts sur la grille, ou **Ctrl + molette**. Mémorisé sur l'appareil ; il
+  ne change que l'affichage (ni le classeur, ni le PDF).
+- La barre du bas montre la somme, la moyenne et le nombre de valeurs de la
+  sélection, ou l'explication de l'erreur de la cellule choisie.
 
-**Édition** (onglet « Édition »)
+### Onglet « Édition »
 
-- Copier, couper, coller : boutons ou **Ctrl + C / X / V**. Une formule collée
+- **Copier, Couper, Coller** (ou **Ctrl + C / X / V**). Une formule collée
   ailleurs adapte ses références (=A1*2 devient =A2*2 une ligne plus bas).
-- Recopier : petit carré en bas à droite de la sélection (souris), ou boutons
+- **Recopier** : petit carré en bas à droite de la sélection (souris), ou
   **Recopier en bas / à droite** (**Ctrl + D / Ctrl + R**). Les formules
   s'adaptent et les suites continuent : 1, 2 → 3, 4… ; lundi → mardi… ;
   janvier → février… ; « Semaine 1 » → « Semaine 2 » ; une date → le jour suivant.
-- Insérer et supprimer des lignes ou des colonnes : les formules de tout le
-  classeur suivent les cellules (`#REF!` si une cellule utilisée disparaît).
-- Effacer le contenu (comme **Suppr**), en gardant la mise en forme.
-- **Rechercher et remplacer** (bouton « Rechercher » ou **Ctrl + F**) : une
-  barre s'ouvre sous les outils, avec « Rechercher », « Remplacer par »,
+- **Insérer** et **Supprimer** des lignes ou des colonnes : les formules de
+  tout le classeur suivent les cellules (`#REF!` si une cellule utilisée disparaît).
+- **Effacer** (ou **Suppr**) : vide les cellules en gardant leur mise en forme.
+- **Rechercher** (**Ctrl + F**, ou **Ctrl + H** pour remplacer) : une barre
+  s'ouvre sous les outils, avec « Rechercher », « Remplacer par »,
   **Suivant**, **Remplacer**, **Tout remplacer**, le nombre de résultats
-  (« 2 sur 5 ») et deux options : « Respecter la casse » et « Dans toutes les
-  feuilles ». « Tout remplacer » s'annule d'un seul « Annuler », même sur
-  plusieurs feuilles. La recherche porte sur ce qui a été tapé (pour une
-  formule, son texte). Sur téléphone, la barre d'outils se replie pendant la
-  recherche pour laisser de la place à la grille.
+  (« 2 sur 5 ») et deux options : « Respecter la casse » et « Dans toutes
+  les feuilles ». « Tout remplacer » s'annule d'un seul « Annuler », même
+  sur plusieurs feuilles. La recherche porte sur ce qui a été tapé (pour une
+  formule, son texte : `SOMME`…).
 
-**Formules**
+### Onglet « Mise en forme »
 
-- Une cellule qui commence par `=` est une formule : `+ - * /`, `^`, `%`, `&`,
-  comparaisons, références (`=A1+B2`, `$A$1`), plages (`A1:A10`, `A:A`), et
+- **Gras** (**Ctrl + B**), **Italique** (**Ctrl + I**), couleur du **Texte**,
+  couleur de **Fond** (couleurs douces, adaptées à chaque thème),
+  alignement **Gauche / Centre / Droite**.
+- **À la ligne** (retour à la ligne) : un texte trop long continue sur
+  plusieurs lignes dans la cellule au lieu d'être coupé par « … ». La ligne
+  du tableau s'agrandit toute seule, et se réajuste quand le texte, la
+  largeur de la colonne ou le zoom changent. Comme dans Excel, une cellule
+  fusionnée n'agrandit pas ses lignes (le texte passe à la ligne à
+  l'intérieur de la zone). Le PDF garde aussi le retour à la ligne.
+- **Fusionner** des cellules (idéal pour un titre au-dessus d'un tableau) :
+  - seule la cellule en haut à gauche garde son contenu ; si d'autres
+    cellules sont remplies, une question est posée avant de les vider ;
+  - le texte est centré (sauf alignement déjà choisi) ; les couleurs et les
+    bordures s'appliquent à toute la zone fusionnée ;
+  - une cellule fusionnée se choisit d'un seul appui, les flèches sautent
+    par-dessus ; une formule qui vise une case de la zone (`=B1` quand A1:C1
+    est fusionnée) utilise la cellule en haut à gauche ; une plage
+    (`=SOMME(A1:C1)`) compte chaque case une seule fois, comme dans Excel ;
+  - sur une cellule fusionnée, le bouton devient **Défusionner** ;
+  - insérer ou supprimer des lignes ou colonnes agrandit, réduit ou déplace
+    la fusion ; trier des lignes qui en contiennent est refusé avec un
+    message (un titre fusionné juste au-dessus du tableau reste à sa place) ;
+    avec la ligne 1 figée, une fusion ne peut pas déborder de la ligne 1 ;
+  - un collage ou une recopie ne cache jamais de texte dans les cases couvertes.
+- **Format** des nombres : nombre (`1 234,50`), euros, pourcentage, date,
+  et nombre de décimales. Le format ne change que l'affichage : les calculs
+  gardent le nombre exact.
+- **Largeur** des colonnes (aussi en glissant le bord d'un en-tête ; un
+  double-clic l'ajuste au contenu).
+- **Conditions** (mise en forme conditionnelle) : colorer des cellules
+  selon leur valeur. Une règle = des cellules (ex. `B2:B20`), une condition
+  (« supérieure à », « inférieure à », « égale à », « entre », « négative »,
+  « contient le texte ») et une couleur de fond et/ou de texte. Plusieurs
+  règles par feuille ; la fenêtre les liste, avec **Modifier** et
+  **Supprimer**. Les couleurs se recalculent toutes seules quand les valeurs
+  changent, suivent les insertions et suppressions de lignes, et
+  apparaissent dans le PDF. Si deux règles colorent la même cellule, la
+  première de la liste l'emporte.
+
+### Onglet « Bordures »
+
+- **Toutes**, **Extérieure**, **Haut**, **Bas**, **Gauche**, **Droite**,
+  **Aucune** ; trait **Fin** ou **Épais** ; **Couleur** au choix. Les
+  bordures apparaissent aussi dans le PDF.
+
+### Onglet « Données » et onglets des feuilles
+
+- **Feuilles** (en bas) : ajouter (**+**), afficher, renommer, supprimer.
+  Chaque feuille garde sa sélection et son défilement.
+- **Trier** (croissant / décroissant) : le tableau autour de la cellule
+  active est trié, la ligne de titres est reconnue, les lignes restent entières.
+- **Figer la 1<sup>re</sup> ligne** : elle reste visible quand on fait défiler.
+- **Graphique** : le graphique du tableau sélectionné (une seule cellule
+  touchée suffit : le tableau autour est pris, sans son titre fusionné).
+  - Trois types : **Colonnes**, **Courbe**, **Secteurs** (camembert), et un
+    titre au choix (le nom de la série, s'il n'y en a qu'une).
+  - Comme dans Excel : les noms de la 1<sup>re</sup> colonne vont sous l'axe,
+    chaque colonne de nombres est une série, la 1<sup>re</sup> ligne donne les
+    noms des séries (un tableau plus large que haut est lu par lignes). Le
+    champ « Cellules » permet de choisir une autre plage (ex. `A2:C14`).
+  - **Enregistrer l'image (.png)** : une image nette (1280 × 800 pixels),
+    sur fond blanc, à glisser dans un document ou un message.
+  - Le graphique n'est pas enregistré dans le classeur : on rouvre la fenêtre
+    pour le refaire avec les valeurs du moment. Au plus 7 séries (une couleur
+    chacune) ; un camembert montre la 1<sup>re</sup> série, sans les valeurs
+    négatives, et regroupe au-delà de 7 parts les plus petites en « Autres ».
+- **Importer** : « Importer un classeur (.json) » ou « Importer un CSV ».
+- **Exporter** : « Exporter le classeur (.json) », « Exporter la feuille
+  (.csv) » ou « Exporter la feuille (.pdf) » (case « Quadrillage gris »).
+  Voir la partie 1 pour bien choisir.
+
+### Formules
+
+- Une cellule qui commence par `=` est une formule : `+ - * /`, `^`, `%`,
+  `&` (assembler du texte), comparaisons `= <> < > <= >=`, références
+  (`=A1+B2`, `$A$1` pour figer), plages (`A1:A10`, colonne entière `A:A`),
   cellules d'une autre feuille (`=Feuille2!A1`, `='Mes ventes'!B2:B10`).
-- Arguments séparés par `;` comme dans Excel en français : `=SI(A1>10;"oui";"non")`.
-- Fonctions (noms français) :
-
-  | Domaine | Fonctions |
-  |---|---|
-  | Calcul | SOMME, MOYENNE, MIN, MAX, NB, NBVAL, ARRONDI, ARRONDI.SUP, ARRONDI.INF, ABS, ENT, MOD, PRODUIT, RACINE, PUISSANCE |
-  | Conditions | SI, ET, OU, NON, SIERREUR, NB.SI, SOMME.SI, MOYENNE.SI |
-  | Texte | CONCATENER (et `&`), MAJUSCULE, MINUSCULE, NBCAR |
-  | Dates | AUJOURDHUI, DATE, ANNEE, MOIS, JOUR |
-  | Recherche | RECHERCHEV |
-
-- Critères de NB.SI / SOMME.SI : `">5"`, `"<=2,5"`, `"<>0"`, `"pomme"`,
-  `"P*"` (jokers `*` et `?`), `""` (cellules vides), `">=01/01/2026"`.
+- Les arguments sont séparés par `;`, comme dans Excel en français :
+  `=SI(A1>10;"oui";"non")`.
+- Recalcul automatique dès qu'une cellule change, en cascade, d'une feuille à l'autre.
 - Comme Excel en français : le texte se compare sans tenir compte des
   majuscules (`="oui"="Oui"` est VRAI), `&` écrit `2,5` et `VRAI`, et
   `=0,1+0,2=0,3` est VRAI.
-- Recalcul automatique dès qu'une cellule change, en cascade, d'une feuille à l'autre.
+
+Les **37 fonctions** disponibles (noms français) :
+
+| Fonction | Ce qu'elle fait | Exemple |
+|---|---|---|
+| SOMME | additionne | `=SOMME(A1:A10)` |
+| MOYENNE | moyenne des nombres | `=MOYENNE(B2:B8)` |
+| MEDIANE | valeur du milieu (moins sensible qu'une moyenne à une valeur extrême) | `=MEDIANE(1;2;100)` → 2 |
+| MIN, MAX | plus petit, plus grand nombre | `=MAX(C1:C20)` |
+| NB | compte les cellules qui contiennent un nombre | `=NB(A1:A100)` |
+| NBVAL | compte les cellules non vides | `=NBVAL(A1:A100)` |
+| PRODUIT | multiplie | `=PRODUIT(A1:A3)` |
+| ARRONDI, ARRONDI.SUP, ARRONDI.INF | arrondit (au plus près, au-dessus, en dessous) | `=ARRONDI(A1;2)` |
+| ENT | partie entière | `=ENT(7,8)` → 7 |
+| ABS | valeur sans le signe | `=ABS(-5)` → 5 |
+| MOD | reste d'une division | `=MOD(10;3)` → 1 |
+| RACINE | racine carrée | `=RACINE(16)` → 4 |
+| PUISSANCE | puissance | `=PUISSANCE(2;10)` → 1024 |
+| SI | un résultat ou l'autre selon une condition | `=SI(A1>100;"cher";"ok")` |
+| ET, OU, NON | combinent des conditions | `=ET(A1>0;A1<10)` |
+| SIERREUR | valeur de secours si le calcul échoue | `=SIERREUR(A1/B1;0)` |
+| NB.SI | compte les cellules qui respectent un critère | `=NB.SI(B2:B20;">10")` |
+| SOMME.SI, MOYENNE.SI | somme ou moyenne selon un critère | `=SOMME.SI(A2:A9;"Loyer";B2:B9)` |
+| NB.SI.ENS | compte les lignes qui respectent **toutes** les conditions | `=NB.SI.ENS(A2:A9;"Courses";B2:B9;">50")` |
+| SOMME.SI.ENS, MOYENNE.SI.ENS | somme ou moyenne avec plusieurs conditions (la plage à calculer vient **en premier**) | `=SOMME.SI.ENS(C2:C9;A2:A9;"mars";B2:B9;"Courses")` |
+| RECHERCHEV | cherche une valeur dans la 1<sup>re</sup> colonne d'un tableau | `=RECHERCHEV("Poire";A2:C9;3;FAUX)` |
+| CONCATENER (et `&`) | assemble des textes | `=A1&" "&B1` |
+| MAJUSCULE, MINUSCULE | change la casse | `=MAJUSCULE(A1)` |
+| NBCAR | nombre de caractères | `=NBCAR(A1)` |
+| AUJOURDHUI | date du jour | `=AUJOURDHUI()` |
+| DATE | fabrique une date | `=DATE(2026;10;24)` |
+| ANNEE, MOIS, JOUR | parties d'une date | `=MOIS(A1)` |
+
+- Critères de NB.SI / SOMME.SI / MOYENNE.SI (et de leurs versions .ENS) :
+  `">5"`, `"<=2,5"`, `"<>0"`, `"pomme"`, `"P*"` (jokers `*` et `?`), `""`
+  (cellules vides), `">=01/01/2026"`. Dans une fonction .ENS, toutes les
+  plages doivent avoir la même taille (sinon `#VALEUR!`).
+- Dates : une date est un nombre de jours (`=B1-A1` donne l'écart en jours).
 - Erreurs claires : `#DIV/0!`, `#VALEUR!`, `#REF!`, `#NOM?`, `#N/A`,
-  `#ERREUR!`, `#CIRC!` (référence circulaire), `#NOMBRE!`. Quand on
-  sélectionne la cellule, une explication en français s'affiche en bas de l'écran.
-- La barre du bas montre la somme, la moyenne et le nombre de valeurs de la sélection.
+  `#ERREUR!`, `#CIRC!` (la formule dépend d'elle-même), `#NOMBRE!`. Une
+  explication en français s'affiche en bas de l'écran.
 
-**Mise en forme** (onglets « Mise en forme » et « Bordures »)
+### Menu et le reste
 
-- Gras (**Ctrl + B**), italique (**Ctrl + I**), couleur du texte, couleur de
-  fond (couleurs douces, adaptées à chaque thème), alignement gauche /
-  centre / droite.
-- Format des nombres : nombre (`1 234,50`), euros, pourcentage, date, et
-  nombre de décimales. Le format ne change que l'affichage.
-- Largeur des colonnes (glisser le bord de l'en-tête, double-clic pour
-  ajuster au contenu, ou bouton « Largeur »).
-- Bordures : toutes, extérieure, haut, bas, gauche, droite, aucune ; trait
-  fin ou épais ; couleur au choix. Elles sont aussi dans le PDF.
-- **Fusionner** des cellules (idéal pour un titre au-dessus d'un tableau) :
-  sélectionner la plage, puis « Fusionner ». Règles, comme dans Excel :
-  - seule la cellule en haut à gauche garde son contenu ; si d'autres cellules
-    sont remplies, une question est posée avant de les vider ;
-  - le texte est centré (sauf alignement déjà choisi) ; les couleurs et les
-    bordures s'appliquent à toute la zone fusionnée (au moment de la fusion,
-    toute la zone prend la mise en forme de la cellule en haut à gauche) ;
-  - une formule qui vise une case de la zone (`=B1` quand A1:C1 est
-    fusionnée) utilise la cellule en haut à gauche ; une plage
-    (`=SOMME(A1:C1)`) compte chaque case une seule fois, comme dans Excel ;
-  - une cellule fusionnée se choisit d'un seul clic, les flèches sautent
-    par-dessus, et les formules l'utilisent par son adresse en haut à gauche ;
-  - sur une cellule fusionnée, le bouton devient « Défusionner » ; « Annuler »
-    marche aussi ;
-  - insérer ou supprimer des lignes ou colonnes agrandit, réduit ou déplace la
-    fusion ; on ne peut pas trier des lignes qui en contiennent (un titre
-    fusionné juste au-dessus du tableau est, lui, laissé à sa place) ;
-  - avec la ligne 1 figée, une fusion ne peut pas déborder de la ligne 1 ;
-  - les fusions sont dans le PDF et dans le fichier .json.
+- **Menu** : thème (**Omni-système**, **Sombre classique**, **Clair**),
+  taille du tableau (+ 50 lignes, + 5 colonnes), **Aide** (formules et
+  raccourcis), installation sur l'appareil, **À propos**, **Nouveau classeur**.
+- **À propos** (aussi en haut) : version, auteurs, contact pour les retours,
+  licence et bibliothèques utilisées.
+- **Titre du classeur** (en haut) : il sert aussi de nom aux fichiers exportés.
+- Fonctionne **hors ligne** ; une nouvelle version se signale par un bandeau
+  « Recharger ».
 
-**Données** (onglet « Données » et onglets des feuilles en bas)
+### Raccourcis clavier
 
-- Plusieurs feuilles : ajouter (**+**), afficher, renommer, supprimer. Chaque
-  feuille garde sa sélection et son défilement.
-- Trier une colonne (croissant / décroissant) : le tableau autour de la
-  cellule active est trié, la ligne de titres est reconnue, les lignes
-  restent entières.
-- Figer la première ligne (elle reste visible quand on fait défiler).
-- **Importer** : « Importer un classeur (.json) » (une sauvegarde complète,
-  voir plus bas) ou « Importer un CSV » (dans une nouvelle feuille).
-- **Exporter** : « Exporter le classeur (.json) », « Exporter la feuille
-  (.csv) » ou « Exporter la feuille (.pdf) » (avec la mise en forme et les bordures).
-
-**Le reste** : sauvegarde automatique (toutes les feuilles, toute la mise en
-forme), trois thèmes (Omni-système, Sombre classique, Clair), aide intégrée
-(Menu → Aide), fenêtre « À propos » (version, contact, licence, bibliothèques).
+| Raccourci | Action |
+|---|---|
+| Ctrl + Z / Ctrl + Y | annuler / rétablir |
+| Ctrl + C / X / V | copier / couper / coller |
+| Ctrl + D / Ctrl + R | recopier vers le bas / vers la droite |
+| Ctrl + B / Ctrl + I | gras / italique |
+| Ctrl + F / Ctrl + H | rechercher / remplacer |
+| Ctrl + A | tout sélectionner |
+| Ctrl + P | exporter en PDF |
+| Ctrl + molette | zoom |
+| F2 | modifier la cellule |
+| Suppr | vider les cellules sélectionnées |
 
 ---
 
-## 2. Essayer l'application sur ton ordinateur
+## 3. Essayer l'application sur ton ordinateur
 
 Ouvrir `index.html` par un double-clic ne marche pas : le navigateur bloque
 les modules JavaScript ouverts depuis un fichier. Il faut un petit serveur web
@@ -174,12 +305,12 @@ local. Il est fourni (`outils/serveur.mjs`) et n'a besoin que de Node.js.
 glisse le dossier `Tableur` dans la fenêtre, appuie sur Entrée, puis suis les
 étapes 4 à 7 ci-dessus.
 
-**Sur ton téléphone** : le plus simple est de publier l'application (partie 3)
+**Sur ton téléphone** : le plus simple est de publier l'application (partie 4)
 et d'ouvrir son adresse sur le téléphone.
 
 ---
 
-## 3. Publier l'application sur GitHub Pages
+## 4. Publier l'application sur GitHub Pages
 
 Le code est sur GitHub, dans le dépôt `FerrusDantioch/Tableur`. La version
 publiée est celle de la branche `main` ; le travail de cette mise à jour est
@@ -205,7 +336,7 @@ servent qu'aux vérifications : ils ne gênent pas l'application.
 
 **Publier une mise à jour plus tard**
 
-1. Augmente le numéro de version dans `js/config.js` (par exemple `2.0.0` devient `2.0.1`).
+1. Augmente le numéro de version dans `js/config.js` (par exemple `2.1.0` devient `2.1.1`).
 2. Envoie les fichiers modifiés sur la branche `main`.
 3. Les personnes qui utilisent l'application verront : « Une nouvelle version
    est disponible. Recharger ».
@@ -215,7 +346,7 @@ Sans changement de version, les utilisateurs gardent l'ancienne version
 
 ---
 
-## 4. Installer l'application sur un appareil
+## 5. Installer l'application sur un appareil
 
 - **Ordinateur (Chrome, Edge)** : Menu d'Omni-Tableur → « Installer l'application
   sur cet appareil » (ou l'icône d'installation dans la barre d'adresse).
@@ -225,41 +356,6 @@ Sans changement de version, les utilisateurs gardent l'ancienne version
   toutes tes applications partagent `ferrusdantioch.github.io`. Si Chrome
   répond « Cette appli est déjà installée », utilise Brave, ou choisis
   « Créer un raccourci ».
-
----
-
-## 5. Les classeurs et leur sécurité
-
-- Le classeur (toutes ses feuilles, toute la mise en forme, les bordures, la
-  feuille affichée) est enregistré **automatiquement** dans le navigateur de
-  l'appareil (IndexedDB), moins d'une seconde après chaque modification, et
-  aussitôt quand l'application passe en arrière-plan. L'état est indiqué en
-  bas à droite (« ✓ Enregistré »).
-- Les classeurs créés avec l'ancienne version (1.x) s'ouvrent normalement
-  avec la nouvelle : rien n'est perdu.
-- Rien ne quitte l'appareil. Si tu effaces les données du site dans le
-  navigateur, ou si tu changes d'appareil, le classeur enregistré
-  automatiquement disparaît. **Pour garder une copie complète** : onglet
-  « Données » → **Exporter** → **Exporter le classeur (.json)**. Le fichier
-  `omni-tableur-AAAA-MM-JJ.json` arrive dans les téléchargements ; range-le où
-  tu veux (clé USB, cloud, e-mail…).
-- Pour le rouvrir (sur le même appareil ou un autre) : **Importer** →
-  **Importer un classeur (.json)**. Une confirmation est demandée (« Cela
-  remplacera votre classeur actuel. Continuer ? ») ; « Annuler » permet ensuite
-  de revenir au classeur d'avant. Un fichier abîmé ou venant d'une autre
-  application est refusé avec un message, sans rien modifier.
-- Le fichier contient tout : feuilles (noms et ordre), textes et formules,
-  mise en forme, bordures, largeurs, ligne figée, feuille affichée, thème et
-  zoom. Il porte un numéro de version de format (`"version": 1`) : les
-  versions futures sauront relire les anciens fichiers.
-- Le classeur d'un téléphone et celui d'un ordinateur sont indépendants
-  (pas de synchronisation) : le fichier .json sert à passer de l'un à l'autre.
-- Ouvre Omni-Tableur dans **un seul onglet à la fois** : un bandeau prévient si ce
-  n'est pas le cas (sinon un onglet pourrait écraser les modifications de l'autre).
-- Sur Firefox, une question peut apparaître (« stocker des données de façon
-  persistante ») : réponds « Autoriser ».
-- « Menu → Nouveau classeur » efface tout, après confirmation ; le bouton
-  « Annuler » permet encore de tout récupérer tant que l'application reste ouverte.
 
 ---
 
@@ -285,17 +381,20 @@ js/donnees/              (a) LES DONNÉES — ce que tu as saisi
                          insertion/suppression de lignes, feuilles, enregistrement
   formules.js            lit et réécrit les références des formules (A1, $A$1, Feuille2!A1…)
   fusions.js             cellules fusionnées : sélection agrandie, insertion et suppression
+  regles.js              règles de mise en forme conditionnelle (description, vérification)
   fichier-classeur.js    fichier de sauvegarde complète (.json) : création et vérification
   recopie.js             poignée de recopie : formules adaptées, suites 1, 2, 3…
   recherche.js           rechercher et remplacer (texte cherché, ordre de lecture, remplacements)
   bordures.js            pose des bordures (toutes, extérieure…) et traits à dessiner
   tri.js                 tri : tableau autour de la cellule, ligne de titres, ordre
+  graphique.js           graphique : catégories et séries d'un tableau, graduations, parts
 
 js/calcul/               (b) LE CALCUL DES FORMULES
   traduction.js          formules françaises → bibliothèque (SOMME → SUM, « ; » → « , »)
   moteur.js              calcule, suit les dépendances (entre feuilles aussi), recalcule
   fonctions.js           fonctions écrites pour Omni-Tableur (NB.SI, RECHERCHEV, MAJUSCULE…)
   comparaisons.js        comparaisons et critères à la française
+  conditions.js          mise en forme conditionnelle : la cellule respecte-t-elle la règle ?
   erreurs.js             #DIV/0!, #REF!… et leurs explications
   bibliotheque.js        accès à la bibliothèque fast-formula-parser
 
@@ -309,7 +408,10 @@ js/affichage/            (c) L'AFFICHAGE
   barre-outils.js        onglets de la barre d'outils, panneaux
   commandes-edition.js   recopier, insérer, supprimer, effacer
   commandes-fusion.js    bouton « Fusionner / Défusionner »
-  mise-en-forme.js       gras, italique, couleurs, alignement, formats, largeurs
+  conditions.js          fenêtre « Mise en forme conditionnelle »
+  graphique.js           fenêtre « Graphique » et enregistrement de l'image
+  dessin-graphique.js    dessin du graphique en SVG (colonnes, courbe, secteurs)
+  mise-en-forme.js       gras, italique, couleurs, alignement, retour à la ligne, formats, largeurs
   outils-bordures.js     onglet « Bordures »
   commandes-donnees.js   trier, figer la 1re ligne, importer un CSV
   onglets-feuilles.js    onglets des feuilles (ajouter, renommer, supprimer)
@@ -347,7 +449,7 @@ tests/                   vérifications automatiques
   `tests/unitaires/contrastes.test.mjs` vérifie que le texte et les bordures restent lisibles.
 - **Ajouter une fonction en français** : dans `js/calcul/traduction.js`,
   ajoute une ligne à la liste `FONCTIONS` (nom français → nom anglais de la
-  bibliothèque, par exemple `MEDIANE: 'MEDIAN'`), puis un test dans
+  bibliothèque, par exemple `ECARTYPE: 'STDEV.S'`), puis un test dans
   `tests/unitaires/fonctions.test.mjs`. Vérifie le résultat : si la fonction
   de la bibliothèque ne se comporte pas comme Excel, écris-la dans
   `js/calcul/fonctions.js` (c'est ce qui a été fait pour NB.SI ou RECHERCHEV).
@@ -357,12 +459,17 @@ tests/                   vérifications automatiques
 
 ### Vérifier après une modification
 
-- `npm test` : tests des formules, des données, des exports, des contrastes
-  et de la liste hors ligne. N'a besoin que de Node.js, version 22 ou plus
-  récente (rien d'autre à installer).
-- `npm run test:navigateur` : tests dans un vrai navigateur (clavier, souris,
-  doigt, onglets, tri, import, sauvegarde, thèmes, hors ligne, exports). Il
-  faut d'abord, une seule fois : `npm install` puis `npx playwright install chromium`.
+- `npm test` : tests des formules, des données, des fusions, des règles de
+  couleurs, de la recherche, du fichier .json (y compris un classeur complexe
+  exporté puis réimporté à l'identique, et des fichiers invalides refusés),
+  des exports, des contrastes et de la liste hors ligne. N'a besoin que de
+  Node.js, version 22 ou plus récente (rien d'autre à installer).
+- `npm run test:navigateur` : tests dans un vrai navigateur, à la souris, au
+  clavier et au doigt (téléphone imité) : saisie, onglets, tri, import et
+  export, sauvegarde, passage de l'ancien nom au nouveau, zoom, recherche,
+  fusion, mise en forme conditionnelle, retour à la ligne, graphiques,
+  thèmes, hors ligne, PDF. Il faut
+  d'abord, une seule fois : `npm install` puis `npx playwright install chromium`.
 
 ---
 
@@ -383,7 +490,11 @@ tests/                   vérifications automatiques
   auteurs (remplacée par HyperFormula, sous licence GPL) ; formula.js ne sait
   pas lire une formule, seulement calculer des fonctions.
 - **Grille « virtuelle »** : seules les lignes visibles existent dans la page.
-  1000 lignes × 52 colonnes s'affichent aussi vite que 100 lignes.
+  1000 lignes × 52 colonnes s'affichent aussi vite que 100 lignes. La
+  position de chaque ligne est calculée d'avance ; une ligne avec du texte
+  renvoyé à la ligne est plus haute : le navigateur mesure ce texte dans une
+  zone invisible (toutes les cellules d'un coup), sans dessiner les lignes
+  hors de l'écran.
 - **PDF par l'impression du navigateur** (« Enregistrer au format PDF »),
   comme dans Plume : hors ligne, texte sélectionnable, aucune bibliothèque.
 - **CSV au format Excel français** : `;` entre les colonnes, virgule décimale,
@@ -398,10 +509,11 @@ tests/                   vérifications automatiques
 
 ## 8. Prêt pour plus tard (non fait pour l'instant)
 
-- **Graphiques** depuis une plage : `moteur.valeursPlage(feuille, "A1:B10")`
-  donne les valeurs calculées d'une plage, et `moteur.abonner(…)` prévient à
-  chaque changement de valeur. Un module `js/affichage/graphiques.js` pourra
-  s'appuyer dessus sans toucher à la grille ni au calcul.
+- **Graphiques gardés dans le classeur** (posés sur la feuille, mis à jour
+  tout seuls) : le dessin existe déjà (`js/affichage/dessin-graphique.js`)
+  et `moteur.abonner(…)` prévient à chaque changement de valeur ; il
+  faudrait enregistrer la plage et le type dans la feuille (comme les règles
+  de couleurs), et les décaler quand on insère des lignes (`ajusterPlage`).
 - **Import de fichiers Excel (.xlsx)** : il suffira de lire le fichier (avec
   une bibliothèque sous licence permissive) puis de créer les feuilles avec
   `classeur.ajouterFeuille({ nom, donnees })`, comme le fait déjà l'import CSV.
@@ -415,12 +527,18 @@ tests/                   vérifications automatiques
 
 - Un seul classeur à la fois (avec autant de feuilles que l'on veut) ;
   1000 lignes × 52 colonnes au maximum par feuille.
-- Pas de retour à la ligne dans une cellule (un texte trop long est coupé
-  avec « … »), pas de tableaux de valeurs (formules matricielles).
+- Pas de tableaux de valeurs (formules matricielles).
+- La hauteur des lignes ne se règle pas à la main : elle suit le texte
+  renvoyé à la ligne (bouton « À la ligne »). Pendant la saisie, le texte
+  s'écrit sur une seule ligne (la barre « fx » montre tout le texte).
 - Copier une cellule fusionnée colle son contenu, pas la fusion elle-même.
 - Le tri trie les lignes du tableau entier ; pour trier une partie précise,
   il faut d'abord la sélectionner (plusieurs lignes et colonnes).
 - Dates : jour/mois/année seulement (pas d'heures).
+- Mise en forme conditionnelle volontairement simple : des couleurs de fond
+  et de texte, sans barres de données ni échelles de couleurs.
+- Graphiques simples : colonnes, courbe ou secteurs, montrés dans une
+  fenêtre et enregistrés en image ; ils ne sont pas gardés dans le classeur.
 - La poignée de recopie se tire à la souris ; au doigt, on utilise les
   boutons « Recopier en bas / à droite ».
 

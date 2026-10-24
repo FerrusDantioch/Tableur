@@ -189,7 +189,7 @@ describe('Erreurs', () => {
   test('nom inconnu : #NOM?', () => {
     verifier([
       ['=TOTO(1)', '#NOM?'],
-      ['=MEDIANE(A1:A2)', '#NOM?'],
+      ['=ECARTYPE(A1:A2)', '#NOM?'], // fonction d'Excel pas (encore) disponible
       ['=abc', '#NOM?'],
       ['=total*2', '#NOM?'],
     ]);

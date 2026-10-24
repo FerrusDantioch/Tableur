@@ -1,6 +1,6 @@
 // Mise en forme des cellules : gras, italique, couleur du texte, couleur de
-// fond, alignement, format des nombres (décimales, euros, pourcentage, date)
-// et largeur des colonnes.
+// fond, alignement, retour à la ligne, format des nombres (décimales, euros,
+// pourcentage, date) et largeur des colonnes.
 //
 // Les boutons de la barre d'outils et les gestes (glisser le bord d'une
 // colonne, double-cliquer dessus) appellent ces fonctions, qui modifient le
@@ -87,6 +87,7 @@ export class MiseEnForme {
     const element = (id) => document.getElementById(id);
     this.boutonGras = element('bouton-gras');
     this.boutonItalique = element('bouton-italique');
+    this.boutonRetour = element('bouton-retour');
     this.boutonsAlignement = [...document.querySelectorAll('[data-alignement]')];
     this.temoinFond = element('temoin-fond');
     this.temoinEncre = element('temoin-encre');
@@ -100,6 +101,7 @@ export class MiseEnForme {
 
     this.boutonGras.addEventListener('click', () => this.gras());
     this.boutonItalique.addEventListener('click', () => this.italique());
+    this.boutonRetour.addEventListener('click', () => this.retourALaLigne());
     for (const bouton of this.boutonsAlignement) {
       bouton.addEventListener('click', () => this.aligner(bouton.dataset.alignement));
     }
@@ -154,6 +156,7 @@ export class MiseEnForme {
     const cellule = this.#celluleActive();
     this.boutonGras.setAttribute('aria-pressed', String(Boolean(cellule?.gras)));
     this.boutonItalique.setAttribute('aria-pressed', String(Boolean(cellule?.italique)));
+    this.boutonRetour.setAttribute('aria-pressed', String(Boolean(cellule?.retour)));
     for (const bouton of this.boutonsAlignement) {
       bouton.setAttribute('aria-pressed', String(cellule?.alignement === bouton.dataset.alignement));
     }
@@ -208,6 +211,15 @@ export class MiseEnForme {
   /** Met en italique la sélection (ou l'enlève si la cellule active l'est déjà). */
   italique() {
     this.#basculer('italique');
+  }
+
+  /**
+   * Retour à la ligne pour la sélection (ou l'enlève si la cellule active
+   * l'a déjà) : le texte trop long continue sur plusieurs lignes et la ligne
+   * du tableau s'agrandit (voir grille.js).
+   */
+  retourALaLigne() {
+    this.#basculer('retour');
   }
 
   #basculer(propriete) {

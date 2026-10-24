@@ -20,6 +20,7 @@ const cellule = (proprietes) => ({
   brut: '',
   gras: false,
   italique: false,
+  retour: false,
   couleur: null,
   fond: null,
   alignement: null,

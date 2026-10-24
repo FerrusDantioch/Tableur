@@ -126,6 +126,7 @@ describe('Importer un classeur (.json)', () => {
       [fichier((o) => (o.feuilles[0].cellules.A1.brut = 12)), /cellule A1/],
       [fichier((o) => (o.feuilles[0].cellules.A1.fond = 'fuchsia')), /valeur inconnue \(« fond »\)/],
       [fichier((o) => (o.feuilles[0].cellules.A1.gras = 'oui')), /valeur inconnue \(« gras »\)/],
+      [fichier((o) => (o.feuilles[0].cellules.A1.retour = 1)), /valeur inconnue \(« retour »\)/],
       [fichier((o) => (o.feuilles[0].cellules.B2.format = { type: 'monnaie' })), /format de nombre inconnu/],
       [fichier((o) => (o.feuilles[0].cellules.B4.bordures = { milieu: { style: 'fin', couleur: 'auto' } })), /bordure inconnue/],
       [fichier((o) => (o.feuilles[0].largeurs = { A: -5 })), /largeur de colonne impossible/],

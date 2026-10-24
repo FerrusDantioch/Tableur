@@ -336,6 +336,84 @@
   margin: 0;
 }
 
+/* --- Mise en forme conditionnelle ------------------------------------------- */
+
+/* (« .fenetre » en plus : sinon la règle « .fenetre ol » ajouterait une marge à gauche.) */
+.fenetre .liste-regles {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.regle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--trait);
+  border-radius: 12px;
+}
+
+.apercu-regle {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 3.2em;
+  height: 2.2em;
+  border: 1px solid var(--trait);
+  border-radius: 8px;
+  background: var(--teinte, var(--cellule));
+  font-weight: 700;
+}
+
+.texte-regle {
+  flex: 1 1 14em;
+  min-width: 0;
+}
+
+.boutons-regle {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.regle-condition {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.regle-condition > .champ-fenetre {
+  flex: 1 1 10em;
+}
+
+.regle-condition > .champ-fenetre[hidden] {
+  display: none;
+}
+
+.champ-fenetre select {
+  min-height: 44px;
+  padding: 6px 10px;
+  border: 1px solid var(--trait);
+  border-radius: 10px;
+  background: var(--fond);
+  color: var(--texte);
+  font-size: 1.05rem;
+}
+
+.regle-couleurs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13em, 1fr));
+  gap: 12px;
+}
+
+.etiquette-nuancier {
+  margin: 0 0 6px;
+}
+
 /* Champ de saisie dans une fenêtre (renommer une feuille). */
 .champ-fenetre {
   display: grid;
@@ -359,4 +437,58 @@
 .erreur-champ {
   color: var(--erreur);
   min-height: 1.4em;
+}
+
+/* --- Fenêtre « Graphique » ----------------------------------------------------- */
+
+/* Trois gros boutons côte à côte : Colonnes, Courbe, Secteurs. */
+.choix-graphique {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.choix-graphique .outil {
+  justify-content: center;
+  min-width: 0;
+}
+
+/* Sur un téléphone : l'icône au-dessus du nom, pour que les trois tiennent. */
+@media (max-width: 480px) {
+  .choix-graphique .outil {
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 4px;
+  }
+}
+
+.reglages-graphique {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.reglages-graphique > .champ-fenetre {
+  flex: 1 1 10em;
+}
+
+/* Le dessin garde ses proportions et prend toute la largeur de la fenêtre. */
+.zone-graphique {
+  border: 1px solid var(--trait);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--cellule);
+}
+
+.zone-graphique svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.message-graphique {
+  margin: 0;
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--discret);
 }

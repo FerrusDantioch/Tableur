@@ -11,6 +11,7 @@ import { adresse, lireAdresse, textePlage } from './donnees/adresses.js';
 import { interpreterSaisie } from './donnees/saisie.js';
 import { borduresADessiner } from './donnees/bordures.js';
 import { MoteurCalcul } from './calcul/moteur.js';
+import { couleursConditionnelles } from './calcul/conditions.js';
 import { formaterNombre, presenter } from './affichage/format.js';
 import { Grille } from './affichage/grille.js';
 import { Selection } from './affichage/selection.js';
@@ -22,6 +23,8 @@ import { OutilsBordures } from './affichage/outils-bordures.js';
 import { OngletsFeuilles } from './affichage/onglets-feuilles.js';
 import { CommandesDonnees } from './affichage/commandes-donnees.js';
 import { CommandesFusion } from './affichage/commandes-fusion.js';
+import { MiseEnFormeConditionnelle } from './affichage/conditions.js';
+import { FenetreGraphique } from './affichage/graphique.js';
 import { installerBarreOutils } from './affichage/barre-outils.js';
 import { demander, ouvrirFenetre, preparerFenetres } from './affichage/fenetres.js';
 import { installerMenu } from './affichage/menu.js';
@@ -67,19 +70,29 @@ const feuilleActive = () => classeur.feuilleActive;
 
 /**
  * Ce qu'affiche une cellule de la feuille active : valeur calculée mise en
- * forme (format des nombres), gras, italique, couleurs, alignement et bordures.
+ * forme (format des nombres), gras, italique, retour à la ligne, couleurs,
+ * alignement et bordures.
+ * Les règles de mise en forme conditionnelle (voir calcul/conditions.js)
+ * peuvent remplacer les couleurs : elles sont donc recalculées à chaque
+ * dessin de la cellule, c'est-à-dire à chaque changement de sa valeur.
  */
 function presenterCellule(adr, ligne, colonne) {
   const feuille = feuilleActive();
   const cellule = feuille.cellule(adr);
   const saisie = interpreterSaisie(cellule?.brut);
   const position = ligne ? { ligne, colonne } : lireAdresse(adr);
+  const valeur = moteur.valeur(feuille, adr);
+  const vue = presenter(valeur, saisie.style, cellule?.format);
+  const conditions = feuille.regles.length
+    ? couleursConditionnelles(feuille.regles, position.ligne, position.colonne, valeur, vue.texte)
+    : { fond: null, encre: null };
   return {
-    ...presenter(moteur.valeur(feuille, adr), saisie.style, cellule?.format),
+    ...vue,
     gras: cellule?.gras,
     italique: cellule?.italique,
-    couleur: cellule?.couleur,
-    fond: cellule?.fond,
+    retour: cellule?.retour,
+    couleur: conditions.encre ?? cellule?.couleur,
+    fond: conditions.fond ?? cellule?.fond,
     alignement: cellule?.alignement,
     bordures: borduresADessiner((a) => feuille.cellule(a), position.ligne, position.colonne),
   };
@@ -215,6 +228,15 @@ new OutilsBordures({ classeur, selection, preferences, avantAction, apresAction 
 new OngletsFeuilles({ classeur, avantAction, apresAction, demander, ouvrirFenetre, signaler });
 new CommandesDonnees({ classeur, selection, valeur: (feuille, adr) => moteur.valeur(feuille, adr), avantAction, apresAction, signaler });
 new CommandesFusion({ classeur, selection, demander, avantAction, apresAction, signaler });
+new MiseEnFormeConditionnelle({ classeur, selection, ouvrirFenetre, avantAction });
+const graphique = new FenetreGraphique({
+  classeur,
+  selection,
+  valeur: (adr) => moteur.valeur(feuilleActive(), adr),
+  presenterCellule,
+  ouvrirFenetre,
+  avantAction,
+});
 const recherche = new RechercheRemplacement({ classeur, selection, grille, avantAction, apresAction, signaler });
 commandes.rechercher = (remplacer) => recherche.ouvrir({ remplacer });
 
@@ -515,5 +537,6 @@ window.omniTableur = {
   sauvegardeFichier,
   zoom,
   recherche,
+  graphique,
   adresse,
 };

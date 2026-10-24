@@ -153,6 +153,36 @@ describe('Toute la mise en forme est enregistrée', () => {
     assert.equal(copie.feuilles[0].figee, true);
   });
 
+  test('retour à la ligne (initiative) : enregistré, annulable, gardé par le tri et la fusion', () => {
+    const t = creerClasseurDeTest({ A1: 'Titre', A2: 'un texte assez long', A3: 'b', B2: '2', B3: '1' });
+    const { classeur, feuille } = t;
+    classeur.modifierCellules(feuille, [{ adresse: 'A2', retour: true }]);
+    assert.equal(feuille.cellule('A2').retour, true);
+    assert.equal(feuille.cellule('A3').retour, false); // par défaut : pas de retour à la ligne
+    // Enregistré seulement quand il est choisi (fichier plus léger).
+    const json = JSON.parse(JSON.stringify(classeur.versJSON()));
+    assert.deepEqual(json.feuilles[0].cellules.A2, { brut: 'un texte assez long', retour: true });
+    assert.deepEqual(json.feuilles[0].cellules.A3, { brut: 'b' });
+    const copie = new Classeur();
+    copie.charger(json);
+    assert.equal(copie.feuilles[0].cellule('A2').retour, true);
+    // Une valeur bizarre (fichier abîmé) devient « pas de retour à la ligne ».
+    copie.charger({ ...json, feuilles: [{ ...json.feuilles[0], cellules: { A1: { brut: 'x', retour: 'oui' } } }] });
+    assert.equal(copie.feuilles[0].cellule('A1').retour, false);
+    // Tri (les lignes 2 et 3 échangées) : la mise en forme suit sa ligne.
+    assert.equal(classeur.reordonnerLignes(feuille, lirePlage('A2:B3'), [3, 2]), true);
+    assert.equal(feuille.brut('A3'), 'un texte assez long');
+    assert.equal(feuille.cellule('A3').retour, true);
+    // Annuler (le tri, puis le retour à la ligne).
+    classeur.annuler();
+    classeur.annuler();
+    assert.equal(feuille.cellule('A2').retour, false);
+    // Fusion : le retour à la ligne de la cellule en haut à gauche s'étend à la zone.
+    classeur.modifierCellules(feuille, [{ adresse: 'A1', retour: true }]);
+    classeur.fusionner(feuille, lirePlage('A1:B1'));
+    assert.equal(feuille.cellule('B1').retour, true);
+  });
+
   test('valeurs inconnues ignorées (fichier abîmé)', () => {
     const copie = new Classeur();
     copie.charger({

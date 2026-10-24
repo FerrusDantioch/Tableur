@@ -12,7 +12,7 @@
 // Ce module ne contient que des calculs sur des plages
 // ({ debut: { ligne, colonne }, fin: { ligne, colonne } }) : aucun affichage.
 
-import { dansPlage, plage as creerPlage } from './adresses.js';
+import { ajusterPlage, dansPlage, plage as creerPlage } from './adresses.js';
 
 /** Nombre de cellules d'une plage. */
 export const nombreCellules = ({ debut, fin }) => (fin.ligne - debut.ligne + 1) * (fin.colonne - debut.colonne + 1);
@@ -56,40 +56,11 @@ export function etendreAuxFusions(fusions, plage) {
 
 /**
  * Fusions après une insertion ou une suppression de lignes (ou de colonnes) :
- *   - insertion avant une fusion : elle se décale ; au milieu : elle s'agrandit ;
- *   - suppression : elle perd les lignes supprimées, et disparaît s'il ne lui
- *     reste qu'une cellule.
+ * elles se décalent, s'agrandissent ou rétrécissent (voir ajusterPlage), et
+ * disparaissent s'il ne leur reste qu'une cellule.
  * @param {Array<object>} fusions
- * @param {{axe: 'lignes'|'colonnes', type: 'insertion'|'suppression', position: number, nombre: number, maximum: number}} changement
+ * @param {{axe: 'lignes'|'colonnes', type: 'insertion'|'suppression', position: number, nombre: number, maximum?: number}} changement
  */
-export function ajusterFusions(fusions, { axe, type, position, nombre, maximum }) {
-  const cle = axe === 'lignes' ? 'ligne' : 'colonne';
-  const resultat = [];
-  for (const f of fusions) {
-    let debut = f.debut[cle];
-    let fin = f.fin[cle];
-    if (type === 'insertion') {
-      if (debut >= position) debut += nombre;
-      if (fin >= position) fin += nombre;
-      fin = Math.min(fin, maximum);
-      if (debut > maximum) continue;
-    } else {
-      const derniere = position + nombre - 1;
-      // Lignes (ou colonnes) de la fusion qui restent, avec leur nouveau numéro.
-      const restantes = [];
-      for (let v = debut; v <= fin; v++) {
-        if (v < position) restantes.push(v);
-        else if (v > derniere) restantes.push(v - nombre);
-      }
-      if (restantes.length === 0) continue;
-      debut = restantes[0];
-      fin = restantes.at(-1);
-    }
-    const nouvelle = {
-      debut: { ...f.debut, [cle]: debut },
-      fin: { ...f.fin, [cle]: fin },
-    };
-    if (nombreCellules(nouvelle) >= 2) resultat.push(nouvelle);
-  }
-  return resultat;
+export function ajusterFusions(fusions, changement) {
+  return fusions.map((f) => ajusterPlage(f, changement)).filter((f) => f && nombreCellules(f) >= 2);
 }

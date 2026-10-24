@@ -126,3 +126,27 @@ test('fonctions françaises : NB.SI, SOMME.SI, RECHERCHEV, texte et date', async
   assert.deepEqual(page.erreurs, []);
   await contexte.close();
 });
+
+test('MEDIANE, NB.SI.ENS, SOMME.SI.ENS et MOYENNE.SI.ENS tapées au clavier', async () => {
+  const { contexte, page } = await ouvrirApplication(navigateur, serveur.url);
+  await taperColonne(page, ['Courses', 'Loyer', 'courses', 'Courses']);
+  await page.click('td[data-ligne="1"][data-colonne="2"]');
+  await taperColonne(page, ['120', '600', '30', '95,5']);
+  await page.click('td[data-ligne="1"][data-colonne="3"]');
+  await taperColonne(page, [
+    '=MEDIANE(B1:B4)',
+    '=NB.SI.ENS(A1:A4;"courses";B1:B4;">50")',
+    '=SOMME.SI.ENS(B1:B4;A1:A4;"courses")',
+    '=MOYENNE.SI.ENS(B1:B4;A1:A4;"courses")',
+    '=SOMME.SI.ENS(B1:B4;A1:A3;"courses")',
+  ]);
+  assert.equal(await texteCellule(page, 'C1'), '107,75');
+  assert.equal(await texteCellule(page, 'C2'), '2');
+  assert.equal(await texteCellule(page, 'C3'), '245,5');
+  assert.equal(await texteCellule(page, 'C4'), '81,8333333333');
+  assert.equal(await texteCellule(page, 'C5'), '#VALEUR!');
+  await page.click('td[data-ligne="5"][data-colonne="3"]');
+  assert.match(await page.textContent('#message'), /plages de tailles différentes/);
+  assert.deepEqual(page.erreurs, []);
+  await contexte.close();
+});

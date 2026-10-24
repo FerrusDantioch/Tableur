@@ -5,7 +5,9 @@
 //   - MIN, MAX, MAJUSCULE (UPPER) et NBVAL (COUNTA) n'y sont pas écrites ;
 //   - MOYENNE d'une plage sans aucun nombre donne #VALEUR! au lieu de #DIV/0! ;
 //   - SOMME, MOYENNE… ignorent une cellule en erreur au lieu de signaler l'erreur ;
-//   - NB.SI(A1:A9;">5") compte aussi les cellules de texte ;
+//   - NB.SI(A1:A9;">5") compte aussi les cellules de texte (même défaut pour
+//     SOMME.SI.ENS et MOYENNE.SI.ENS ; NB.SI.ENS n'existe pas) ;
+//   - MEDIANE compte comme 0 une cellule vide désignée seule (=MEDIANE(A1;A2)) ;
 //   - RECHERCHEV distingue les majuscules (« POMME » ≠ « pomme ») ;
 //   - CONCATENER et « & » écrivent 2.5 et TRUE au lieu de 2,5 et VRAI ;
 //   - les comparaisons de texte distinguent les majuscules (="a"="A" donne FAUX).
@@ -74,7 +76,7 @@ export function completerFonctions(parseur, FormulaParser) {
   // La bibliothèque appelle certaines de ses fonctions d'une façon spéciale
   // (cellules vides changées en 0, références au lieu des valeurs…). Nos
   // versions de ces fonctions reçoivent simplement les valeurs.
-  const remplacees = ['COUNTIF', 'SUMIF', 'AVERAGEIF', 'VLOOKUP', 'TODAY'];
+  const remplacees = ['COUNTIF', 'SUMIF', 'AVERAGEIF', 'COUNTIFS', 'SUMIFS', 'AVERAGEIFS', 'MEDIAN', 'VLOOKUP', 'TODAY'];
   for (const liste of ['funsNullAs0', 'funsNeedContext', 'funsNeedContextAndNoDataRetrieve']) {
     if (Array.isArray(parseur[liste])) parseur[liste] = parseur[liste].filter((nom) => !remplacees.includes(nom));
   }
@@ -95,6 +97,18 @@ export function completerFonctions(parseur, FormulaParser) {
     const liste = nombres(parametres);
     if (liste.length === 0) throw FormulaError.DIV0;
     return liste.reduce((somme, valeur) => somme + valeur, 0) / liste.length;
+  });
+
+  /**
+   * MEDIANE : la valeur du milieu, une fois les nombres rangés dans l'ordre
+   * (pour un nombre pair de valeurs, la moyenne des deux du milieu).
+   * MEDIANE(1;2;100) = 2, alors que MOYENNE(1;2;100) = 34,33.
+   */
+  f.MEDIAN = avecErreurs((...parametres) => {
+    const liste = nombres(parametres).sort((a, b) => a - b);
+    if (liste.length === 0) throw FormulaError.NUM; // aucun nombre : #NOMBRE!, comme Excel
+    const milieu = Math.floor(liste.length / 2);
+    return liste.length % 2 ? liste[milieu] : (liste[milieu - 1] + liste[milieu]) / 2;
   });
 
   f.SUM = avecErreurs(f.SUM);
@@ -155,6 +169,71 @@ export function completerFonctions(parseur, FormulaParser) {
     if (critere === undefined) throw FormulaError.NA;
     const liste = [];
     for (const valeur of correspondances(plage, critere, plageMoyenne)) {
+      if (estErreur(valeur)) return valeur;
+      if (typeof valeur === 'number') liste.push(valeur);
+    }
+    if (liste.length === 0) return FormulaError.DIV0;
+    return liste.reduce((a, b) => a + b, 0) / liste.length;
+  };
+
+  // --- Plusieurs critères (fonctions « .ENS ») ------------------------------------------
+
+  /** Une plage sous forme de tableau de lignes (une cellule seule : [[valeur]]). */
+  const tableauDe = (parametre) => {
+    const valeur = parametre?.value;
+    const lignes = Array.isArray(valeur) ? valeur : [[valeur ?? null]];
+    return lignes.map((ligne) => (Array.isArray(ligne) ? ligne : [ligne]));
+  };
+
+  /**
+   * Garde, dans `plageCalcul`, les cellules dont la position respecte TOUS
+   * les critères. `couples` = [plage1, critère1, plage2, critère2…] : chaque
+   * plage doit avoir la même taille que `plageCalcul` (sinon #VALEUR!, comme
+   * Excel), car on compare les cellules à la même position.
+   */
+  const retenues = (plageCalcul, couples) => {
+    // Il manque un critère : #N/A (le moteur reconnaît « is missing » et
+    // affiche « Il manque un argument à une fonction »).
+    if (couples.length < 2 || couples.length % 2 !== 0) throw new FormulaError('#N/A', 'Criteria is missing');
+    const modele = tableauDe(plageCalcul);
+    const tests = [];
+    for (let k = 0; k < couples.length; k += 2) {
+      const plage = tableauDe(couples[k]);
+      if (plage.length !== modele.length || plage[0].length !== modele[0].length) throw FormulaError.VALUE;
+      const valeurCritere = valeurSimple(couples[k + 1]);
+      if (estErreur(valeurCritere)) throw valeurCritere;
+      const respecte = creerCritere(valeurCritere);
+      tests.push((i, j) => {
+        const valeur = plage[i][j] ?? null;
+        return !estErreur(valeur) && respecte(valeur);
+      });
+    }
+    const gardees = [];
+    modele.forEach((ligne, i) => {
+      ligne.forEach((valeur, j) => {
+        if (tests.every((respecte) => respecte(i, j))) gardees.push(valeur ?? null);
+      });
+    });
+    return gardees;
+  };
+
+  /** NB.SI.ENS(plage1 ; critère1 ; [plage2 ; critère2]…) : lignes qui respectent tous les critères. */
+  f.COUNTIFS = (...couples) => retenues(couples[0], couples).length;
+
+  /** SOMME.SI.ENS(plage à additionner ; plage1 ; critère1 ; [plage2 ; critère2]…). */
+  f.SUMIFS = (plageSomme, ...couples) => {
+    let somme = 0;
+    for (const valeur of retenues(plageSomme, couples)) {
+      if (estErreur(valeur)) return valeur;
+      if (typeof valeur === 'number') somme += valeur;
+    }
+    return somme;
+  };
+
+  /** MOYENNE.SI.ENS(plage pour la moyenne ; plage1 ; critère1 ; [plage2 ; critère2]…). */
+  f.AVERAGEIFS = (plageMoyenne, ...couples) => {
+    const liste = [];
+    for (const valeur of retenues(plageMoyenne, couples)) {
       if (estErreur(valeur)) return valeur;
       if (typeof valeur === 'number') liste.push(valeur);
     }
