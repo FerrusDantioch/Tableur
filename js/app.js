@@ -25,6 +25,7 @@ import { installerBarreOutils } from './affichage/barre-outils.js';
 import { demander, ouvrirFenetre, preparerFenetres } from './affichage/fenetres.js';
 import { installerMenu } from './affichage/menu.js';
 import { PressePapiers } from './affichage/presse-papiers.js';
+import { SauvegardeFichier } from './affichage/sauvegarde-fichier.js';
 import { demanderStockagePersistant, ecrireClasseur, lireClasseur, mettreDeCote, preferences } from './services/stockage.js';
 import { SauvegardeAuto } from './services/sauvegarde-auto.js';
 import { demarrerServiceWorker } from './services/pwa.js';
@@ -32,6 +33,7 @@ import { genererCSV } from './services/export-csv.js';
 import { ExportPdf } from './services/export-pdf.js';
 import { nomDeFichier, telecharger } from './services/fichiers.js';
 import { surveillerAutresOnglets } from './services/onglets.js';
+import { THEME_PAR_DEFAUT, choisirTheme } from './services/theme.js';
 
 const CONFIG = self.CONFIG_APP;
 const element = (id) => document.getElementById(id);
@@ -436,6 +438,20 @@ commandes.exporterPdf = () => {
   exportPdf.exporter();
 };
 
+// --- Sauvegarde complète dans un fichier (.json) ----------------------------------
+// Le fichier garde aussi le thème et le zoom ; ils sont repris à l'import.
+const sauvegardeFichier = new SauvegardeFichier({
+  classeur,
+  lireAffichage: () => ({ zoom: preferences.lire('zoom', 100), theme: preferences.lire('theme', THEME_PAR_DEFAUT) }),
+  appliquerAffichage({ theme }) {
+    if (theme) choisirTheme(theme, preferences);
+  },
+  demander,
+  avantAction,
+  apresAction,
+  signaler,
+});
+
 // --- Divers ----------------------------------------------------------------------
 
 // Taille de fenêtre modifiée (ou téléphone tourné) : le cadre de sélection est recalé.
@@ -483,5 +499,6 @@ window.omniTableur = {
   sauvegarde,
   exportPdf,
   pressePapiers,
+  sauvegardeFichier,
   adresse,
 };

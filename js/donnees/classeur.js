@@ -468,9 +468,10 @@ export class Classeur {
 
   // --- Modifications de structure (annulables) ------------------------------------
 
-  /** Photographie du classeur : ordre des feuilles, feuille active, contenu de chaque feuille. */
+  /** Photographie du classeur : titre, ordre des feuilles, feuille active, contenu de chaque feuille. */
   #photographier() {
     return {
+      titre: this.titre,
       ordre: [...this.feuilles],
       active: this.#active,
       donnees: new Map(this.feuilles.map((feuille) => [feuille, feuille.versJSON()])),
@@ -482,6 +483,10 @@ export class Classeur {
     for (const [feuille, donnees] of photo.donnees) feuille.restaurer(donnees);
     const ancienne = this.#active;
     this.#active = this.feuilles.includes(photo.active) ? photo.active : this.feuilles[0];
+    if ('titre' in photo && photo.titre !== this.titre) {
+      this.titre = photo.titre;
+      this.#annoncer({ type: 'titre' });
+    }
     this.#annoncer({ type: 'onglets' });
     this.#annoncer({ type: 'structure', feuilles: [...photo.donnees.keys()].filter((f) => this.feuilles.includes(f)) });
     if (this.#active !== ancienne) this.#annoncer({ type: 'active', feuille: this.#active });
@@ -497,6 +502,12 @@ export class Classeur {
     const avant = this.#photographier();
     if (travail() === false) return false;
     const apres = this.#photographier();
+    // Titre inchangé : on ne le garde pas (Annuler ne doit pas défaire un
+    // changement de titre fait plus tard, en dehors de cette action).
+    if (avant.titre === apres.titre) {
+      delete avant.titre;
+      delete apres.titre;
+    }
     for (const f of [...avant.donnees.keys()]) {
       if (apres.donnees.has(f) && JSON.stringify(avant.donnees.get(f)) === JSON.stringify(apres.donnees.get(f))) {
         avant.donnees.delete(f);
@@ -505,8 +516,9 @@ export class Classeur {
     }
     const action = { feuille, selection, faire: () => this.#restaurer(apres), defaire: () => this.#restaurer(avant) };
     // Les abonnés sont prévenus comme pour un « Rétablir » (la feuille active
-    // d'avant est remise un instant, pour que son changement soit annoncé).
+    // et le titre d'avant sont remis un instant, pour que leur changement soit annoncé).
     this.#active = avant.active;
+    if ('titre' in avant) this.titre = avant.titre;
     action.faire();
     this.#executer(action, { dejaFaite: true });
     return true;
@@ -618,7 +630,7 @@ export class Classeur {
     });
   }
 
-  /** Remet le classeur à zéro : une seule feuille vide, sans titre. Annulable. */
+  /** Remet le classeur à zéro : une seule feuille vide, sans titre. Annulable (titre compris). */
   reinitialiser() {
     const titreAvant = this.titre;
     const premiere = this.feuilles[0];
@@ -626,8 +638,8 @@ export class Classeur {
       this.feuilles = [premiere];
       premiere.restaurer({ nom: 'Feuille1' });
       this.#active = premiere;
+      this.titre = 'Sans titre';
     });
-    this.renommer('Sans titre');
     return titreAvant;
   }
 
@@ -734,16 +746,16 @@ export class Classeur {
   }
 
   /**
-   * Remplace tout le contenu par un classeur enregistré (version 1 ou 2).
-   * Les objets Feuille existants sont réutilisés quand c'est possible, et
-   * l'historique d'annulation est vidé.
+   * Lit un classeur enregistré (version 1 ou 2) : titre, feuilles et feuille
+   * active. `reutiliser` donne des objets Feuille à reprendre (dans l'ordre),
+   * les autres feuilles sont neuves.
    */
-  charger(donnees) {
+  static #lire(donnees, reutiliser = []) {
     if (!donnees || !FORMATS_ACCEPTES.includes(donnees.format)) throw new Error('Ce fichier n’est pas un classeur Omni-Tableur.');
-    this.titre = typeof donnees.titre === 'string' && donnees.titre.trim() ? donnees.titre : 'Sans titre';
+    const titre = typeof donnees.titre === 'string' && donnees.titre.trim() ? donnees.titre : 'Sans titre';
     const liste = Array.isArray(donnees.feuilles) && donnees.feuilles.length ? donnees.feuilles : [{}];
     const feuilles = liste.map((donneesFeuille, index) => {
-      const feuille = this.feuilles[index] ?? new Feuille();
+      const feuille = reutiliser[index] ?? new Feuille();
       feuille.restaurer(donneesFeuille);
       return feuille;
     });
@@ -755,8 +767,35 @@ export class Classeur {
       const doublon = feuilles.slice(0, index).some((autre) => autre.nom.toLocaleLowerCase('fr') === feuille.nom.toLocaleLowerCase('fr'));
       if (doublon) feuille.nom = `${feuille.nom.slice(0, NOM_FEUILLE_MAX - 4)} (${index + 1})`;
     }
+    const active = feuilles[Math.min(feuilles.length - 1, Math.max(0, Number(donnees.active) || 0))];
+    return { titre, feuilles, active };
+  }
+
+  /**
+   * Remplace tout le classeur par un autre (fichier importé). Contrairement à
+   * `charger`, c'est une modification ANNULABLE : « Annuler » rend le
+   * classeur d'avant. Lance une erreur (et ne change rien) si les données ne
+   * sont pas un classeur.
+   */
+  remplacer(donnees) {
+    const { titre, feuilles, active } = Classeur.#lire(donnees);
+    this.#modifierStructure({ feuille: active }, () => {
+      this.feuilles = feuilles;
+      this.#active = active;
+      this.titre = titre;
+    });
+  }
+
+  /**
+   * Remplace tout le contenu par un classeur enregistré (au démarrage).
+   * Les objets Feuille existants sont réutilisés quand c'est possible, et
+   * l'historique d'annulation est vidé.
+   */
+  charger(donnees) {
+    const { titre, feuilles, active } = Classeur.#lire(donnees, this.feuilles);
+    this.titre = titre;
     this.feuilles = feuilles;
-    this.#active = feuilles[Math.min(feuilles.length - 1, Math.max(0, Number(donnees.active) || 0))];
+    this.#active = active;
     this.#passe = [];
     this.#futur = [];
     this.#annoncer({ type: 'titre' });

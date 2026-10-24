@@ -215,11 +215,15 @@
           <svg aria-hidden="true"><use href="#i-figer" /></svg><span class="libelle">Figer la 1<sup>re</sup> ligne</span>
         </button>
         <span class="separateur" aria-hidden="true"></span>
-        <button id="bouton-importer" class="outil" type="button" title="Importer un fichier CSV dans une nouvelle feuille">
-          <svg aria-hidden="true"><use href="#i-importer" /></svg><span class="libelle">Importer CSV</span>
+        <button id="bouton-importer" class="outil" type="button" title="Importer un classeur (.json) ou un fichier CSV" popovertarget="panneau-importer">
+          <svg aria-hidden="true"><use href="#i-importer" /></svg><span class="libelle">Importer</span>
         </button>
         <input id="fichier-csv" type="file" accept=".csv,.txt,text/csv,text/plain" hidden />
-        <button id="bouton-exporter" class="outil" type="button" title="Exporter en PDF ou en CSV" popovertarget="panneau-exporter">
+        <!-- « accept » : le sélecteur de fichiers d'Android s'ouvre directement sur
+             les documents .json (sans proposer l'appareil photo). Le fichier
+             choisi est de toute façon vérifié avant l'import. -->
+        <input id="fichier-classeur" type="file" accept=".json,application/json" hidden />
+        <button id="bouton-exporter" class="outil" type="button" title="Exporter le classeur (.json), ou la feuille en CSV ou en PDF" popovertarget="panneau-exporter">
           <svg aria-hidden="true"><use href="#i-exporter" /></svg><span class="libelle">Exporter</span>
         </button>
       </div>
@@ -301,16 +305,27 @@
       <button id="largeur-normale" class="outil large" type="button">Largeur normale</button>
       <p class="panneau-aide">Astuce : on peut aussi faire glisser le bord droit d'un en-tête (A, B, C…), ou le double-cliquer.</p>
     </div>
+    <div id="panneau-importer" class="panneau" popover>
+      <p class="panneau-titre">Importer</p>
+      <button id="importer-classeur" class="outil large choix-export" type="button">
+        <strong>Importer un classeur (.json)</strong><small>Rouvre une sauvegarde faite avec « Exporter le classeur ». Remplace le classeur actuel (après confirmation).</small>
+      </button>
+      <button id="importer-csv" class="outil large choix-export" type="button">
+        <strong>Importer un CSV</strong><small>Un tableau d'Excel, d'une banque, de Google Sheets… dans une nouvelle feuille</small>
+      </button>
+    </div>
     <div id="panneau-exporter" class="panneau" popover>
-      <p class="panneau-titre">Exporter la feuille affichée</p>
+      <p class="panneau-titre">Exporter</p>
+      <button id="exporter-classeur" class="outil large choix-export" type="button">
+        <strong>Exporter le classeur (.json)</strong><small>Sauvegarde complète (toutes les feuilles, formules, mise en forme) à garder en lieu sûr ou à rouvrir sur un autre appareil</small>
+      </button>
+      <button id="exporter-csv" class="outil large choix-export" type="button">
+        <strong>Exporter la feuille (.csv)</strong><small>La feuille affichée, pour Excel, LibreOffice ou Google Sheets (formules remplacées par leur résultat)</small>
+      </button>
       <button id="exporter-pdf" class="outil large choix-export" type="button">
-        <strong>PDF</strong><small>Pour imprimer ou envoyer un tableau figé (avec la mise en forme et les bordures)</small>
+        <strong>Exporter la feuille (.pdf)</strong><small>Pour imprimer ou envoyer un tableau figé (avec la mise en forme et les bordures)</small>
       </button>
       <label class="case case-panneau"><input id="quadrillage-pdf" type="checkbox" /> Quadrillage gris dans le PDF</label>
-      <button id="exporter-csv" class="outil large choix-export" type="button">
-        <strong>CSV</strong><small>Pour Excel, LibreOffice ou Google Sheets</small>
-      </button>
-      <p class="panneau-aide">Le fichier porte le titre du classeur. Les formules sont exportées avec leur résultat.</p>
     </div>
 
     <div class="barre-formule">
@@ -425,6 +440,30 @@
       </div>
     </dialog>
 
+    <dialog id="fenetre-importer-classeur" class="fenetre" aria-labelledby="titre-importer-classeur">
+      <div class="fenetre-tete"><h2 id="titre-importer-classeur">Importer un classeur</h2></div>
+      <div class="fenetre-corps">
+        <p><strong>Cela remplacera votre classeur actuel. Continuer ?</strong></p>
+        <p id="resume-import"></p>
+        <p class="note">Tant que l'application reste ouverte, le bouton « Annuler » permet de revenir au classeur d'avant. Pour le garder aussi dans un fichier, choisissez d'abord « Exporter le classeur (.json) ».</p>
+        <div class="boutons-fenetre">
+          <button class="outil" type="button" data-fermer="garder">Garder mon classeur</button>
+          <button class="outil principal" type="button" data-fermer="remplacer">Remplacer</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="fenetre-erreur-fichier" class="fenetre" aria-labelledby="titre-erreur-fichier">
+      <div class="fenetre-tete"><h2 id="titre-erreur-fichier">Import impossible</h2></div>
+      <div class="fenetre-corps">
+        <p id="texte-erreur-fichier" role="alert"></p>
+        <p class="note">Votre classeur actuel n'a pas été modifié.</p>
+        <div class="boutons-fenetre">
+          <button class="outil principal" type="button" data-fermer="">Compris</button>
+        </div>
+      </div>
+    </dialog>
+
     <dialog id="fenetre-aide-pdf" class="fenetre" aria-labelledby="titre-aide-pdf">
       <div class="fenetre-tete"><h2 id="titre-aide-pdf">Exporter en PDF</h2></div>
       <div class="fenetre-corps">
@@ -535,7 +574,16 @@
             <li><strong>Feuilles</strong> : les onglets en bas de l'écran. <strong>+</strong> ajoute une feuille ; un appui sur un onglet l'affiche ; un appui sur l'onglet affiché ouvre son menu (<strong>Renommer…</strong>, <strong>Supprimer…</strong>). À la souris, un double-clic renomme.</li>
             <li>Onglet <strong>« Données »</strong> → <strong>Trier</strong> : placez-vous dans la colonne qui décide de l'ordre. Omni-Tableur trouve le tableau autour, reconnaît la ligne de titres (case à cocher), puis trie en ordre croissant ou décroissant. Les lignes restent entières.</li>
             <li><strong>Figer la 1<sup>re</sup> ligne</strong> : la ligne des titres reste visible quand on fait défiler.</li>
-            <li><strong>Importer CSV</strong> : un fichier CSV (Excel, banque, Google Sheets…) arrive dans une nouvelle feuille. <strong>Exporter</strong> : la feuille affichée en PDF ou en CSV.</li>
+            <li><strong>Importer</strong> → <strong>Importer un CSV</strong> : un fichier CSV (Excel, banque, Google Sheets…) arrive dans une nouvelle feuille.</li>
+            <li><strong>Exporter</strong> → <strong>Exporter la feuille (.csv)</strong> ou <strong>(.pdf)</strong> : la feuille affichée, pour un autre tableur ou pour l'imprimer.</li>
+          </ul>
+        </section>
+        <section>
+          <h3>Sauvegarder dans un fichier</h3>
+          <ul>
+            <li>Le classeur est enregistré automatiquement, mais seulement <strong>dans ce navigateur</strong> : si vous effacez ses données ou changez d'appareil, il disparaît.</li>
+            <li>Pour le garder en lieu sûr : onglet « Données » → <strong>Exporter</strong> → <strong>Exporter le classeur (.json)</strong>. Le fichier <code>omni-tableur-AAAA-MM-JJ.json</code> arrive dans les téléchargements ; rangez-le où vous voulez (clé USB, cloud, e-mail…).</li>
+            <li>Pour le rouvrir (ici ou sur un autre appareil) : <strong>Importer</strong> → <strong>Importer un classeur (.json)</strong>. Il remplace le classeur actuel, après confirmation ; « Annuler » permet de revenir en arrière.</li>
           </ul>
         </section>
         <section>

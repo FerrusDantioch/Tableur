@@ -143,9 +143,10 @@ test('importer un fichier CSV dans une nouvelle feuille', async () => {
   const contenu = '\uFEFFDate;Libellé;Montant\r\n02/03/2026;Boulangerie;-4,20\r\n05/03/2026;"Salaire; mars";1850\r\n';
   const { contexte, page } = await ouvrirApplication(navigateur, serveur.url);
   await taperColonne(page, ['ne bouge pas']);
-  // Le bouton « Importer CSV » ouvre le choix de fichier du système ; le test donne le fichier directement.
-  const choix = page.waitForEvent('filechooser');
+  // « Importer » → « Importer un CSV » ouvre le choix de fichier du système ; le test donne le fichier directement.
   await cliquerOutil(page, '#bouton-importer');
+  const choix = page.waitForEvent('filechooser');
+  await page.click('#importer-csv');
   await (await choix).setFiles({ name: 'Relevé mars.csv', mimeType: 'text/csv', buffer: Buffer.from(contenu, 'utf8') });
   await page.waitForFunction(() => window.omniTableur.classeur.feuilles.length === 2);
   assert.deepEqual(await nomsOnglets(page), ['Feuille1', 'Relevé mars']);

@@ -101,8 +101,10 @@ barre (plus de place pour la grille sur téléphone). **Annuler**,
   cellule active est trié, la ligne de titres est reconnue, les lignes
   restent entières.
 - Figer la première ligne (elle reste visible quand on fait défiler).
-- Importer un fichier CSV dans une nouvelle feuille ; exporter la feuille
-  affichée en **PDF** (avec la mise en forme et les bordures) ou en **CSV**.
+- **Importer** : « Importer un classeur (.json) » (une sauvegarde complète,
+  voir plus bas) ou « Importer un CSV » (dans une nouvelle feuille).
+- **Exporter** : « Exporter le classeur (.json) », « Exporter la feuille
+  (.csv) » ou « Exporter la feuille (.pdf) » (avec la mise en forme et les bordures).
 
 **Le reste** : sauvegarde automatique (toutes les feuilles, toute la mise en
 forme), trois thèmes (Omni-système, Sombre classique, Clair), aide intégrée
@@ -200,10 +202,22 @@ Sans changement de version, les utilisateurs gardent l'ancienne version
 - Les classeurs créés avec l'ancienne version (1.x) s'ouvrent normalement
   avec la nouvelle : rien n'est perdu.
 - Rien ne quitte l'appareil. Si tu effaces les données du site dans le
-  navigateur, le classeur disparaît : pour garder une copie, exporte-le en CSV
-  ou en PDF.
+  navigateur, ou si tu changes d'appareil, le classeur enregistré
+  automatiquement disparaît. **Pour garder une copie complète** : onglet
+  « Données » → **Exporter** → **Exporter le classeur (.json)**. Le fichier
+  `omni-tableur-AAAA-MM-JJ.json` arrive dans les téléchargements ; range-le où
+  tu veux (clé USB, cloud, e-mail…).
+- Pour le rouvrir (sur le même appareil ou un autre) : **Importer** →
+  **Importer un classeur (.json)**. Une confirmation est demandée (« Cela
+  remplacera votre classeur actuel. Continuer ? ») ; « Annuler » permet ensuite
+  de revenir au classeur d'avant. Un fichier abîmé ou venant d'une autre
+  application est refusé avec un message, sans rien modifier.
+- Le fichier contient tout : feuilles (noms et ordre), textes et formules,
+  mise en forme, bordures, largeurs, ligne figée, feuille affichée, thème et
+  zoom. Il porte un numéro de version de format (`"version": 1`) : les
+  versions futures sauront relire les anciens fichiers.
 - Le classeur d'un téléphone et celui d'un ordinateur sont indépendants
-  (pas de synchronisation pour l'instant).
+  (pas de synchronisation) : le fichier .json sert à passer de l'un à l'autre.
 - Ouvre Omni-Tableur dans **un seul onglet à la fois** : un bandeau prévient si ce
   n'est pas le cas (sinon un onglet pourrait écraser les modifications de l'autre).
 - Sur Firefox, une question peut apparaître (« stocker des données de façon
@@ -234,6 +248,7 @@ js/donnees/              (a) LES DONNÉES — ce que tu as saisi
   classeur.js            le classeur : feuilles, cellules, mise en forme, annuler/rétablir,
                          insertion/suppression de lignes, feuilles, enregistrement
   formules.js            lit et réécrit les références des formules (A1, $A$1, Feuille2!A1…)
+  fichier-classeur.js    fichier de sauvegarde complète (.json) : création et vérification
   recopie.js             poignée de recopie : formules adaptées, suites 1, 2, 3…
   bordures.js            pose des bordures (toutes, extérieure…) et traits à dessiner
   tri.js                 tri : tableau autour de la cellule, ligne de titres, ordre
@@ -259,6 +274,7 @@ js/affichage/            (c) L'AFFICHAGE
   commandes-donnees.js   trier, figer la 1re ligne, importer un CSV
   onglets-feuilles.js    onglets des feuilles (ajouter, renommer, supprimer)
   presse-papiers.js      copier, couper, coller
+  sauvegarde-fichier.js  boutons « Exporter / Importer un classeur (.json) »
   menu.js, fenetres.js   menu, « À propos » et fenêtres
 
 js/services/             sauvegarde, thèmes, exports PDF et CSV, import CSV, application installable
@@ -333,7 +349,9 @@ tests/                   vérifications automatiques
   dates jj/mm/aaaa, UTF-8 avec BOM.
 - **Sécurité** : la page ne charge que ses propres fichiers (règle CSP dans
   `index.html`), le contenu des cellules est toujours affiché comme du texte,
-  un fichier CSV importé ne peut pas lancer de formule.
+  un fichier CSV importé ne peut pas lancer de formule, et un fichier .json
+  importé est lu comme de simples données (`JSON.parse`), vérifié en entier
+  avant de remplacer quoi que ce soit.
 
 ---
 

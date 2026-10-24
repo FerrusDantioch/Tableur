@@ -1,5 +1,6 @@
 // Commandes de l'onglet « Données » : trier, figer la première ligne,
-// importer un fichier CSV.
+// importer un fichier CSV. (Import et export du classeur en .json :
+// voir sauvegarde-fichier.js.)
 
 import { adresse, lettresColonne, plage as creerPlage } from '../donnees/adresses.js';
 import { ordreDeTri, sembleTitres, zoneAutour } from '../donnees/tri.js';
@@ -39,7 +40,8 @@ export class CommandesDonnees {
     element('trier-decroissant').addEventListener('click', () => this.trier(false));
 
     this.boutonFiger.addEventListener('click', () => this.figer());
-    element('bouton-importer').addEventListener('click', () => {
+    element('importer-csv').addEventListener('click', () => {
+      element('panneau-importer').hidePopover();
       this.avantAction();
       this.champFichier.value = '';
       this.champFichier.click();
