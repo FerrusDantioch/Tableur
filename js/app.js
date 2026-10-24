@@ -26,6 +26,7 @@ import { demander, ouvrirFenetre, preparerFenetres } from './affichage/fenetres.
 import { installerMenu } from './affichage/menu.js';
 import { PressePapiers } from './affichage/presse-papiers.js';
 import { SauvegardeFichier } from './affichage/sauvegarde-fichier.js';
+import { Zoom } from './affichage/zoom.js';
 import { demanderStockagePersistant, ecrireClasseur, lireClasseur, mettreDeCote, preferences } from './services/stockage.js';
 import { SauvegardeAuto } from './services/sauvegarde-auto.js';
 import { demarrerServiceWorker } from './services/pwa.js';
@@ -185,6 +186,9 @@ const interactions = new Interactions({
 
 const avantAction = () => interactions.validerEdition(null, { refocaliser: false });
 const apresAction = () => interactions.focaliser();
+
+// Zoom de la grille (boutons − et +, deux doigts, Ctrl + molette), mémorisé sur l'appareil.
+const zoom = new Zoom({ grille, preferences, avantChangement: avantAction, apresChangement: () => interactions.actualiser() });
 
 miseEnForme = new MiseEnForme({
   classeur,
@@ -442,9 +446,10 @@ commandes.exporterPdf = () => {
 // Le fichier garde aussi le thème et le zoom ; ils sont repris à l'import.
 const sauvegardeFichier = new SauvegardeFichier({
   classeur,
-  lireAffichage: () => ({ zoom: preferences.lire('zoom', 100), theme: preferences.lire('theme', THEME_PAR_DEFAUT) }),
-  appliquerAffichage({ theme }) {
-    if (theme) choisirTheme(theme, preferences);
+  lireAffichage: () => ({ zoom: zoom.pourcent, theme: preferences.lire('theme', THEME_PAR_DEFAUT) }),
+  appliquerAffichage(affichage) {
+    if (affichage.theme) choisirTheme(affichage.theme, preferences);
+    if (affichage.zoom !== undefined) zoom.choisir(affichage.zoom);
   },
   demander,
   avantAction,
@@ -500,5 +505,6 @@ window.omniTableur = {
   exportPdf,
   pressePapiers,
   sauvegardeFichier,
+  zoom,
   adresse,
 };

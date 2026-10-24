@@ -45,6 +45,11 @@ barre (plus de place pour la grille sur téléphone). **Annuler**,
   elle (les panneaux « Insérer » et « Supprimer » ne proposent plus que des
   colonnes, ou que des lignes).
 - Annuler / Rétablir (boutons, **Ctrl + Z**, **Ctrl + Y**), pour toutes les actions.
+- **Zoom** de 50 % à 200 % (par pas de 10 %) : boutons **−** et **+** en bas
+  à droite (un appui sur le pourcentage revient à 100 %), pincement à deux
+  doigts sur la grille, ou **Ctrl + molette**. Il est mémorisé sur l'appareil
+  et ne change que l'affichage (ni le classeur, ni les largeurs enregistrées,
+  ni le PDF).
 
 **Édition** (onglet « Édition »)
 
@@ -270,6 +275,7 @@ js/affichage/            (c) L'AFFICHAGE
   interactions.js        clavier, souris, doigt, poignée de recopie
   edition.js             saisie dans la cellule et dans la barre « fx »
   selection.js           cellule active et plage sélectionnée
+  zoom.js                zoom de la grille (boutons, deux doigts, Ctrl + molette)
   format.js              nombres à la française (3,5 ; 12,50 € ; 23/10/2026)
   barre-outils.js        onglets de la barre d'outils, panneaux
   commandes-edition.js   recopier, insérer, supprimer, effacer

@@ -61,6 +61,7 @@ const FICHIERS = [
   'js/affichage/presse-papiers.js',
   'js/affichage/sauvegarde-fichier.js',
   'js/affichage/selection.js',
+  'js/affichage/zoom.js',
   'js/services/export-csv.js',
   'js/services/export-pdf.js',
   'js/services/fichiers.js',

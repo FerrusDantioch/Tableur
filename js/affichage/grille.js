@@ -16,6 +16,10 @@
 // Toutes les lignes ont la même hauteur : la position d'une cellule se
 // calcule donc directement (ligne × hauteur), sans la chercher dans la page.
 //
+// Zoom : toutes les tailles (hauteur des lignes, largeur des colonnes, texte)
+// sont multipliées par le même facteur. Le classeur, lui, garde les largeurs
+// « à 100 % » : le zoom ne change que l'affichage.
+//
 // Première ligne figée : elle reste toujours dessinée, collée sous les
 // en-têtes A, B, C… (CSS « position: sticky »). Les cadres de sélection et
 // le champ de saisie qui la concernent sont placés dans une « couche figée »
@@ -23,7 +27,7 @@
 
 import { lettresColonne, lireAdresse } from '../donnees/adresses.js';
 
-/** Largeur de la colonne des numéros de ligne (1, 2, 3…), en pixels. */
+/** Largeur de la colonne des numéros de ligne (1, 2, 3…), en pixels, à 100 %. */
 const LARGEUR_NUMEROS = 52;
 
 /** Nombre de lignes dessinées en plus, au-dessus et en dessous de la partie visible. */
@@ -46,7 +50,9 @@ export class Grille {
   #lignes = new Map(); // lignes dessinées, par numéro
   #premiere = 1; // fenêtre de lignes dessinées (sans compter la ligne figée)
   #derniere = 0;
-  #hauteur = 32; // hauteur d'une ligne (et des en-têtes), en pixels
+  #hauteur = 32; // hauteur d'une ligne (et des en-têtes), en pixels, zoom compris
+  #zoom = 1; // 1 = 100 %
+  #largeurNumeros = LARGEUR_NUMEROS; // colonne des numéros, zoom compris
   #positions = [0]; // #positions[c] = bord gauche de la colonne c, dans le contenu
   #figee = false; // première ligne figée ?
   #couche; // couche figée (cadres et saisie de la ligne 1 quand elle est figée)
@@ -92,6 +98,38 @@ export class Grille {
     return this.#hauteur;
   }
 
+  /** Zoom actuel (1 = 100 %). */
+  get zoom() {
+    return this.#zoom;
+  }
+
+  /**
+   * Change le zoom (0,5 à 2) et redessine. Le point `point` de l'écran
+   * ({ x, y }, par exemple entre les deux doigts) reste au même endroit ;
+   * sans point, c'est le coin en haut à gauche de la grille.
+   */
+  changerZoom(facteur, point = null) {
+    if (facteur === this.#zoom) return;
+    const zone = this.#racine;
+    const bords = zone.getBoundingClientRect();
+    const vx = point ? point.x - bords.left : 0;
+    const vy = point ? point.y - bords.top : 0;
+    const rapport = facteur / this.#zoom;
+    const x = zone.scrollLeft + vx;
+    const y = zone.scrollTop + vy;
+    this.#zoom = facteur;
+    zone.style.setProperty('--zoom', String(facteur));
+    this.construire();
+    zone.scrollLeft = x * rapport - vx;
+    zone.scrollTop = y * rapport - vy;
+    this.#mettreAJourFenetre();
+  }
+
+  /** Largeur à l'écran d'une colonne (largeur enregistrée × zoom), en pixels entiers. */
+  #largeurEcran(largeur) {
+    return Math.round(largeur * this.#zoom);
+  }
+
   /** Change la feuille affichée (onglets) et redessine tout. */
   changerFeuille(feuille) {
     this.feuille = feuille;
@@ -106,7 +144,11 @@ export class Grille {
    */
   construire() {
     const { colonnes } = this.feuille;
-    this.#hauteur = parseFloat(getComputedStyle(this.#racine).getPropertyValue('--hauteur-ligne')) || 32;
+    // Hauteur à 100 % (32 px, ou 36 px au doigt, voir css/grille.css), puis zoom.
+    const base = parseFloat(getComputedStyle(this.#racine).getPropertyValue('--hauteur-base')) || 32;
+    this.#hauteur = Math.round(base * this.#zoom);
+    this.#racine.style.setProperty('--hauteur-ligne', `${this.#hauteur}px`);
+    this.#largeurNumeros = this.#largeurEcran(LARGEUR_NUMEROS);
     this.#figee = this.feuille.figee === true;
 
     const contenu = document.createElement('div');
@@ -118,12 +160,12 @@ export class Grille {
     // Largeurs des colonnes : un <col> par colonne.
     const groupe = document.createElement('colgroup');
     const colEntete = document.createElement('col');
-    colEntete.style.width = `${LARGEUR_NUMEROS}px`;
+    colEntete.style.width = `${this.#largeurNumeros}px`;
     groupe.append(colEntete);
     this.#colonnes = [null];
     for (let c = 1; c <= colonnes; c++) {
       const col = document.createElement('col');
-      col.style.width = `${this.feuille.largeur(c)}px`;
+      col.style.width = `${this.#largeurEcran(this.feuille.largeur(c))}px`;
       this.#colonnes.push(col);
       groupe.append(col);
     }
@@ -368,7 +410,7 @@ export class Grille {
 
   /** Calcule le bord gauche de chaque colonne et la largeur totale du tableau. */
   #calculerPositions() {
-    this.#positions = [0, LARGEUR_NUMEROS];
+    this.#positions = [0, this.#largeurNumeros];
     for (let c = 1; c < this.#colonnes.length; c++) {
       this.#positions.push(this.#positions[c] + parseFloat(this.#colonnes[c].style.width));
     }
@@ -382,14 +424,14 @@ export class Grille {
   rafraichirLargeurs(colonnes = null) {
     const liste = colonnes ?? this.#colonnes.keys();
     for (const c of liste) {
-      if (this.#colonnes[c]) this.#colonnes[c].style.width = `${this.feuille.largeur(c)}px`;
+      if (this.#colonnes[c]) this.#colonnes[c].style.width = `${this.#largeurEcran(this.feuille.largeur(c))}px`;
     }
     this.#calculerPositions();
   }
 
-  /** Largeur provisoire d'une colonne pendant qu'on la fait glisser. */
+  /** Largeur provisoire d'une colonne pendant qu'on la fait glisser (largeur à 100 %). */
   apercuLargeur(colonne, largeur) {
-    if (this.#colonnes[colonne]) this.#colonnes[colonne].style.width = `${largeur}px`;
+    if (this.#colonnes[colonne]) this.#colonnes[colonne].style.width = `${this.#largeurEcran(largeur)}px`;
     this.#calculerPositions();
   }
 
@@ -519,7 +561,7 @@ export class Grille {
     if (colonne >= 1 && colonne <= this.feuille.colonnes) {
       const gauche = this.#positions[colonne];
       const droite = this.#positions[colonne + 1];
-      const gaucheVisible = zone.scrollLeft + LARGEUR_NUMEROS;
+      const gaucheVisible = zone.scrollLeft + this.#largeurNumeros;
       const droiteVisible = zone.scrollLeft + zone.clientWidth;
       if (gauche < gaucheVisible) zone.scrollLeft -= gaucheVisible - gauche;
       else if (droite > droiteVisible) zone.scrollLeft += Math.min(droite - droiteVisible, gauche - gaucheVisible);
@@ -570,7 +612,7 @@ export class Grille {
       ligne = Math.min(this.feuille.lignes, Math.max(1, ligne));
     }
     let colonne = null;
-    if (vx >= LARGEUR_NUMEROS) {
+    if (vx >= this.#largeurNumeros) {
       const cx = vx + zone.scrollLeft;
       colonne = this.feuille.colonnes;
       for (let c = 1; c <= this.feuille.colonnes; c++) {

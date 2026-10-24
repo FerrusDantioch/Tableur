@@ -558,6 +558,46 @@ svg {
   touch-action: manipulation;
 }
 
+/* Zoom (à droite de la barre des onglets) : − 100 % + */
+.zoom {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  padding-left: 6px;
+}
+
+.bouton-zoom {
+  width: 40px;
+  height: 36px;
+}
+
+.bouton-zoom:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.zoom-valeur {
+  min-width: 4.4em;
+  min-height: 36px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--texte);
+  font-family: var(--police-entetes);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.zoom-valeur:hover {
+  background: var(--survol);
+}
+
 .onglet-feuille:hover {
   color: var(--texte);
   background: var(--survol);
