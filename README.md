@@ -39,7 +39,11 @@ barre (plus de place pour la grille sur téléphone). **Annuler**,
   **Suppr** pour vider ; **Ctrl + flèche** pour aller au bord.
 - Au doigt : un appui sélectionne, un second appui ouvre le clavier ; la
   poignée ronde étend la sélection ; la barre « fx » permet aussi d'écrire.
-- Sélection de plages (Maj + flèches, glisser, clic sur un en-tête A/B/C ou 1/2/3).
+- Sélection de plages (Maj + flèches, glisser). Toucher ou cliquer un en-tête
+  (A, B, C… ou 1, 2, 3…) sélectionne toute la colonne ou toute la ligne : la
+  mise en forme, Copier/Coller, Insérer et Supprimer s'appliquent alors à
+  elle (les panneaux « Insérer » et « Supprimer » ne proposent plus que des
+  colonnes, ou que des lignes).
 - Annuler / Rétablir (boutons, **Ctrl + Z**, **Ctrl + Y**), pour toutes les actions.
 
 **Édition** (onglet « Édition »)

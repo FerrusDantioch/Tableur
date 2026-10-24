@@ -146,6 +146,12 @@ svg {
   touch-action: manipulation;
 }
 
+/* Sans cette règle, « display: inline-flex » ci-dessus l'emporterait sur
+   l'attribut hidden : un bouton caché resterait visible. */
+.outil[hidden] {
+  display: none;
+}
+
 .outil:hover:not(:disabled) {
   background: var(--survol);
 }
