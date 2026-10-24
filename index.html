@@ -74,6 +74,7 @@
       <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" /></symbol>
       <symbol id="i-rechercher" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2.2" /><path d="m15 15 5 5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" /></symbol>
       <symbol id="i-fusionner" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2" /><path d="M6.5 12h4M8.5 10l2 2-2 2M17.5 12h-4M15.5 10l-2 2 2 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></symbol>
+      <symbol id="i-conditions" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2.5" fill="none" stroke="currentColor" stroke-width="2" /><path d="M3 12h18M12 4v16" fill="none" stroke="currentColor" stroke-width="1.4" opacity="0.6" /><rect x="13" y="13" width="7" height="6" rx="1" fill="currentColor" opacity="0.55" /><path d="m5.5 8 1.6 1.6L10 6.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></symbol>
       <symbol id="i-moins" viewBox="0 0 24 24"><path d="M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" /></symbol>
       <symbol id="i-effacer" viewBox="0 0 24 24"><path d="M14.5 4.5 20 10l-8.5 8.5H7l-3-3a1.5 1.5 0 0 1 0-2.1z M9 10l5.5 5.5 M12 20.5h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
     </svg>
@@ -177,6 +178,9 @@
         </button>
         <button id="bouton-largeur" class="outil" type="button" title="Largeur des colonnes" popovertarget="panneau-largeur">
           <svg aria-hidden="true"><use href="#i-largeur" /></svg><span class="libelle">Largeur</span>
+        </button>
+        <button id="bouton-conditions" class="outil" type="button" title="Mise en forme conditionnelle : colorer les cellules selon leur valeur" aria-haspopup="dialog">
+          <svg aria-hidden="true"><use href="#i-conditions" /></svg><span class="libelle">Conditions</span>
         </button>
       </div>
 
@@ -460,6 +464,59 @@
       </div>
     </dialog>
 
+    <dialog id="fenetre-conditions" class="fenetre fenetre-large" aria-labelledby="titre-conditions">
+      <div class="fenetre-tete">
+        <h2 id="titre-conditions">Mise en forme conditionnelle</h2>
+        <button class="outil-rond" type="button" data-fermer aria-label="Fermer"><svg aria-hidden="true"><use href="#i-fermer" /></svg></button>
+      </div>
+      <div class="fenetre-corps">
+        <p class="note">Colorer automatiquement des cellules selon leur valeur. Les couleurs changent toutes seules quand les valeurs changent, et apparaissent dans le PDF.</p>
+        <section class="a-propos-bloc" aria-labelledby="titre-liste-regles">
+          <h3 id="titre-liste-regles">Règles de la feuille</h3>
+          <ol id="liste-regles" class="liste-regles"></ol>
+          <p id="aucune-regle" class="note">Aucune règle pour l'instant.</p>
+          <p class="note">Si plusieurs règles colorent la même cellule, la première de la liste l'emporte.</p>
+          <p id="etat-regles" class="note" role="status"></p>
+        </section>
+        <section class="a-propos-bloc formulaire-regle" aria-labelledby="titre-formulaire-regle">
+          <h3 id="titre-formulaire-regle">Nouvelle règle</h3>
+          <label class="champ-fenetre">
+            <span>Cellules concernées</span>
+            <input id="regle-plage" type="text" autocomplete="off" spellcheck="false" autocapitalize="characters" placeholder="ex. B2:B20" />
+          </label>
+          <div class="regle-condition">
+            <label class="champ-fenetre">
+              <span>Si la valeur est</span>
+              <select id="regle-type"></select>
+            </label>
+            <label id="bloc-valeur" class="champ-fenetre">
+              <span>Valeur</span>
+              <input id="regle-valeur" type="text" autocomplete="off" spellcheck="false" />
+            </label>
+            <label id="bloc-valeur2" class="champ-fenetre" hidden>
+              <span>et</span>
+              <input id="regle-valeur2" type="text" autocomplete="off" spellcheck="false" placeholder="nombre (ex. 200)" />
+            </label>
+          </div>
+          <div class="regle-couleurs">
+            <div>
+              <p class="etiquette-nuancier">Alors, couleur de fond</p>
+              <div id="regle-fond" class="nuancier" role="group" aria-label="Couleur de fond"></div>
+            </div>
+            <div>
+              <p class="etiquette-nuancier">et/ou couleur du texte</p>
+              <div id="regle-encre" class="nuancier nuancier-encres" role="group" aria-label="Couleur du texte"></div>
+            </div>
+          </div>
+          <p id="erreur-regle" class="erreur-champ" role="alert"></p>
+          <div class="boutons-fenetre">
+            <button id="regle-abandonner" class="outil" type="button" hidden>Abandonner la modification</button>
+            <button id="regle-enregistrer" class="outil principal" type="button">Ajouter la règle</button>
+          </div>
+        </section>
+      </div>
+    </dialog>
+
     <dialog id="fenetre-fusion" class="fenetre" aria-labelledby="titre-fusion">
       <div class="fenetre-tete"><h2 id="titre-fusion">Fusionner les cellules ?</h2></div>
       <div class="fenetre-corps">
@@ -627,6 +684,7 @@
           <ul>
             <li>Onglet <strong>« Mise en forme »</strong> : gras (<strong>Ctrl + B</strong>), italique (<strong>Ctrl + I</strong>), couleur du texte, couleur de fond, alignement (gauche, centre, droite ; un second appui revient à l'automatique), largeur des colonnes.</li>
             <li><strong>Fusionner</strong> : sélectionnez plusieurs cellules (par exemple A1 à D1 pour un titre) puis « Fusionner » : elles n'en font plus qu'une, au texte centré. Seul le contenu de la cellule en haut à gauche est gardé (une question est posée si d'autres cellules sont remplies) ; ses couleurs et ses bordures s'appliquent à toute la zone. Une formule qui vise une case de la zone (<code>=B1</code>) utilise la cellule en haut à gauche. Sur une cellule fusionnée, le même bouton devient « Défusionner ». On ne peut pas trier des lignes qui contiennent des cellules fusionnées.</li>
+            <li><strong>Conditions</strong> (mise en forme conditionnelle) : colorer des cellules selon leur valeur. Choisissez les cellules (ex. <code>B2:B20</code>), la condition (supérieure à, inférieure à, égale à, entre, négative, contient le texte) et une couleur de fond et/ou de texte. Plusieurs règles possibles ; la liste permet de les modifier ou de les supprimer. Les couleurs se mettent à jour toutes seules.</li>
             <li><strong>Format</strong> des nombres : nombre (1 234,50), euros, pourcentage, date, et nombre de décimales (− et +). Le format change seulement l'affichage : les calculs gardent le nombre exact.</li>
             <li>Onglet <strong>« Bordures »</strong> : choisissez d'abord le trait (<strong>Fin</strong> ou <strong>Épais</strong>) et la <strong>Couleur</strong>, sélectionnez les cellules, puis <strong>Toutes</strong>, <strong>Extérieure</strong>, <strong>Haut</strong>, <strong>Bas</strong>, <strong>Gauche</strong>, <strong>Droite</strong> ou <strong>Aucune</strong>. Les bordures apparaissent aussi dans le PDF.</li>
           </ul>

@@ -42,6 +42,10 @@ des données d'avant le renommage (`stockage.js`, `theme-initial.js`,
   l'écran, un bloc `.cellule-fusionnee` est posé sur les cases couvertes
   (`Grille.#dessinerFusions`) ; la `Selection` agrandit les plages aux fusions.
   Les cases couvertes restent vides (`modifierFeuilles` ignore leur texte).
+- Mise en forme conditionnelle : `Feuille.regles` (`"reglesConditionnelles"`
+  dans le JSON), `donnees/regles.js` (vérification), `calcul/conditions.js`
+  (évaluation), appliquée dans `presenterCellule` (app.js) : grille, blocs
+  fusionnés et PDF en profitent sans code de plus.
 
 ## Tests
 

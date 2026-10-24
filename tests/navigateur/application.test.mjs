@@ -186,7 +186,9 @@ test('menu : lignes et colonnes en plus, aide, à propos', async () => {
   assert.match(texte, /fast-formula-parser/);
   await page.click('#fenetre-a-propos [data-fermer]');
   assert.equal(await page.isVisible('#fenetre-a-propos'), false);
-  // Après fermeture, le clavier pilote à nouveau la grille.
+  // Après fermeture, le clavier pilote à nouveau la grille (le navigateur rend
+  // le focus juste après la fermeture : on l'attend avant de taper).
+  await page.waitForFunction(() => document.activeElement?.id === 'editeur-cellule');
   await page.keyboard.type('ok');
   await page.keyboard.press('Enter');
   assert.equal(await texteCellule(page, 'A1'), 'ok');

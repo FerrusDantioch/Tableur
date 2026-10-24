@@ -93,3 +93,32 @@ export function* adressesDePlage({ debut, fin }) {
     }
   }
 }
+
+/**
+ * Une plage après une insertion ou une suppression de lignes (ou de colonnes) :
+ *   - insertion avant la plage : elle se décale ; au milieu : elle s'agrandit ;
+ *   - suppression : elle perd les lignes supprimées ; null s'il ne lui en reste aucune.
+ * @param {{debut, fin}} zone
+ * @param {{axe: 'lignes'|'colonnes', type: 'insertion'|'suppression', position: number, nombre: number, maximum?: number}} changement
+ */
+export function ajusterPlage(zone, { axe, type, position, nombre, maximum = Infinity }) {
+  const cle = axe === 'lignes' ? 'ligne' : 'colonne';
+  let debut = zone.debut[cle];
+  let fin = zone.fin[cle];
+  if (type === 'insertion') {
+    if (debut >= position) debut += nombre;
+    if (fin >= position) fin += nombre;
+    if (debut > maximum) return null;
+    fin = Math.min(fin, maximum);
+  } else {
+    const derniere = position + nombre - 1;
+    // Lignes (ou colonnes) de la plage qui restent, avec leur nouveau numéro.
+    const nouveau = (v) => (v < position ? v : v - nombre);
+    const premiereRestante = debut < position ? debut : Math.max(debut, derniere + 1);
+    const derniereRestante = fin > derniere ? fin : Math.min(fin, position - 1);
+    if (premiereRestante > derniereRestante) return null;
+    debut = nouveau(premiereRestante);
+    fin = nouveau(derniereRestante);
+  }
+  return { debut: { ...zone.debut, [cle]: debut }, fin: { ...zone.fin, [cle]: fin } };
+}

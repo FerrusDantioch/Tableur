@@ -336,6 +336,84 @@
   margin: 0;
 }
 
+/* --- Mise en forme conditionnelle ------------------------------------------- */
+
+/* (« .fenetre » en plus : sinon la règle « .fenetre ol » ajouterait une marge à gauche.) */
+.fenetre .liste-regles {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.regle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--trait);
+  border-radius: 12px;
+}
+
+.apercu-regle {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 3.2em;
+  height: 2.2em;
+  border: 1px solid var(--trait);
+  border-radius: 8px;
+  background: var(--teinte, var(--cellule));
+  font-weight: 700;
+}
+
+.texte-regle {
+  flex: 1 1 14em;
+  min-width: 0;
+}
+
+.boutons-regle {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.regle-condition {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.regle-condition > .champ-fenetre {
+  flex: 1 1 10em;
+}
+
+.regle-condition > .champ-fenetre[hidden] {
+  display: none;
+}
+
+.champ-fenetre select {
+  min-height: 44px;
+  padding: 6px 10px;
+  border: 1px solid var(--trait);
+  border-radius: 10px;
+  background: var(--fond);
+  color: var(--texte);
+  font-size: 1.05rem;
+}
+
+.regle-couleurs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13em, 1fr));
+  gap: 12px;
+}
+
+.etiquette-nuancier {
+  margin: 0 0 6px;
+}
+
 /* Champ de saisie dans une fenêtre (renommer une feuille). */
 .champ-fenetre {
   display: grid;

@@ -109,6 +109,16 @@ barre (plus de place pour la grille sur téléphone). **Annuler**,
   ajuster au contenu, ou bouton « Largeur »).
 - Bordures : toutes, extérieure, haut, bas, gauche, droite, aucune ; trait
   fin ou épais ; couleur au choix. Elles sont aussi dans le PDF.
+- **Mise en forme conditionnelle** (bouton « Conditions ») : colorer des
+  cellules selon leur valeur. Une règle = des cellules (ex. `B2:B20`), une
+  condition (« supérieure à », « inférieure à », « égale à », « entre »,
+  « négative », « contient le texte ») et une couleur de fond et/ou de texte.
+  Plusieurs règles par feuille ; la fenêtre les liste, avec « Modifier » et
+  « Supprimer ». Les couleurs se recalculent toutes seules quand les valeurs
+  changent, suivent les insertions et suppressions de lignes, et apparaissent
+  dans le PDF. Nombres à la française (`2,5`, `1 000`, `20 %`, dates) ; le
+  texte est comparé sans tenir compte des majuscules. Si deux règles colorent
+  la même cellule, la première de la liste l'emporte.
 - **Fusionner** des cellules (idéal pour un titre au-dessus d'un tableau) :
   sélectionner la plage, puis « Fusionner ». Règles, comme dans Excel :
   - seule la cellule en haut à gauche garde son contenu ; si d'autres cellules
@@ -285,6 +295,7 @@ js/donnees/              (a) LES DONNÉES — ce que tu as saisi
                          insertion/suppression de lignes, feuilles, enregistrement
   formules.js            lit et réécrit les références des formules (A1, $A$1, Feuille2!A1…)
   fusions.js             cellules fusionnées : sélection agrandie, insertion et suppression
+  regles.js              règles de mise en forme conditionnelle (description, vérification)
   fichier-classeur.js    fichier de sauvegarde complète (.json) : création et vérification
   recopie.js             poignée de recopie : formules adaptées, suites 1, 2, 3…
   recherche.js           rechercher et remplacer (texte cherché, ordre de lecture, remplacements)
@@ -296,6 +307,7 @@ js/calcul/               (b) LE CALCUL DES FORMULES
   moteur.js              calcule, suit les dépendances (entre feuilles aussi), recalcule
   fonctions.js           fonctions écrites pour Omni-Tableur (NB.SI, RECHERCHEV, MAJUSCULE…)
   comparaisons.js        comparaisons et critères à la française
+  conditions.js          mise en forme conditionnelle : la cellule respecte-t-elle la règle ?
   erreurs.js             #DIV/0!, #REF!… et leurs explications
   bibliotheque.js        accès à la bibliothèque fast-formula-parser
 
@@ -309,6 +321,7 @@ js/affichage/            (c) L'AFFICHAGE
   barre-outils.js        onglets de la barre d'outils, panneaux
   commandes-edition.js   recopier, insérer, supprimer, effacer
   commandes-fusion.js    bouton « Fusionner / Défusionner »
+  conditions.js          fenêtre « Mise en forme conditionnelle »
   mise-en-forme.js       gras, italique, couleurs, alignement, formats, largeurs
   outils-bordures.js     onglet « Bordures »
   commandes-donnees.js   trier, figer la 1re ligne, importer un CSV

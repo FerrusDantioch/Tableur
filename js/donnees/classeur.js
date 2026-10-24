@@ -16,6 +16,7 @@
 import {
   COLONNES_MAX,
   LIGNES_MAX,
+  ajusterPlage,
   adresse as versAdresse,
   dansPlage,
   lireAdresse,
@@ -26,6 +27,7 @@ import {
 } from './adresses.js';
 import { ajusterReferences, decalerReferences, oublierFeuilleDansFormule, renommerFeuilleDansFormule } from './formules.js';
 import { ajusterFusions, contient, fusionContenant, nombreCellules, seChevauchent } from './fusions.js';
+import { REGLES_MAX, nettoyerRegle, regleVersJSON, verifierRegle } from './regles.js';
 
 export { COLONNES_MAX, LIGNES_MAX };
 export const LIGNES_PAR_DEFAUT = 100;
@@ -160,6 +162,8 @@ export class Feuille {
   #largeurs = new Map();
   /** Cellules fusionnées : plages (gelées) qui ne se chevauchent pas. Voir fusions.js. */
   #fusions = [];
+  /** Règles de mise en forme conditionnelle (gelées), dans l'ordre. Voir regles.js. */
+  #regles = [];
 
   constructor({ nom = 'Feuille1', lignes = LIGNES_PAR_DEFAUT, colonnes = COLONNES_PAR_DEFAUT } = {}) {
     /** Identifiant fixe pendant la session (le nom, lui, peut changer). */
@@ -204,6 +208,30 @@ export class Feuille {
   /** La fusion qui contient la cellule, ou null. */
   fusionEn(ligne, colonne) {
     return fusionContenant(this.#fusions, ligne, colonne);
+  }
+
+  /** Les règles de mise en forme conditionnelle (en lecture seule), dans l'ordre. */
+  get regles() {
+    return this.#regles;
+  }
+
+  /**
+   * Remplace la liste des règles (les règles impossibles sont ignorées ; une
+   * règle sans numéro en reçoit un). Usage interne : passer par le Classeur.
+   */
+  poserRegles(regles) {
+    const propres = regles.map(nettoyerRegle).filter(Boolean).slice(0, REGLES_MAX);
+    let prochain = Math.max(0, ...propres.map((r) => r.id)) + 1;
+    const vus = new Set();
+    this.#regles = propres.map((regle) => {
+      if (regle.id > 0 && !vus.has(regle.id)) {
+        vus.add(regle.id);
+        return regle;
+      }
+      const numerotee = nettoyerRegle({ ...regleVersJSON(regle), id: prochain++ });
+      vus.add(numerotee.id);
+      return numerotee;
+    });
   }
 
   /** Remplace la liste des fusions. Usage interne : passer par le Classeur. */
@@ -273,6 +301,7 @@ export class Feuille {
     const donnees = { nom: this.nom, lignes: this.lignes, colonnes: this.colonnes, largeurs, cellules };
     if (this.figee) donnees.figee = true;
     if (this.#fusions.length) donnees.fusions = this.#fusions.map(textePlage);
+    if (this.#regles.length) donnees.reglesConditionnelles = this.#regles.map(regleVersJSON);
     return donnees;
   }
 
@@ -309,6 +338,7 @@ export class Feuille {
       this.colonnes = Math.max(this.colonnes, plage.fin.colonne);
     }
     this.poserFusions(fusions);
+    this.poserRegles(Array.isArray(donnees.reglesConditionnelles) ? donnees.reglesConditionnelles : []);
   }
 
   static depuisJSON(donnees) {
@@ -627,6 +657,7 @@ export class Classeur {
         feuille.deplacerLargeurs((colonne) => (decaler(colonne) <= COLONNES_MAX ? decaler(colonne) : null));
       }
       feuille.poserFusions(ajusterFusions(feuille.fusions, { axe, type: 'insertion', position, nombre, maximum }));
+      feuille.poserRegles(ajusterRegles(feuille.regles, { axe, type: 'insertion', position, nombre, maximum }));
       const changement = { feuille: feuille.nom, axe, type: 'insertion', position, nombre };
       this.#reecrireFormules((brut, f) => ajusterReferences(brut, f.nom, changement));
     });
@@ -651,6 +682,7 @@ export class Classeur {
       });
       if (!lignes) feuille.deplacerLargeurs(nouvelle);
       feuille.poserFusions(ajusterFusions(feuille.fusions, { axe, type: 'suppression', position, nombre }));
+      feuille.poserRegles(ajusterRegles(feuille.regles, { axe, type: 'suppression', position, nombre }));
       const changement = { feuille: feuille.nom, axe, type: 'suppression', position, nombre };
       this.#reecrireFormules((brut, f) => ajusterReferences(brut, f.nom, changement));
     });
@@ -690,6 +722,42 @@ export class Classeur {
         const brut = decalerReferences(cellule.brut, dLignes, 0);
         if (brut !== cellule.brut) feuille.poser(adresse, { ...cellule, brut });
       }
+    });
+  }
+
+  // --- Mise en forme conditionnelle (voir regles.js) -----------------------------
+
+  /**
+   * Ajoute une règle à la fin de la liste de la feuille. Annulable.
+   * @returns {{ok: boolean, message?: string, id?: number}}
+   */
+  ajouterRegle(feuille, regle) {
+    const refus = verifierRegle(regle);
+    if (refus) return { ok: false, message: refus };
+    if (feuille.regles.length >= REGLES_MAX) return { ok: false, message: `Pas plus de ${REGLES_MAX} règles par feuille.` };
+    const id = Math.max(0, ...feuille.regles.map((r) => r.id)) + 1;
+    this.#modifierStructure({ feuille }, () => {
+      feuille.poserRegles([...feuille.regles, { ...regle, id }]);
+    });
+    return { ok: true, id };
+  }
+
+  /** Remplace la règle numéro `id` (même place dans la liste). Annulable. */
+  modifierRegle(feuille, id, regle) {
+    const refus = verifierRegle(regle);
+    if (refus) return { ok: false, message: refus };
+    if (!feuille.regles.some((r) => r.id === id)) return { ok: false, message: 'Cette règle n’existe plus.' };
+    this.#modifierStructure({ feuille }, () => {
+      feuille.poserRegles(feuille.regles.map((r) => (r.id === id ? { ...regle, id } : r)));
+    });
+    return { ok: true, id };
+  }
+
+  /** Supprime la règle numéro `id`. Annulable. Renvoie vrai si elle existait. */
+  supprimerRegle(feuille, id) {
+    if (!feuille.regles.some((r) => r.id === id)) return false;
+    return this.#modifierStructure({ feuille }, () => {
+      feuille.poserRegles(feuille.regles.filter((r) => r.id !== id));
     });
   }
 
@@ -957,6 +1025,20 @@ export class Classeur {
     this.#annoncer({ type: 'active', feuille: this.#active });
     this.#annoncer({ type: 'historique' });
   }
+}
+
+/**
+ * Règles après une insertion ou une suppression de lignes (ou de colonnes) :
+ * leur plage suit (voir ajusterPlage) ; une règle dont toutes les cellules
+ * ont été supprimées disparaît.
+ */
+function ajusterRegles(regles, changement) {
+  const resultat = [];
+  for (const regle of regles) {
+    const zone = ajusterPlage(regle.zone, changement);
+    if (zone) resultat.push({ ...regleVersJSON(regle), plage: textePlage(zone) });
+  }
+  return resultat;
 }
 
 /** Vrai si la cellule est couverte par une fusion (sans en être le coin en haut à gauche). */
