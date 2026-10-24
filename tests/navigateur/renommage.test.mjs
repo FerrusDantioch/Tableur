@@ -36,6 +36,8 @@ async function preparerAncienStockage(page) {
   await page.goto(`${serveur.url}licences/jstat-MIT.txt`);
   await page.evaluate(async (classeur) => {
     localStorage.setItem('tableur.preferences', JSON.stringify({ theme: 'clair', barreOutils: { groupe: 'donnees', repliee: false } }));
+    // Copie de secours (rangée dans localStorage quand IndexedDB est indisponible).
+    localStorage.setItem('tableur.classeur.principal', JSON.stringify({ donnees: classeur, modifieLe: '2026-10-19T08:00:00.000Z' }));
     await new Promise((resoudre, rejeter) => {
       const demande = indexedDB.open('tableur', 1);
       demande.onupgradeneeded = () => demande.result.createObjectStore('classeurs');
@@ -79,10 +81,14 @@ test('les données de l’ancienne version sont copiées sous le nouveau nom, pu
     bases: (await indexedDB.databases()).map((b) => b.name),
     anciennesPreferences: localStorage.getItem('tableur.preferences'),
     nouvellesPreferences: JSON.parse(localStorage.getItem('omni-tableur.preferences')),
+    ancienSecours: localStorage.getItem('tableur.classeur.principal'),
+    nouveauSecours: JSON.parse(localStorage.getItem('omni-tableur.classeur.principal')),
   }));
   assert.ok(etat.bases.includes('omni-tableur'));
   assert.equal(etat.anciennesPreferences, null);
   assert.equal(etat.nouvellesPreferences.theme, 'clair');
+  assert.equal(etat.ancienSecours, null);
+  assert.equal(etat.nouveauSecours.donnees.titre, 'Budget 2026');
 
   // Le service worker de la nouvelle version supprime l'ancienne copie hors ligne.
   await page.evaluate(() => navigator.serviceWorker.ready);
