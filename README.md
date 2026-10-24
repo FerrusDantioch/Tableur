@@ -178,6 +178,20 @@ barre (plus de place pour la grille sur téléphone). **Annuler**,
 - **Trier** (croissant / décroissant) : le tableau autour de la cellule
   active est trié, la ligne de titres est reconnue, les lignes restent entières.
 - **Figer la 1<sup>re</sup> ligne** : elle reste visible quand on fait défiler.
+- **Graphique** : le graphique du tableau sélectionné (une seule cellule
+  touchée suffit : le tableau autour est pris, sans son titre fusionné).
+  - Trois types : **Colonnes**, **Courbe**, **Secteurs** (camembert), et un
+    titre au choix (le nom de la série, s'il n'y en a qu'une).
+  - Comme dans Excel : les noms de la 1<sup>re</sup> colonne vont sous l'axe,
+    chaque colonne de nombres est une série, la 1<sup>re</sup> ligne donne les
+    noms des séries (un tableau plus large que haut est lu par lignes). Le
+    champ « Cellules » permet de choisir une autre plage (ex. `A2:C14`).
+  - **Enregistrer l'image (.png)** : une image nette (1280 × 800 pixels),
+    sur fond blanc, à glisser dans un document ou un message.
+  - Le graphique n'est pas enregistré dans le classeur : on rouvre la fenêtre
+    pour le refaire avec les valeurs du moment. Au plus 7 séries (une couleur
+    chacune) ; un camembert montre la 1<sup>re</sup> série, sans les valeurs
+    négatives, et regroupe au-delà de 7 parts les plus petites en « Autres ».
 - **Importer** : « Importer un classeur (.json) » ou « Importer un CSV ».
 - **Exporter** : « Exporter le classeur (.json) », « Exporter la feuille
   (.csv) » ou « Exporter la feuille (.pdf) » (case « Quadrillage gris »).
@@ -373,6 +387,7 @@ js/donnees/              (a) LES DONNÉES — ce que tu as saisi
   recherche.js           rechercher et remplacer (texte cherché, ordre de lecture, remplacements)
   bordures.js            pose des bordures (toutes, extérieure…) et traits à dessiner
   tri.js                 tri : tableau autour de la cellule, ligne de titres, ordre
+  graphique.js           graphique : catégories et séries d'un tableau, graduations, parts
 
 js/calcul/               (b) LE CALCUL DES FORMULES
   traduction.js          formules françaises → bibliothèque (SOMME → SUM, « ; » → « , »)
@@ -394,7 +409,9 @@ js/affichage/            (c) L'AFFICHAGE
   commandes-edition.js   recopier, insérer, supprimer, effacer
   commandes-fusion.js    bouton « Fusionner / Défusionner »
   conditions.js          fenêtre « Mise en forme conditionnelle »
-  mise-en-forme.js       gras, italique, couleurs, alignement, formats, largeurs
+  graphique.js           fenêtre « Graphique » et enregistrement de l'image
+  dessin-graphique.js    dessin du graphique en SVG (colonnes, courbe, secteurs)
+  mise-en-forme.js       gras, italique, couleurs, alignement, retour à la ligne, formats, largeurs
   outils-bordures.js     onglet « Bordures »
   commandes-donnees.js   trier, figer la 1re ligne, importer un CSV
   onglets-feuilles.js    onglets des feuilles (ajouter, renommer, supprimer)
@@ -450,8 +467,8 @@ tests/                   vérifications automatiques
 - `npm run test:navigateur` : tests dans un vrai navigateur, à la souris, au
   clavier et au doigt (téléphone imité) : saisie, onglets, tri, import et
   export, sauvegarde, passage de l'ancien nom au nouveau, zoom, recherche,
-  fusion, mise en forme conditionnelle, retour à la ligne, thèmes, hors
-  ligne, PDF. Il faut
+  fusion, mise en forme conditionnelle, retour à la ligne, graphiques,
+  thèmes, hors ligne, PDF. Il faut
   d'abord, une seule fois : `npm install` puis `npx playwright install chromium`.
 
 ---
@@ -492,10 +509,11 @@ tests/                   vérifications automatiques
 
 ## 8. Prêt pour plus tard (non fait pour l'instant)
 
-- **Graphiques** depuis une plage : `moteur.valeursPlage(feuille, "A1:B10")`
-  donne les valeurs calculées d'une plage, et `moteur.abonner(…)` prévient à
-  chaque changement de valeur. Un module `js/affichage/graphiques.js` pourra
-  s'appuyer dessus sans toucher à la grille ni au calcul.
+- **Graphiques gardés dans le classeur** (posés sur la feuille, mis à jour
+  tout seuls) : le dessin existe déjà (`js/affichage/dessin-graphique.js`)
+  et `moteur.abonner(…)` prévient à chaque changement de valeur ; il
+  faudrait enregistrer la plage et le type dans la feuille (comme les règles
+  de couleurs), et les décaler quand on insère des lignes (`ajusterPlage`).
 - **Import de fichiers Excel (.xlsx)** : il suffira de lire le fichier (avec
   une bibliothèque sous licence permissive) puis de créer les feuilles avec
   `classeur.ajouterFeuille({ nom, donnees })`, comme le fait déjà l'import CSV.
@@ -519,6 +537,8 @@ tests/                   vérifications automatiques
 - Dates : jour/mois/année seulement (pas d'heures).
 - Mise en forme conditionnelle volontairement simple : des couleurs de fond
   et de texte, sans barres de données ni échelles de couleurs.
+- Graphiques simples : colonnes, courbe ou secteurs, montrés dans une
+  fenêtre et enregistrés en image ; ils ne sont pas gardés dans le classeur.
 - La poignée de recopie se tire à la souris ; au doigt, on utilise les
   boutons « Recopier en bas / à droite ».
 

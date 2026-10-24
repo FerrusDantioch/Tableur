@@ -438,3 +438,57 @@
   color: var(--erreur);
   min-height: 1.4em;
 }
+
+/* --- Fenêtre « Graphique » ----------------------------------------------------- */
+
+/* Trois gros boutons côte à côte : Colonnes, Courbe, Secteurs. */
+.choix-graphique {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.choix-graphique .outil {
+  justify-content: center;
+  min-width: 0;
+}
+
+/* Sur un téléphone : l'icône au-dessus du nom, pour que les trois tiennent. */
+@media (max-width: 480px) {
+  .choix-graphique .outil {
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 4px;
+  }
+}
+
+.reglages-graphique {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.reglages-graphique > .champ-fenetre {
+  flex: 1 1 10em;
+}
+
+/* Le dessin garde ses proportions et prend toute la largeur de la fenêtre. */
+.zone-graphique {
+  border: 1px solid var(--trait);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--cellule);
+}
+
+.zone-graphique svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.message-graphique {
+  margin: 0;
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--discret);
+}

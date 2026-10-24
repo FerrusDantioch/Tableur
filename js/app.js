@@ -24,6 +24,7 @@ import { OngletsFeuilles } from './affichage/onglets-feuilles.js';
 import { CommandesDonnees } from './affichage/commandes-donnees.js';
 import { CommandesFusion } from './affichage/commandes-fusion.js';
 import { MiseEnFormeConditionnelle } from './affichage/conditions.js';
+import { FenetreGraphique } from './affichage/graphique.js';
 import { installerBarreOutils } from './affichage/barre-outils.js';
 import { demander, ouvrirFenetre, preparerFenetres } from './affichage/fenetres.js';
 import { installerMenu } from './affichage/menu.js';
@@ -228,6 +229,14 @@ new OngletsFeuilles({ classeur, avantAction, apresAction, demander, ouvrirFenetr
 new CommandesDonnees({ classeur, selection, valeur: (feuille, adr) => moteur.valeur(feuille, adr), avantAction, apresAction, signaler });
 new CommandesFusion({ classeur, selection, demander, avantAction, apresAction, signaler });
 new MiseEnFormeConditionnelle({ classeur, selection, ouvrirFenetre, avantAction });
+const graphique = new FenetreGraphique({
+  classeur,
+  selection,
+  valeur: (adr) => moteur.valeur(feuilleActive(), adr),
+  presenterCellule,
+  ouvrirFenetre,
+  avantAction,
+});
 const recherche = new RechercheRemplacement({ classeur, selection, grille, avantAction, apresAction, signaler });
 commandes.rechercher = (remplacer) => recherche.ouvrir({ remplacer });
 
@@ -528,5 +537,6 @@ window.omniTableur = {
   sauvegardeFichier,
   zoom,
   recherche,
+  graphique,
   adresse,
 };

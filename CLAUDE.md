@@ -47,6 +47,10 @@ des données d'avant le renommage (`stockage.js`, `theme-initial.js`,
   l'écran, un bloc `.cellule-fusionnee` est posé sur les cases couvertes
   (`Grille.#dessinerFusions`) ; la `Selection` agrandit les plages aux fusions.
   Les cases couvertes restent vides (`modifierFeuilles` ignore leur texte).
+- Graphique : `donnees/graphique.js` (lecture du tableau, graduations,
+  parts), `affichage/dessin-graphique.js` (SVG, couleurs passées en
+  paramètre), `affichage/graphique.js` (fenêtre, image PNG). Rien n'est
+  enregistré dans le classeur.
 - Mise en forme conditionnelle : `Feuille.regles` (`"reglesConditionnelles"`
   dans le JSON), `donnees/regles.js` (vérification), `calcul/conditions.js`
   (évaluation), appliquée dans `presenterCellule` (app.js) : grille, blocs
@@ -79,6 +83,10 @@ Ne pas annoncer un travail terminé avant que les deux passent.
 - Pincement : redessiner la grille retire de la page la case touchée, et le
   navigateur continue d'envoyer les événements tactiles à cette case retirée
   (ils ne remontent plus) : `zoom.js` écoute donc les cases touchées.
+- Téléchargement dans les tests : le conteneur n'a pas de langue UTF-8, et
+  Chromium sans fenêtre y renomme « download » un fichier dont le nom a des
+  accents. Ce n'est pas un défaut de l'application : dans les tests, donner
+  des noms sans accent (ou lancer avec `LANG=C.UTF-8`).
 - Tests navigateur : le serveur démarre avec `PORT=0` (port libre choisi par
   le système) ; un port tiré au hasard entrait parfois en conflit.
 
