@@ -24,7 +24,7 @@ if (!globalThis.FormulaParser) {
 export function creerTableur(cellules = {}) {
   const classeur = new Classeur();
   const feuille = classeur.feuilles[0];
-  const moteur = new MoteurCalcul(classeur, feuille);
+  const moteur = new MoteurCalcul(classeur);
 
   /** Remplit des cellules : remplir({ A1: '10', B1: '=A1*2' }). */
   const remplir = (contenus) =>
@@ -36,14 +36,14 @@ export function creerTableur(cellules = {}) {
   /** Texte affiché dans une cellule, comme à l'écran (ex. "2,5", "#DIV/0!"). */
   const affiche = (adresse) => {
     const saisie = interpreterSaisie(feuille.brut(adresse));
-    return presenter(moteur.valeur(adresse), saisie.style).texte;
+    return presenter(moteur.valeur(feuille, adresse), saisie.style).texte;
   };
 
   /** Explication de l'erreur d'une cellule (ou undefined). */
-  const explication = (adresse) => presenter(moteur.valeur(adresse)).explication;
+  const explication = (adresse) => presenter(moteur.valeur(feuille, adresse)).explication;
 
   remplir(cellules);
-  return { classeur, feuille, moteur, remplir, affiche, explication, valeur: (a) => moteur.valeur(a) };
+  return { classeur, feuille, moteur, remplir, affiche, explication, valeur: (a) => moteur.valeur(feuille, a) };
 }
 
 /** Calcule une formule seule (dans Z1) au milieu de cellules données ; renvoie le texte affiché. */

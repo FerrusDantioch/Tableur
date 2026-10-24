@@ -1,17 +1,21 @@
-// Mise en forme des cellules : gras, couleur de fond, largeur des colonnes.
+// Mise en forme des cellules : gras, italique, couleur du texte, couleur de
+// fond, alignement, format des nombres (décimales, euros, pourcentage, date)
+// et largeur des colonnes.
 //
 // Les boutons de la barre d'outils et les gestes (glisser le bord d'une
 // colonne, double-cliquer dessus) appellent ces fonctions, qui modifient le
 // classeur. L'affichage se met ensuite à jour tout seul.
 
-import { adresse, adressesDePlage, lettresColonne } from '../donnees/adresses.js';
-import { COULEURS_FOND, LARGEUR_MAX, LARGEUR_MIN, LARGEUR_PAR_DEFAUT } from '../donnees/classeur.js';
+import { adresse, adressesDePlage, lettresColonne, lireAdresse } from '../donnees/adresses.js';
+import { COULEURS_FOND, DECIMALES_MAX, ENCRES, LARGEUR_MAX, LARGEUR_MIN, LARGEUR_PAR_DEFAUT } from '../donnees/classeur.js';
+import { interpreterSaisie } from '../donnees/saisie.js';
+import { decimalesAffichees, formaterSelonFormat } from './format.js';
 
 /** Écart ajouté ou retiré par les boutons « − » et « + » de la largeur. */
 const PAS_LARGEUR = 20;
 
 /** Nom affiché de chaque couleur (pour les lecteurs d'écran et les infobulles). */
-const NOMS_COULEURS = {
+export const NOMS_COULEURS = {
   jaune: 'Jaune',
   orange: 'Orange',
   rouge: 'Rouge',
@@ -22,96 +26,164 @@ const NOMS_COULEURS = {
   gris: 'Gris',
 };
 
+/** Décimales proposées quand on choisit un format (comme Excel). */
+const DECIMALES_PAR_DEFAUT = { nombre: 2, euro: 2, pourcent: 0, date: 0 };
+
+/**
+ * Crée un nuancier : une pastille par couleur, plus « aucune » (ou « automatique »).
+ * @param {HTMLElement} conteneur
+ * @param {string[]} couleurs
+ * @param {'fond'|'encre'} genre  fond de cellule, ou couleur de texte / de bordure
+ * @param {string} nomAucune  texte de la pastille « sans couleur »
+ * @param {(couleur: string|null) => void} choisir
+ */
+export function creerNuancier(conteneur, couleurs, genre, nomAucune, choisir) {
+  for (const couleur of ['', ...couleurs]) {
+    const pastille = document.createElement('button');
+    pastille.type = 'button';
+    pastille.className = genre === 'fond' ? 'pastille' : 'pastille pastille-encre';
+    if (couleur) pastille.dataset[genre] = couleur;
+    else pastille.classList.add('aucune');
+    pastille.dataset.couleur = couleur;
+    const nom = couleur ? NOMS_COULEURS[couleur] : nomAucune;
+    pastille.title = nom;
+    pastille.setAttribute('aria-label', nom);
+    if (genre === 'encre') pastille.textContent = couleur ? 'Abc' : nomAucune;
+    pastille.addEventListener('click', () => {
+      conteneur.closest('[popover]')?.hidePopover();
+      choisir(couleur || null);
+    });
+    conteneur.append(pastille);
+  }
+}
+
+/** Marque la pastille de la couleur actuelle. */
+export function marquerNuancier(conteneur, couleur) {
+  for (const pastille of conteneur.querySelectorAll('.pastille')) {
+    pastille.setAttribute('aria-pressed', String((pastille.dataset.couleur || null) === (couleur ?? null)));
+  }
+}
+
 export class MiseEnForme {
   /**
    * @param {object} options
    * @param {import('../donnees/classeur.js').Classeur} options.classeur
-   * @param {import('../donnees/classeur.js').Feuille} options.feuille
    * @param {import('./selection.js').Selection} options.selection
    * @param {import('./grille.js').Grille} options.grille
+   * @param {(adresse: string) => *} options.valeurCellule  valeur calculée d'une cellule de la feuille affichée
    * @param {() => void} options.avantAction  termine la saisie en cours
    * @param {() => void} options.apresAction  rend le focus à la grille
    * @param {() => void} options.redessinerSelection
    */
-  constructor({ classeur, feuille, selection, grille, avantAction, apresAction, redessinerSelection }) {
+  constructor({ classeur, selection, grille, valeurCellule, avantAction, apresAction, redessinerSelection }) {
     this.classeur = classeur;
-    this.feuille = feuille;
     this.selection = selection;
     this.grille = grille;
+    this.valeurCellule = valeurCellule;
     this.avantAction = avantAction;
     this.apresAction = apresAction;
     this.redessinerSelection = redessinerSelection;
 
-    this.boutonGras = document.getElementById('bouton-gras');
-    this.temoinFond = document.getElementById('temoin-fond');
-    this.panneauFond = document.getElementById('panneau-fond');
-    this.panneauLargeur = document.getElementById('panneau-largeur');
-    this.valeurLargeur = document.getElementById('largeur-valeur');
-    this.nomColonnes = document.getElementById('largeur-colonnes');
+    const element = (id) => document.getElementById(id);
+    this.boutonGras = element('bouton-gras');
+    this.boutonItalique = element('bouton-italique');
+    this.boutonsAlignement = [...document.querySelectorAll('[data-alignement]')];
+    this.temoinFond = element('temoin-fond');
+    this.temoinEncre = element('temoin-encre');
+    this.panneauFond = element('panneau-fond');
+    this.panneauEncre = element('panneau-encre');
+    this.panneauFormat = element('panneau-format');
+    this.panneauLargeur = element('panneau-largeur');
+    this.valeurLargeur = element('largeur-valeur');
+    this.nomColonnes = element('largeur-colonnes');
+    this.valeurDecimales = element('decimales-valeur');
 
     this.boutonGras.addEventListener('click', () => this.gras());
-
-    // Nuancier : une pastille par couleur, plus « aucune couleur ».
-    const nuancier = this.panneauFond.querySelector('.nuancier');
-    for (const couleur of ['', ...COULEURS_FOND]) {
-      const pastille = document.createElement('button');
-      pastille.type = 'button';
-      pastille.className = 'pastille';
-      if (couleur) pastille.dataset.fond = couleur;
-      else pastille.classList.add('aucune');
-      const nom = couleur ? NOMS_COULEURS[couleur] : 'Aucune couleur';
-      pastille.title = nom;
-      pastille.setAttribute('aria-label', nom);
-      pastille.addEventListener('click', () => {
-        this.panneauFond.hidePopover();
-        this.fond(couleur || null);
-      });
-      nuancier.append(pastille);
+    this.boutonItalique.addEventListener('click', () => this.italique());
+    for (const bouton of this.boutonsAlignement) {
+      bouton.addEventListener('click', () => this.aligner(bouton.dataset.alignement));
     }
 
+    // Nuanciers : couleur de fond et couleur du texte.
+    creerNuancier(this.panneauFond.querySelector('.nuancier'), COULEURS_FOND, 'fond', 'Aucune couleur', (couleur) => this.fond(couleur));
+    creerNuancier(this.panneauEncre.querySelector('.nuancier'), ENCRES, 'encre', 'Automatique', (couleur) => this.encre(couleur));
+
+    // Panneau « Format ».
+    for (const bouton of this.panneauFormat.querySelectorAll('[data-format]')) {
+      bouton.addEventListener('click', () => {
+        this.panneauFormat.hidePopover();
+        this.choisirFormat(bouton.dataset.format || null);
+      });
+    }
+    element('decimales-moins').addEventListener('click', () => this.decimales(-1));
+    element('decimales-plus').addEventListener('click', () => this.decimales(1));
+
     // Panneau « Largeur ».
-    document.getElementById('largeur-moins').addEventListener('click', () => this.changerLargeur(-PAS_LARGEUR));
-    document.getElementById('largeur-plus').addEventListener('click', () => this.changerLargeur(PAS_LARGEUR));
-    document.getElementById('largeur-ajuster').addEventListener('click', () => {
+    element('largeur-moins').addEventListener('click', () => this.changerLargeur(-PAS_LARGEUR));
+    element('largeur-plus').addEventListener('click', () => this.changerLargeur(PAS_LARGEUR));
+    element('largeur-ajuster').addEventListener('click', () => {
       this.ajusterLargeur(this.#colonnesSelectionnees());
       this.panneauLargeur.hidePopover();
     });
-    document.getElementById('largeur-normale').addEventListener('click', () => {
+    element('largeur-normale').addEventListener('click', () => {
       this.#appliquerLargeur(this.#colonnesSelectionnees(), LARGEUR_PAR_DEFAUT);
       this.panneauLargeur.hidePopover();
     });
 
-    // Les panneaux s'ouvrent juste sous leur bouton.
-    for (const panneau of [this.panneauFond, this.panneauLargeur]) {
+    // À l'ouverture d'un panneau, ses boutons montrent l'état de la cellule active.
+    for (const panneau of [this.panneauFond, this.panneauEncre, this.panneauFormat, this.panneauLargeur]) {
       panneau.addEventListener('beforetoggle', (e) => {
-        if (e.newState !== 'open') return;
-        this.avantAction();
-        this.actualiser();
-        const bouton = document.querySelector(`[popovertarget="${panneau.id}"]`);
-        const r = bouton.getBoundingClientRect();
-        panneau.style.top = `${r.bottom + 6}px`;
-        panneau.style.left = `${Math.max(8, Math.min(r.left, window.innerWidth - 300))}px`;
-      });
-      panneau.addEventListener('toggle', (e) => {
-        if (e.newState === 'closed') this.apresAction();
+        if (e.newState === 'open') this.actualiser();
       });
     }
   }
 
+  /** La feuille affichée (onglet sélectionné). */
+  get feuille() {
+    return this.classeur.feuilleActive;
+  }
+
+  /** La cellule active (ou null si elle est vide). */
+  #celluleActive() {
+    const { ligne, colonne } = this.selection.active;
+    return this.feuille.cellule(adresse(ligne, colonne));
+  }
+
   /** Met à jour l'état des boutons d'après la cellule active. */
   actualiser() {
-    const { ligne, colonne } = this.selection.active;
-    const cellule = this.feuille.cellule(adresse(ligne, colonne));
+    const cellule = this.#celluleActive();
     this.boutonGras.setAttribute('aria-pressed', String(Boolean(cellule?.gras)));
-    if (cellule?.fond) this.temoinFond.dataset.fond = cellule.fond;
-    else delete this.temoinFond.dataset.fond;
-    for (const pastille of this.panneauFond.querySelectorAll('.pastille')) {
-      pastille.setAttribute('aria-pressed', String((pastille.dataset.fond ?? null) === (cellule?.fond ?? null)));
+    this.boutonItalique.setAttribute('aria-pressed', String(Boolean(cellule?.italique)));
+    for (const bouton of this.boutonsAlignement) {
+      bouton.setAttribute('aria-pressed', String(cellule?.alignement === bouton.dataset.alignement));
     }
+    const temoin = (element, nom, valeur) => {
+      if (valeur) element.dataset[nom] = valeur;
+      else delete element.dataset[nom];
+    };
+    temoin(this.temoinFond, 'fond', cellule?.fond);
+    temoin(this.temoinEncre, 'encre', cellule?.couleur);
+    marquerNuancier(this.panneauFond.querySelector('.nuancier'), cellule?.fond);
+    marquerNuancier(this.panneauEncre.querySelector('.nuancier'), cellule?.couleur);
+
+    // Format : bouton du format actuel, nombre de décimales, exemples.
+    const { type, decimales } = this.#formatActuel();
+    for (const bouton of this.panneauFormat.querySelectorAll('[data-format]')) {
+      bouton.setAttribute('aria-pressed', String((bouton.dataset.format || null) === (cellule?.format?.type ?? null)));
+    }
+    this.valeurDecimales.value = type === 'date' ? '—' : `${decimales} décimale${decimales > 1 ? 's' : ''}`;
+    const exemple = (id, format) => {
+      document.getElementById(id).textContent = formaterSelonFormat(format.type === 'pourcent' ? 0.125 : 1234.5, format);
+    };
+    const d = type === 'date' ? 2 : decimales;
+    exemple('exemple-nombre', { type: 'nombre', decimales: d });
+    exemple('exemple-euro', { type: 'euro', decimales: d });
+    exemple('exemple-pourcent', { type: 'pourcent', decimales: d });
+
     const colonnes = this.#colonnesSelectionnees();
     const lettres = this.#nomPlageColonnes(colonnes);
     this.nomColonnes.textContent = colonnes.length > 1 ? `des colonnes ${lettres}` : `de la colonne ${lettres}`;
-    this.valeurLargeur.value = `${this.feuille.largeur(colonne)} px`;
+    this.valeurLargeur.value = `${this.feuille.largeur(this.selection.active.colonne)} px`;
   }
 
   #nomPlageColonnes(colonnes) {
@@ -126,14 +198,21 @@ export class MiseEnForme {
     return colonnes;
   }
 
-  // --- Gras et couleur de fond --------------------------------------------------
+  // --- Gras, italique, couleurs, alignement ------------------------------------
 
   /** Met en gras la sélection (ou enlève le gras si la cellule active l'est déjà). */
   gras() {
+    this.#basculer('gras');
+  }
+
+  /** Met en italique la sélection (ou l'enlève si la cellule active l'est déjà). */
+  italique() {
+    this.#basculer('italique');
+  }
+
+  #basculer(propriete) {
     this.avantAction();
-    const { ligne, colonne } = this.selection.active;
-    const dejaGras = Boolean(this.feuille.cellule(adresse(ligne, colonne))?.gras);
-    this.#appliquer({ gras: !dejaGras });
+    this.#appliquer({ [propriete]: !this.#celluleActive()?.[propriete] });
     this.apresAction();
   }
 
@@ -142,6 +221,61 @@ export class MiseEnForme {
     this.avantAction();
     this.#appliquer({ fond: couleur });
     this.apresAction();
+  }
+
+  /** Colore le texte de la sélection (null : couleur automatique du thème). */
+  encre(couleur) {
+    this.avantAction();
+    this.#appliquer({ couleur });
+    this.apresAction();
+  }
+
+  /** Aligne le texte ; un second appui sur le même bouton revient à l'alignement automatique. */
+  aligner(alignement) {
+    this.avantAction();
+    const actuel = this.#celluleActive()?.alignement ?? null;
+    this.#appliquer({ alignement: actuel === alignement ? null : alignement });
+    this.apresAction();
+  }
+
+  // --- Format des nombres ---------------------------------------------------------
+
+  /**
+   * Format de la cellule active, tel qu'il s'affiche : le format choisi, ou
+   * celui qui découle de la saisie (12,5 → nombre à 1 décimale, 20 % → pourcentage…).
+   */
+  #formatActuel() {
+    const cellule = this.#celluleActive();
+    if (cellule?.format) return cellule.format;
+    const saisie = interpreterSaisie(cellule?.brut ?? '');
+    const valeur = this.valeurCellule(adresse(this.selection.active.ligne, this.selection.active.colonne));
+    const type = { pourcent: 'pourcent', euro: 'euro', date: 'date' }[saisie.style] ?? 'nombre';
+    const decimales = typeof valeur === 'number' ? decimalesAffichees(valeur, saisie.style) : DECIMALES_PAR_DEFAUT[type];
+    return { type, decimales };
+  }
+
+  /** Choisit un format pour la sélection (null : automatique). */
+  choisirFormat(type) {
+    this.avantAction();
+    if (!type) {
+      this.#appliquer({ format: null });
+    } else {
+      const actuel = this.#celluleActive()?.format;
+      const decimales = actuel && actuel.type !== 'date' && type !== 'date' ? actuel.decimales : DECIMALES_PAR_DEFAUT[type];
+      this.#appliquer({ format: { type, decimales } });
+    }
+    this.apresAction();
+  }
+
+  /** Une décimale de plus (+1) ou de moins (-1) pour la sélection. */
+  decimales(ecart) {
+    this.avantAction();
+    const { type, decimales } = this.#formatActuel();
+    if (type !== 'date') {
+      const nouvelles = Math.min(DECIMALES_MAX, Math.max(0, decimales + ecart));
+      this.#appliquer({ format: { type, decimales: nouvelles } });
+    }
+    this.actualiser();
   }
 
   #appliquer(proprietes) {
@@ -166,18 +300,27 @@ export class MiseEnForme {
     this.#appliquerLargeur(colonnes, Math.min(LARGEUR_MAX, Math.max(LARGEUR_MIN, largeur)));
   }
 
-  /** Ajuste chaque colonne à son contenu le plus large. */
+  /**
+   * Ajuste chaque colonne à son contenu le plus large. Le texte de chaque
+   * cellule est mesuré d'après les données (les lignes hors de l'écran ne
+   * sont pas dessinées), avec la police des cellules.
+   */
   ajusterLargeur(colonnes) {
     this.avantAction();
     const mesureur = document.createElement('canvas').getContext('2d');
+    const style = getComputedStyle(this.grille.contenu.querySelector('table.grille'));
+    const parColonne = new Map(colonnes.map((colonne) => [colonne, []]));
+    for (const adr of this.feuille.adresses()) {
+      const position = lireAdresse(adr);
+      parColonne.get(position.colonne)?.push(position);
+    }
     for (const colonne of colonnes) {
       let largeurTexte = 0;
-      for (let ligne = 1; ligne <= this.feuille.lignes; ligne++) {
-        const td = this.grille.td(ligne, colonne);
-        if (!td?.textContent) continue;
-        const style = getComputedStyle(td);
-        mesureur.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
-        largeurTexte = Math.max(largeurTexte, mesureur.measureText(td.textContent).width);
+      for (const { ligne } of parColonne.get(colonne)) {
+        const vue = this.grille.presenterCellule(adresse(ligne, colonne), ligne, colonne);
+        if (!vue.texte) continue;
+        mesureur.font = `${vue.italique ? 'italic ' : ''}${vue.gras ? 700 : style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+        largeurTexte = Math.max(largeurTexte, mesureur.measureText(vue.texte).width);
       }
       // Marges intérieures de la cellule (8 px de chaque côté) et trait de séparation.
       const largeur = largeurTexte ? Math.ceil(largeurTexte) + 20 : LARGEUR_PAR_DEFAUT;

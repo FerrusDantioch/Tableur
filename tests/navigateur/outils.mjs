@@ -47,7 +47,10 @@ export async function ouvrirApplication(navigateur, url, options = {}) {
   return { contexte, page };
 }
 
-/** Texte affiché dans une cellule (ex. "B3"). */
+/**
+ * Texte affiché dans une cellule (ex. "B3"). La grille ne dessine que les
+ * lignes visibles : on fait donc d'abord défiler jusqu'à la cellule.
+ */
 export function texteCellule(page, adresse) {
   return page.evaluate((adr) => {
     const { ligne, colonne } = (() => {
@@ -56,6 +59,7 @@ export function texteCellule(page, adresse) {
       for (const l of m[1]) c = c * 26 + l.charCodeAt(0) - 64;
       return { ligne: Number(m[2]), colonne: c };
     })();
+    window.tableur.grille.rendreVisible(ligne, colonne);
     return window.tableur.grille.td(ligne, colonne).textContent;
   }, adresse);
 }
@@ -66,4 +70,24 @@ export function celluleActive(page) {
     const { ligne, colonne } = window.tableur.selection.active;
     return window.tableur.adresse(ligne, colonne);
   });
+}
+
+/**
+ * Clique (ou appuie au doigt) sur un bouton de la barre d'outils, après avoir
+ * ouvert l'onglet qui le contient (Édition, Mise en forme, Bordures, Données).
+ */
+export async function cliquerOutil(page, selecteur, { doigt = false } = {}) {
+  const groupe = await page.evaluate((s) => document.querySelector(s)?.closest('[role="tabpanel"]')?.id.replace('groupe-', ''), selecteur);
+  if (groupe) {
+    const ouvert = await page.evaluate(
+      (g) => !document.getElementById(`groupe-${g}`).hidden,
+      groupe,
+    );
+    if (!ouvert) {
+      if (doigt) await page.tap(`.onglet-outils[data-groupe="${groupe}"]`);
+      else await page.click(`.onglet-outils[data-groupe="${groupe}"]`);
+    }
+  }
+  if (doigt) await page.tap(selecteur);
+  else await page.click(selecteur);
 }

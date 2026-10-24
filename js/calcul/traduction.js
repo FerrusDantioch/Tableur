@@ -6,6 +6,8 @@
 //   =SI(A1>0;"oui";"non")              IF(A1>0,"oui","non")
 //   =ARRONDI(B2*1,5;2)                 ROUND(B2*1.5,2)
 //   =ET(VRAI;FAUX)                     AND(TRUE,FALSE)
+//   =A1&" €"                           TABLEUR.CONCAT(A1," €")
+//   =SI(A1="oui";1;0)                  IF(TABLEUR.COMPARER(A1,"=","oui"),1,0)
 //
 // Règles :
 //   - les noms de fonctions français sont traduits (les noms anglais restent acceptés) ;
@@ -13,9 +15,14 @@
 //     Par tolérance, une virgule qui n'est pas entre deux chiffres sépare aussi ;
 //   - dans un nombre, la virgule est le séparateur décimal (le point aussi) ;
 //   - VRAI et FAUX deviennent TRUE et FALSE ;
-//   - le texte entre guillemets n'est jamais modifié.
+//   - le texte entre guillemets n'est jamais modifié ;
+//   - l'opérateur « & » et les comparaisons (=, <>, <, >, <=, >=) sont confiés à
+//     nos propres fonctions (voir fonctions.js) : la bibliothèque écrirait
+//     « 2.5 » et « TRUE », et distinguerait « Oui » de « oui ».
 
-import { lettresColonne, numeroColonne } from '../donnees/adresses.js';
+import { decouper, segmenter } from '../donnees/formules.js';
+
+export { decouper };
 
 /** Fonctions disponibles : nom français → nom anglais de la bibliothèque. */
 export const FONCTIONS = Object.freeze({
@@ -42,95 +49,22 @@ export const FONCTIONS = Object.freeze({
   PUISSANCE: 'POWER',
   NBCAR: 'LEN',
   CONCATENER: 'CONCATENATE',
+  MAJUSCULE: 'UPPER',
+  MINUSCULE: 'LOWER',
+  // Conditions
+  'NB.SI': 'COUNTIF',
   'SOMME.SI': 'SUMIF',
   'MOYENNE.SI': 'AVERAGEIF',
+  NBVAL: 'COUNTA',
+  // Dates
+  AUJOURDHUI: 'TODAY',
+  DATE: 'DATE',
+  ANNEE: 'YEAR',
+  MOIS: 'MONTH',
+  JOUR: 'DAY',
+  // Recherche
+  RECHERCHEV: 'VLOOKUP',
 });
-
-const LETTRE = /[A-Za-z_$À-ſ]/;
-const CARACTERE_NOM = /[A-Za-z0-9_.$À-ſ]/;
-const CHIFFRE = /[0-9]/;
-// Jetons après lesquels un « ,5 » ou « .5 » est un nombre (et pas un séparateur).
-const AVANT_NOMBRE = new Set(['debut', 'separateur', 'ouvrante', 'operateur']);
-
-/**
- * Découpe une formule (sans le « = ») en jetons :
- *   { type: 'texte', source }                   "entre guillemets"
- *   { type: 'feuille', source }                 'Nom de feuille'!
- *   { type: 'nombre', source, nombre }          12   3,5   1E3
- *   { type: 'nom', source, fonction }           A1, SOMME (fonction: vrai si suivi de « ( »), VRAI…
- *   { type: 'separateur', source }              ;  ou  ,
- *   { type: 'ouvrante' | 'fermante', source }   ( )
- *   { type: 'operateur', source }               + - * / ^ & = < > % :
- *   { type: 'espace' | 'autre', source }
- * En recollant les « source », on retrouve exactement le texte de départ.
- */
-export function decouper(formule) {
-  const jetons = [];
-  let i = 0;
-  let precedent = 'debut'; // type du dernier jeton qui n'est pas une espace
-
-  const ajouter = (jeton) => {
-    jetons.push(jeton);
-    if (jeton.type !== 'espace') precedent = jeton.type;
-  };
-
-  while (i < formule.length) {
-    const c = formule[i];
-    const suivant = formule[i + 1] ?? '';
-
-    // Texte entre guillemets ("" à l'intérieur = un guillemet).
-    if (c === '"' || c === "'") {
-      let j = i + 1;
-      while (j < formule.length) {
-        if (formule[j] === c && formule[j + 1] === c) j += 2;
-        else if (formule[j] === c) break;
-        else j++;
-      }
-      j = Math.min(j + 1, formule.length);
-      if (c === "'" && formule[j] === '!') j++;
-      ajouter({ type: c === '"' ? 'texte' : 'feuille', source: formule.slice(i, j) });
-      i = j;
-      continue;
-    }
-
-    // Nombre : 12   3,5   3.5   1E3   1,5E-2   et aussi ,5 ou .5 en début d'argument.
-    const debutDecimal = (c === ',' || c === '.') && CHIFFRE.test(suivant) && AVANT_NOMBRE.has(precedent);
-    if (CHIFFRE.test(c) || debutDecimal) {
-      let j = i;
-      while (CHIFFRE.test(formule[j] ?? '')) j++;
-      if ((formule[j] === ',' || formule[j] === '.') && CHIFFRE.test(formule[j + 1] ?? '')) {
-        j++;
-        while (CHIFFRE.test(formule[j] ?? '')) j++;
-      }
-      const exposant = /^[eE][+-]?[0-9]+/.exec(formule.slice(j));
-      if (exposant) j += exposant[0].length;
-      const source = formule.slice(i, j);
-      ajouter({ type: 'nombre', source, nombre: Number(source.replace(',', '.')) });
-      i = j;
-      continue;
-    }
-
-    // Nom : référence de cellule (A1, $B$2), fonction (SOMME, NB.SI), VRAI, FAUX…
-    if (LETTRE.test(c)) {
-      let j = i + 1;
-      while (CARACTERE_NOM.test(formule[j] ?? '')) j++;
-      let k = j;
-      while (formule[k] === ' ') k++;
-      ajouter({ type: 'nom', source: formule.slice(i, j), fonction: formule[k] === '(' });
-      i = j;
-      continue;
-    }
-
-    if (c === ';' || c === ',') ajouter({ type: 'separateur', source: c });
-    else if (c === '(') ajouter({ type: 'ouvrante', source: c });
-    else if (c === ')') ajouter({ type: 'fermante', source: c });
-    else if (/\s/.test(c)) ajouter({ type: 'espace', source: c });
-    else if ('+-*/^&=<>%:'.includes(c)) ajouter({ type: 'operateur', source: c });
-    else ajouter({ type: 'autre', source: c });
-    i++;
-  }
-  return jetons;
-}
 
 /** Retire le « = » du début (et les espaces autour). */
 function corps(formule) {
@@ -142,26 +76,121 @@ function corps(formule) {
  * bibliothèque (sans « = »).
  */
 export function traduireFormule(formule) {
-  return decouper(corps(formule))
-    .map((jeton) => {
-      switch (jeton.type) {
-        case 'nombre':
-          // String(…) donne une écriture que la bibliothèque comprend : 1.5, 1e-7, 1e+21.
-          return String(jeton.nombre);
-        case 'separateur':
-          return ',';
-        case 'nom': {
-          const majuscules = jeton.source.toUpperCase();
-          if (jeton.fonction) return FONCTIONS[majuscules] ?? majuscules;
-          if (majuscules === 'VRAI') return 'TRUE';
-          if (majuscules === 'FAUX') return 'FALSE';
-          return jeton.source;
-        }
-        default:
-          return jeton.source;
+  return traduireSuite(decouper(corps(formule)));
+}
+
+/** Traduit un jeton seul (nombre, séparateur, nom de fonction, VRAI / FAUX). */
+function traduireJeton(jeton) {
+  switch (jeton.type) {
+    case 'nombre':
+      // String(…) donne une écriture que la bibliothèque comprend : 1.5, 1e-7, 1e+21.
+      return String(jeton.nombre);
+    case 'separateur':
+      return ',';
+    case 'nom': {
+      const majuscules = jeton.source.toUpperCase();
+      if (jeton.fonction) return FONCTIONS[majuscules] ?? majuscules;
+      if (majuscules === 'VRAI') return 'TRUE';
+      if (majuscules === 'FAUX') return 'FALSE';
+      return jeton.source;
+    }
+    default:
+      return jeton.source;
+  }
+}
+
+/**
+ * Traduit une suite de jetons : les parenthèses sont traduites à part
+ * (récursivement), puis chaque argument (entre deux séparateurs) est traduit
+ * comme une expression.
+ */
+function traduireSuite(jetons) {
+  const morceaux = [];
+  let i = 0;
+  while (i < jetons.length) {
+    const jeton = jetons[i];
+    if (jeton.type === 'ouvrante') {
+      // On cherche la parenthèse fermante qui correspond.
+      let profondeur = 1;
+      let j = i + 1;
+      while (j < jetons.length && profondeur > 0) {
+        if (jetons[j].type === 'ouvrante') profondeur++;
+        else if (jetons[j].type === 'fermante') profondeur--;
+        j++;
       }
-    })
-    .join('');
+      const fermee = profondeur === 0;
+      const interieur = jetons.slice(i + 1, fermee ? j - 1 : j);
+      morceaux.push({ type: 'groupe', texte: `(${traduireSuite(interieur)}${fermee ? ')' : ''}` });
+      i = j;
+      continue;
+    }
+    morceaux.push({ type: jeton.type, texte: traduireJeton(jeton) });
+    i++;
+  }
+  // Découpage en arguments (séparateurs de ce niveau).
+  const expressions = [[]];
+  for (const morceau of morceaux) {
+    if (morceau.type === 'separateur') expressions.push([]);
+    else expressions.at(-1).push(morceau);
+  }
+  return expressions.map(traduireExpression).join(',');
+}
+
+const COMPARAISONS = ['=', '<>', '<', '>', '<=', '>='];
+const texteDe = (morceaux) => morceaux.map((morceau) => morceau.texte).join('');
+const vide = (morceaux) => texteDe(morceaux).trim() === '';
+
+/** Coupe une liste de morceaux à chaque opérateur choisi. */
+function couper(morceaux, estOperateur) {
+  const parties = [[]];
+  const operateurs = [];
+  for (const morceau of morceaux) {
+    if (estOperateur(morceau)) {
+      operateurs.push(morceau.texte);
+      parties.push([]);
+    } else {
+      parties.at(-1).push(morceau);
+    }
+  }
+  return { parties, operateurs };
+}
+
+/**
+ * Traduit une expression sans séparateur. Les comparaisons et « & » sont les
+ * opérations les moins prioritaires (=A1+1&"x" assemble A1+1 et "x") : on
+ * peut donc couper l'expression à ces opérateurs sans changer son sens.
+ * Une formule mal écrite (opérande manquant) est laissée telle quelle : la
+ * bibliothèque signalera l'erreur.
+ */
+function traduireExpression(morceaux) {
+  // « < » suivi de « = » ou « > », et « > » suivi de « = », forment un seul opérateur.
+  const fusionnes = [];
+  for (const morceau of morceaux) {
+    const precedent = fusionnes.at(-1);
+    const suite = precedent?.type === 'operateur' && morceau.type === 'operateur';
+    if (suite && ((precedent.texte === '<' && (morceau.texte === '=' || morceau.texte === '>')) || (precedent.texte === '>' && morceau.texte === '='))) {
+      fusionnes[fusionnes.length - 1] = { type: 'operateur', texte: precedent.texte + morceau.texte };
+    } else {
+      fusionnes.push(morceau);
+    }
+  }
+  const comparaisons = couper(fusionnes, (m) => m.type === 'operateur' && COMPARAISONS.includes(m.texte));
+  if (comparaisons.parties.some(vide) && comparaisons.operateurs.length) return texteDe(morceaux);
+  const textes = comparaisons.parties.map(traduireAssemblage);
+  if (textes.includes(null)) return texteDe(morceaux);
+  let resultat = textes[0];
+  comparaisons.operateurs.forEach((operateur, k) => {
+    resultat = `TABLEUR.COMPARER(${resultat},"${operateur}",${textes[k + 1]})`;
+  });
+  return resultat;
+}
+
+/** A&B&C → TABLEUR.CONCAT(A,B,C) ; null si un morceau manque (formule mal écrite). */
+function traduireAssemblage(morceaux) {
+  const { parties, operateurs } = couper(morceaux, (m) => m.type === 'operateur' && m.texte === '&');
+  if (operateurs.length === 0) return texteDe(morceaux);
+  if (parties.some(vide)) return null;
+  return `TABLEUR.CONCAT(${parties.map(texteDe).join(',')})`;
 }
 
 /**
@@ -169,44 +198,14 @@ export function traduireFormule(formule) {
  * par exemple « total » dans =total*2. La formule affichera alors #NOM?.
  */
 export function nomsInconnus(formule) {
-  const jetons = decouper(corps(formule)).filter((jeton) => jeton.type !== 'espace');
+  const morceaux = segmenter(corps(formule)).filter((morceau) => morceau.reference || morceau.jeton.type !== 'espace');
   const inconnus = [];
-  jetons.forEach((jeton, i) => {
-    if (jeton.type !== 'nom' || jeton.fonction) return;
-    const nom = jeton.source.toUpperCase();
-    if (['VRAI', 'FAUX', 'TRUE', 'FALSE'].includes(nom)) return;
-    if (/^\$?[A-Z]{1,3}\$?[0-9]+$/.test(nom)) return; // cellule : B3, $B$3
-    if (jetons[i - 1]?.source === '#') return; // erreur écrite dans la formule : #REF!
-    // Colonne ou ligne entière : A:C, $1:$3
-    const deuxPoints = jetons[i - 1]?.source === ':' || jetons[i + 1]?.source === ':';
-    if (deuxPoints && /^\$?([A-Z]{1,3}|[0-9]+)$/.test(nom)) return;
+  morceaux.forEach((morceau, i) => {
+    const jeton = morceau.jeton;
+    if (!jeton || jeton.type !== 'nom' || jeton.fonction) return;
+    if (['VRAI', 'FAUX', 'TRUE', 'FALSE'].includes(jeton.source.toUpperCase())) return;
+    if (morceaux[i - 1]?.source === '#') return; // erreur écrite dans la formule : #REF!
     inconnus.push(jeton.source);
   });
   return inconnus;
-}
-
-const MOTIF_REFERENCE = /^(\$?)([A-Za-z]{1,3})(\$?)([0-9]+)$/;
-
-/**
- * Décale les références d'une formule, comme lors d'un copier-coller dans
- * Excel : =A1*2 copiée une ligne plus bas devient =A2*2.
- * Les parties précédées d'un « $ » ne bougent pas ($A$1 reste $A$1).
- * Une référence qui sortirait de la grille devient #REF!.
- */
-export function decalerReferences(formule, dLignes, dColonnes) {
-  const texte = String(formule).trim();
-  if (!texte.startsWith('=')) return formule;
-  const decalee = decouper(texte.slice(1))
-    .map((jeton) => {
-      if (jeton.type !== 'nom' || jeton.fonction) return jeton.source;
-      const ref = MOTIF_REFERENCE.exec(jeton.source);
-      if (!ref) return jeton.source;
-      const [, dollarColonne, lettres, dollarLigne, chiffres] = ref;
-      const ligne = Number(chiffres) + (dollarLigne ? 0 : dLignes);
-      const colonne = numeroColonne(lettres) + (dollarColonne ? 0 : dColonnes);
-      if (ligne < 1 || colonne < 1) return '#REF!';
-      return `${dollarColonne}${lettresColonne(colonne)}${dollarLigne}${ligne}`;
-    })
-    .join('');
-  return `=${decalee}`;
 }

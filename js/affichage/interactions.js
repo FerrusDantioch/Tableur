@@ -11,7 +11,7 @@
 // Les modifications passent toujours par le classeur (donnees/classeur.js),
 // jamais directement par l'affichage.
 
-import { adresse, dansPlage, lireAdresse, lirePlage, textePlage } from '../donnees/adresses.js';
+import { adresse, plage as creerPlage, lirePlage, textePlage } from '../donnees/adresses.js';
 
 // Direction de déplacement associée à chaque flèche : [lignes, colonnes].
 const FLECHES = {
@@ -28,7 +28,6 @@ export class Interactions {
   /**
    * @param {object} options
    * @param {import('../donnees/classeur.js').Classeur} options.classeur
-   * @param {import('../donnees/classeur.js').Feuille} options.feuille
    * @param {import('./selection.js').Selection} options.selection
    * @param {import('./grille.js').Grille} options.grille
    * @param {import('./edition.js').Edition} options.edition
@@ -38,9 +37,8 @@ export class Interactions {
    * @param {object} options.commandes  actions partagées avec la barre d'outils
    *        ({ annuler, retablir, gras, … }, chacune facultative)
    */
-  constructor({ classeur, feuille, selection, grille, edition, nomCellule, boutonValider, boutonAnnuler, commandes }) {
+  constructor({ classeur, selection, grille, edition, nomCellule, boutonValider, boutonAnnuler, commandes }) {
     this.classeur = classeur;
-    this.feuille = feuille;
     this.selection = selection;
     this.grille = grille;
     this.edition = edition;
@@ -73,7 +71,7 @@ export class Interactions {
     edition.champBarre.addEventListener('focus', () => {
       if (!edition.enCours) {
         const { ligne, colonne } = selection.active;
-        const brut = feuille.brut(adresse(ligne, colonne));
+        const brut = this.feuille.brut(adresse(ligne, colonne));
         edition.commencer(ligne, colonne, { texte: brut, mode: 'modification', origine: 'barre', initial: brut });
       } else {
         edition.changerOrigine('barre');
@@ -145,6 +143,11 @@ export class Interactions {
 
   get modeToucher() {
     return this.#modeToucher;
+  }
+
+  /** La feuille affichée (onglet sélectionné). */
+  get feuille() {
+    return this.classeur.feuilleActive;
   }
 
   #changerMode(toucher) {
@@ -223,19 +226,6 @@ export class Interactions {
     this.focaliser();
   }
 
-  /** Vide le texte des cellules sélectionnées (la mise en forme est gardée, comme dans Excel). */
-  effacerSelection() {
-    const plage = this.selection.plage;
-    const modifications = [];
-    for (const adr of this.feuille.adresses()) {
-      const position = lireAdresse(adr);
-      if (dansPlage(plage, position.ligne, position.colonne) && this.feuille.brut(adr) !== '') {
-        modifications.push({ adresse: adr, brut: '' });
-      }
-    }
-    this.classeur.modifierCellules(this.feuille, modifications, plage);
-  }
-
   // --- Clavier -------------------------------------------------------------------
 
   /** Touches dans le champ de la cellule (sert aussi de « récepteur » hors édition). */
@@ -308,12 +298,16 @@ export class Interactions {
       if (lettre === 'z') action = maj ? this.commandes.retablir : this.commandes.annuler;
       else if (lettre === 'y') action = this.commandes.retablir;
       else if (lettre === 'b') action = this.commandes.gras;
+      else if (lettre === 'i') action = this.commandes.italique;
+      else if (lettre === 'd') action = () => this.commandes.recopier?.('bas');
+      else if (lettre === 'r') action = () => this.commandes.recopier?.('droite');
       else if (lettre === 'p') action = this.commandes.exporterPdf;
       else if (lettre === 'a') action = () => selection.tout();
       else if (fleche) action = () => selection.allerAuBord(fleche[0], fleche[1], maj);
       else if (e.key === 'Home') action = () => selection.choisir(1, 1);
       // Les autres raccourcis (copier, coller, imprimer…) restent au navigateur.
       if (!action) return;
+      // (Ctrl+D et Ctrl+R ne doivent pas créer un favori ni recharger la page.)
       e.preventDefault();
       action();
       this.#montrer();
@@ -340,9 +334,7 @@ export class Interactions {
       case 'PageDown':
       case 'PageUp': {
         e.preventDefault();
-        const td = this.grille.td(1, 1);
-        const hauteur = td ? td.getBoundingClientRect().height : 32;
-        const pas = Math.max(1, Math.floor(this.grille.racine.clientHeight / hauteur) - 2);
+        const pas = Math.max(1, Math.floor(this.grille.racine.clientHeight / this.grille.hauteurLigne) - 2);
         selection.deplacer(e.key === 'PageDown' ? pas : -pas, 0, maj);
         break;
       }
@@ -357,7 +349,7 @@ export class Interactions {
       case 'Delete':
       case 'Backspace':
         e.preventDefault();
-        this.effacerSelection();
+        this.commandes.effacer?.();
         return;
       case 'Escape':
         if (!selection.unique) {
@@ -408,6 +400,11 @@ export class Interactions {
     this.validerEdition(null, { refocaliser: false });
     const etendre = e.shiftKey;
     switch (cible.type) {
+      case 'recopie':
+        // Poignée de recopie (petit carré en bas à droite de la sélection).
+        this.#commencerGlisser(e, 'recopie');
+        this.#glisser.source = this.selection.plage;
+        break;
       case 'cellule':
         this.selection.choisir(cible.ligne, cible.colonne, etendre);
         this.#commencerGlisser(e, 'cellules');
@@ -448,7 +445,10 @@ export class Interactions {
     const sous = this.grille.celluleSousPoint(e.clientX, e.clientY);
     if (!sous) return;
     const active = this.selection.bout;
-    if (glisser.type === 'cellules') {
+    if (glisser.type === 'recopie') {
+      glisser.recopie = this.#recopieVers(glisser.source, sous);
+      this.grille.afficherRecopie(glisser.recopie?.zone ?? null);
+    } else if (glisser.type === 'cellules') {
       this.selection.choisir(sous.ligne ?? active.ligne, sous.colonne ?? active.colonne, true);
     } else if (glisser.type === 'colonnes' && sous.colonne) {
       this.selection.colonneEntiere(sous.colonne, true);
@@ -458,7 +458,45 @@ export class Interactions {
   }
 
   #relachement(e) {
-    if (this.#glisser && e.pointerId === this.#glisser.pointerId) this.#glisser = null;
+    const glisser = this.#glisser;
+    if (!glisser || e.pointerId !== glisser.pointerId) return;
+    this.#glisser = null;
+    if (glisser.type === 'recopie') {
+      this.grille.afficherRecopie(null);
+      const recopie = e.type === 'pointerup' ? glisser.recopie : null;
+      if (recopie) this.commandes.recopierPoignee?.(glisser.source, recopie.direction, recopie.nombre);
+    }
+  }
+
+  /**
+   * Poignée de recopie tirée jusqu'à la cellule `sous` : direction (la plus
+   * grande distance l'emporte, comme dans Excel), nombre de lignes ou de
+   * colonnes à remplir, et zone finale. Null si on est resté dans la sélection.
+   */
+  #recopieVers(source, sous) {
+    const { debut, fin } = source;
+    const ligne = sous.ligne ?? fin.ligne;
+    const colonne = sous.colonne ?? fin.colonne;
+    const ecarts = {
+      bas: ligne - fin.ligne,
+      haut: debut.ligne - ligne,
+      droite: colonne - fin.colonne,
+      gauche: debut.colonne - colonne,
+    };
+    const vertical = Math.max(ecarts.bas, ecarts.haut, 0);
+    const horizontal = Math.max(ecarts.droite, ecarts.gauche, 0);
+    if (vertical === 0 && horizontal === 0) return null;
+    let direction;
+    if (vertical >= horizontal) direction = ecarts.bas > 0 ? 'bas' : 'haut';
+    else direction = ecarts.droite > 0 ? 'droite' : 'gauche';
+    const nombre = ecarts[direction];
+    const zone = {
+      bas: creerPlage(debut, { ligne: fin.ligne + nombre, colonne: fin.colonne }),
+      haut: creerPlage({ ligne: debut.ligne - nombre, colonne: debut.colonne }, fin),
+      droite: creerPlage(debut, { ligne: fin.ligne, colonne: fin.colonne + nombre }),
+      gauche: creerPlage({ ligne: debut.ligne, colonne: debut.colonne - nombre }, fin),
+    }[direction];
+    return { direction, nombre, zone };
   }
 
   /** Appui au doigt (le navigateur envoie « click » quand le doigt n'a pas fait défiler). */

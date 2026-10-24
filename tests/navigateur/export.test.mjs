@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { demarrerServeur, lancerNavigateur, ouvrirApplication } from './outils.mjs';
+import { demarrerServeur, lancerNavigateur, ouvrirApplication, cliquerOutil } from './outils.mjs';
 
 const RESULTATS = fileURLToPath(new URL('../resultats/', import.meta.url));
 mkdirSync(RESULTATS, { recursive: true });
@@ -57,7 +57,7 @@ after(async () => {
 test('export CSV : fichier téléchargé, nommé d’après le titre', async () => {
   const { contexte, page } = await ouvrirApplication(navigateur, serveur.url, { acceptDownloads: true });
   await remplirBudget(page, BUDGET);
-  await page.click('#bouton-exporter');
+  await cliquerOutil(page, '#bouton-exporter');
   const [telechargement] = await Promise.all([page.waitForEvent('download'), page.click('#exporter-csv')]);
   assert.equal(telechargement.suggestedFilename(), 'Budget de test.csv');
   const chemin = `${RESULTATS}budget.csv`;
@@ -87,7 +87,7 @@ test('export PDF : explication, impression du tableau seul, nom du fichier', asy
       window.impressions.push({ titre: document.title, texte: lignes.join('\n'), classes: zone.className });
     };
   });
-  await page.click('#bouton-exporter');
+  await cliquerOutil(page, '#bouton-exporter');
   await page.click('#exporter-pdf');
   assert.ok(await page.isVisible('#fenetre-aide-pdf'), 'l’explication s’affiche la première fois');
   await page.check('#fenetre-aide-pdf input[type="checkbox"]');
@@ -140,6 +140,61 @@ test('export PDF : vrai fichier PDF (rendu d’impression de Chromium)', async (
   await contexte.close();
 });
 
+test('export PDF : bordures, couleurs et formats imprimés ; quadrillage au choix', async () => {
+  const { contexte, page } = await ouvrirApplication(navigateur, serveur.url);
+  const epais = { style: 'epais', couleur: 'bleu' };
+  const fin = { style: 'fin', couleur: 'auto' };
+  await remplirBudget(page, [
+    { adresse: 'A1', brut: 'Poste', gras: true, bordures: { haut: epais, gauche: epais, bas: fin, droite: fin } },
+    { adresse: 'B1', brut: 'Montant', italique: true, alignement: 'centre', bordures: { haut: epais, droite: epais, bas: fin } },
+    { adresse: 'A2', brut: 'Loyer', couleur: 'rouge', bordures: { gauche: epais, bas: epais, droite: fin } },
+    { adresse: 'B2', brut: '650', format: { type: 'euro', decimales: 2 }, bordures: { droite: epais, bas: epais } },
+  ]);
+  await page.evaluate(() => window.tableur.exportPdf.preparer());
+  const imprime = await page.evaluate(() => {
+    const cellule = (l, c) => document.querySelector(`#impression tr:nth-child(${l}) td:nth-child(${c})`);
+    return {
+      classes: document.getElementById('impression').className,
+      hautA1: cellule(1, 1).style.borderTop,
+      gaucheA1: cellule(1, 1).style.borderLeft,
+      basA1: cellule(1, 1).style.borderBottom,
+      basB2: cellule(2, 2).style.borderBottom,
+      montant: cellule(2, 2).textContent.replace(/[\u202f\u00a0]/g, ' '),
+      italique: cellule(1, 2).className,
+      align: cellule(1, 2).dataset.align,
+      encre: cellule(2, 1).dataset.encre,
+    };
+  });
+  assert.match(imprime.classes, /sans-quadrillage/); // des bordures : pas de quadrillage par défaut
+  assert.match(imprime.hautA1, /1\.5pt solid/);
+  assert.match(imprime.gaucheA1, /1\.5pt solid/);
+  assert.match(imprime.basA1, /0\.75pt solid/);
+  assert.match(imprime.basB2, /1\.5pt solid/);
+  assert.equal(imprime.montant, '650,00 €');
+  assert.match(imprime.italique, /italique/);
+  assert.equal(imprime.align, 'centre');
+  assert.equal(imprime.encre, 'rouge');
+  // À l'impression, les traits se voient (couleurs pour fond blanc).
+  await page.emulateMedia({ media: 'print' });
+  const trait = await page.evaluate(() => getComputedStyle(document.querySelector('#impression td')).borderTopColor);
+  assert.notEqual(trait, 'rgba(0, 0, 0, 0)');
+  await page.emulateMedia({ media: 'screen' });
+  await page.evaluate(() => window.tableur.exportPdf.terminer());
+  // La case « Quadrillage » est mémorisée.
+  await cliquerOutil(page, '#bouton-exporter');
+  assert.equal(await page.isChecked('#quadrillage-pdf'), false);
+  await page.check('#quadrillage-pdf');
+  await page.keyboard.press('Escape');
+  await page.evaluate(() => window.tableur.exportPdf.preparer());
+  assert.doesNotMatch(await page.getAttribute('#impression', 'class'), /sans-quadrillage/);
+  const chemin = `${RESULTATS}bordures.pdf`;
+  await page.emulateMedia({ media: 'print' });
+  await page.pdf({ path: chemin, preferCSSPageSize: true, printBackground: true });
+  assert.equal(readFileSync(chemin).subarray(0, 5).toString(), '%PDF-');
+  assert.deepEqual(page.erreurs, []);
+  await contexte.close();
+});
+
 test('export PDF : un tableau large passe en paysage', async () => {
   const { contexte, page } = await ouvrirApplication(navigateur, serveur.url);
   const cellules = [];
@@ -159,10 +214,10 @@ test('export PDF : un tableau large passe en paysage', async () => {
 
 test('export d’un classeur vide : message clair', async () => {
   const { contexte, page } = await ouvrirApplication(navigateur, serveur.url);
-  await page.click('#bouton-exporter');
+  await cliquerOutil(page, '#bouton-exporter');
   await page.click('#exporter-csv');
   assert.match(await page.textContent('#message'), /vide/);
-  await page.click('#bouton-exporter');
+  await cliquerOutil(page, '#bouton-exporter');
   await page.click('#exporter-pdf');
   assert.equal(await page.isVisible('#fenetre-aide-pdf'), false);
   assert.match(await page.textContent('#message'), /vide/);

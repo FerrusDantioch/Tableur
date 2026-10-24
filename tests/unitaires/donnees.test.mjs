@@ -15,6 +15,19 @@ import {
 import { interpreterSaisie, lireNombre } from '../../js/donnees/saisie.js';
 import { Classeur, Feuille, LIGNES_MAX } from '../../js/donnees/classeur.js';
 
+/** Une cellule complète, telle que la rend le classeur (mise en forme par défaut sinon). */
+const cellule = (proprietes) => ({
+  brut: '',
+  gras: false,
+  italique: false,
+  couleur: null,
+  fond: null,
+  alignement: null,
+  format: null,
+  bordures: null,
+  ...proprietes,
+});
+
 describe('Adresses', () => {
   test('lettres de colonnes', () => {
     assert.equal(lettresColonne(1), 'A');
@@ -95,7 +108,7 @@ describe('Classeur', () => {
 
     // Mise en forme seule : la cellule change mais pas son contenu.
     classeur.modifierCellules(feuille, [{ adresse: 'A1', gras: true }]);
-    assert.deepEqual(feuille.cellule('A1'), { brut: 'un', gras: true, fond: null });
+    assert.deepEqual(feuille.cellule('A1'), cellule({ brut: 'un', gras: true }));
     assert.deepEqual(evenements.at(-2).contenus, []);
 
     classeur.modifierCellules(feuille, [
@@ -143,7 +156,7 @@ describe('Classeur', () => {
     assert.equal(feuille.cellule('C3'), null);
     assert.equal(feuille.largeur(2), 100);
     classeur.annuler();
-    assert.deepEqual(feuille.cellule('C3'), { brut: 'x', gras: false, fond: 'jaune' });
+    assert.deepEqual(feuille.cellule('C3'), cellule({ brut: 'x', fond: 'jaune' }));
     assert.equal(feuille.largeur(2), 150);
   });
 
@@ -183,7 +196,7 @@ describe('Classeur', () => {
       format: 'tableur',
       feuilles: [{ lignes: 'x', cellules: { a1: { brut: 'ok', fond: 'fluo' }, ZZZ9999: { brut: 'trop loin' } } }],
     });
-    assert.deepEqual(feuilleCopie.cellule('A1'), { brut: 'ok', gras: false, fond: null });
+    assert.deepEqual(feuilleCopie.cellule('A1'), cellule({ brut: 'ok' }));
     assert.equal(feuilleCopie.lignes, 100);
     assert.throws(() => copie.charger({ format: 'autre' }));
   });

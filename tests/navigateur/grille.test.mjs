@@ -182,6 +182,63 @@ describe('À la souris', () => {
   });
 });
 
+describe('Grande feuille (grille virtuelle)', () => {
+  test('seules les lignes visibles sont dessinées ; le défilement dessine la suite', async () => {
+    const { contexte, page } = await ouvrirApplication(navigateur, serveur.url);
+    const duree = await page.evaluate(() => {
+      const { classeur, feuille } = window.tableur;
+      const debut = performance.now();
+      classeur.agrandir(feuille, { lignes: 900, colonnes: 26 });
+      document.body.offsetHeight; // force le dessin
+      return performance.now() - debut;
+    });
+    assert.ok(duree < 500, `1000 lignes × 52 colonnes dessinées en ${Math.round(duree)} ms`);
+    const lignesDessinees = () => page.evaluate(() => document.querySelectorAll('.grille tbody tr:not(.espace)').length);
+    assert.ok((await lignesDessinees()) < 120, 'moins de 120 lignes dans la page');
+    // La barre de défilement correspond bien aux 1000 lignes.
+    const hauteur = await page.evaluate(() => {
+      const zone = document.getElementById('zone-grille');
+      return zone.scrollHeight / window.tableur.grille.hauteurLigne;
+    });
+    assert.ok(Math.abs(hauteur - 1001) < 1, `hauteur de la grille : ${hauteur} lignes`);
+
+    // Aller tout en bas au clavier, saisir, revenir.
+    await page.keyboard.press('Control+ArrowDown');
+    assert.equal(await celluleActive(page), 'A1000');
+    await page.keyboard.type('tout en bas');
+    await page.keyboard.press('Enter');
+    assert.equal(await texteCellule(page, 'A1000'), 'tout en bas');
+    const visible = await page.evaluate(() => {
+      const zone = document.getElementById('zone-grille').getBoundingClientRect();
+      const r = window.tableur.grille.td(1000, 1).getBoundingClientRect();
+      return r.bottom <= zone.bottom + 1 && r.top >= zone.top;
+    });
+    assert.ok(visible, 'A1000 est visible');
+    assert.ok((await lignesDessinees()) < 120);
+
+    // Défilement à la molette : les lignes du milieu apparaissent.
+    await page.keyboard.press('Control+Home');
+    await page.mouse.move(300, 400);
+    for (let i = 0; i < 20; i++) await page.mouse.wheel(0, 600);
+    await page.waitForTimeout(100);
+    const auMilieu = await page.evaluate(() => {
+      const zone = document.getElementById('zone-grille');
+      const r = zone.getBoundingClientRect();
+      const element = document.elementFromPoint(r.left + 150, r.top + r.height / 2);
+      const td = element?.closest('td');
+      return { scrollTop: zone.scrollTop, ligne: Number(td?.dataset.ligne), colonne: Number(td?.dataset.colonne) };
+    });
+    assert.ok(auMilieu.scrollTop > 5000, `défilement : ${auMilieu.scrollTop}`);
+    assert.ok(auMilieu.ligne > 150, `une vraie cellule est affichée au milieu (ligne ${auMilieu.ligne})`);
+    // Un clic sur cette cellule la sélectionne.
+    const r = await page.evaluate(() => document.getElementById('zone-grille').getBoundingClientRect().toJSON());
+    await page.mouse.click(r.left + 150, r.top + r.height / 2);
+    assert.equal(await celluleActive(page), `${'ABC'[auMilieu.colonne - 1]}${auMilieu.ligne}`);
+    assert.deepEqual(page.erreurs, []);
+    await contexte.close();
+  });
+});
+
 describe('Au doigt (téléphone)', () => {
   const telephone = { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true };
 

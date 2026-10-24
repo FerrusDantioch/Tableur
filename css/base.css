@@ -20,8 +20,9 @@ body {
   height: 100vh;
   height: 100dvh;
   display: grid;
-  /* en-tête, outils, barre de formule, grille (prend la place restante), barre d'état */
-  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+  /* en-tête, outils, barre de formule, grille (prend la place restante),
+     onglets des feuilles, barre d'état */
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto auto;
   /* Une seule colonne, jamais plus large que l'écran. */
   grid-template-columns: minmax(0, 1fr);
   background: var(--fond);
@@ -125,8 +126,11 @@ svg {
 
 /* --- Boutons ----------------------------------------------------------------- */
 
-/* Boutons larges, faciles à toucher au doigt (au moins 44 × 44 pixels). */
+/* Boutons larges, faciles à toucher au doigt (au moins 44 × 44 pixels).
+   « relative » : le libellé caché (petits écrans) reste dans son bouton et
+   ne fait pas déborder la page. */
 .outil {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -172,7 +176,49 @@ svg {
   background: var(--survol);
 }
 
-/* --- Barre d'outils --------------------------------------------------------- */
+/* --- Barre d'outils en onglets ---------------------------------------------- */
+
+.outils {
+  background: var(--surface);
+  border-bottom: 1px solid var(--trait);
+}
+
+.onglets-outils {
+  display: flex;
+  gap: 2px;
+  padding: 0 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--trait);
+}
+
+.onglet-outils {
+  flex: none;
+  min-height: 40px;
+  padding: 6px 14px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: var(--discret);
+  font-weight: 500;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.onglet-outils:hover {
+  color: var(--texte);
+}
+
+.onglet-outils[aria-selected="true"] {
+  color: var(--texte);
+  border-bottom-color: var(--accent);
+  font-weight: 700;
+}
+
+/* Barre repliée : l'onglet choisi reste marqué, mais plus discrètement. */
+.outils.repliee .onglet-outils[aria-selected="true"] {
+  border-bottom-color: var(--trait);
+}
 
 .barre-outils {
   display: flex;
@@ -180,8 +226,10 @@ svg {
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--trait);
+}
+
+.barre-outils[hidden] {
+  display: none;
 }
 
 .separateur {
@@ -215,6 +263,10 @@ svg {
   }
   .barre-outils > * {
     flex: none;
+  }
+  .onglet-outils {
+    padding: 6px 10px;
+    font-size: 0.95rem;
   }
 }
 
@@ -251,6 +303,7 @@ svg {
   background: var(--surface);
   color: var(--texte);
   box-shadow: var(--ombre);
+  overflow-y: auto;
 }
 
 .panneau-titre {
@@ -290,6 +343,73 @@ svg {
   outline-offset: 1px;
 }
 
+/* Pastilles de couleur du texte (et des bordures) : « Abc » écrit dans la couleur. */
+.pastille-encre {
+  background: var(--cellule);
+  font-family: var(--police-cellules);
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.pastille-encre.aucune::before {
+  content: none;
+}
+
+.pastille-encre.aucune {
+  color: var(--texte);
+  font-weight: 500;
+  font-size: 0.85rem;
+  font-family: var(--police-interface);
+}
+
+/* Témoin sous l'icône « Texte » / « Couleur » des bordures : la couleur choisie. */
+.temoin-encre {
+  background: var(--bordure-auto);
+}
+
+.temoin-encre[data-encre] {
+  background: var(--encre, var(--bordure-auto));
+}
+
+[data-encre="rouge"] { --encre: var(--encre-rouge); }
+[data-encre="orange"] { --encre: var(--encre-orange); }
+[data-encre="jaune"] { --encre: var(--encre-jaune); }
+[data-encre="vert"] { --encre: var(--encre-vert); }
+[data-encre="bleu"] { --encre: var(--encre-bleu); }
+[data-encre="violet"] { --encre: var(--encre-violet); }
+[data-encre="gris"] { --encre: var(--encre-gris); }
+
+/* Panneau « Format » : un bouton par format, avec un exemple dessous. */
+.choix-formats {
+  display: grid;
+  gap: 6px;
+}
+
+.choix-format {
+  display: grid;
+  justify-items: start;
+  justify-content: stretch;
+  gap: 1px;
+  margin-top: 0;
+  padding: 8px 14px;
+  text-align: left;
+}
+
+.choix-format small {
+  color: var(--discret);
+  font-variant-numeric: tabular-nums;
+}
+
+.panneau-sous-titre {
+  margin-top: 14px;
+}
+
+/* Boutons « Fin » et « Épais » côte à côte (un seul choisi). */
+.groupe-choix {
+  display: inline-flex;
+  gap: 4px;
+}
+
 .reglage-largeur {
   display: flex;
   align-items: center;
@@ -317,6 +437,7 @@ svg {
 .choix-export {
   display: grid;
   justify-items: start;
+  justify-content: stretch;
   gap: 2px;
   padding: 10px 14px;
   text-align: left;
@@ -386,6 +507,68 @@ svg {
   display: inline-grid;
 }
 
+/* --- Onglets des feuilles (en bas) ------------------------------------------- */
+
+.onglets-feuilles {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  min-width: 0;
+  padding: 0 8px;
+  background: var(--surface);
+  border-top: 1px solid var(--trait);
+}
+
+.ajouter-feuille {
+  flex: none;
+  align-self: center;
+  width: 40px;
+  height: 36px;
+  margin: 3px 0;
+}
+
+.liste-feuilles {
+  display: flex;
+  gap: 2px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.onglet-feuille {
+  flex: none;
+  max-width: 14em;
+  min-height: 42px;
+  padding: 6px 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: 0;
+  border-top: 3px solid transparent;
+  background: transparent;
+  color: var(--discret);
+  font-weight: 500;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.onglet-feuille:hover {
+  color: var(--texte);
+  background: var(--survol);
+}
+
+/* Feuille affichée : on la voit au premier coup d'œil. */
+.onglet-feuille[aria-selected="true"] {
+  color: var(--texte);
+  font-weight: 700;
+  background: var(--cellule);
+  border-top-color: var(--accent);
+}
+
+.panneau-texte {
+  margin: 0 0 8px;
+}
+
 /* --- Barre d'état (en bas) -------------------------------------------------- */
 
 .barre-etat {
@@ -429,6 +612,22 @@ svg {
 
 .etat-sauvegarde.erreur {
   color: var(--erreur);
+}
+
+/* Très petits téléphones : un peu plus de place pour le titre et les onglets. */
+@media (max-width: 380px) {
+  .marque {
+    display: none;
+  }
+  .entete {
+    gap: 6px;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  .onglet-outils {
+    padding: 6px 7px;
+    font-size: 0.9rem;
+  }
 }
 
 @media (max-width: 520px) {

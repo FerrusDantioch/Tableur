@@ -92,3 +92,37 @@ test('somme et moyenne de la sélection dans la barre d’état', async () => {
   assert.equal(await page.textContent('#statistiques'), 'Somme : 18 · Moyenne : 6 · Nombres : 3');
   await contexte.close();
 });
+
+test('fonctions françaises : NB.SI, SOMME.SI, RECHERCHEV, texte et date', async () => {
+  const { contexte, page } = await ouvrirApplication(navigateur, serveur.url);
+  // Colonne A : fruits ; colonne B : prix.
+  await taperColonne(page, ['Pomme', 'Poire', 'Banane']);
+  await page.click('td[data-ligne="1"][data-colonne="2"]');
+  await taperColonne(page, ['2,5', '3', '1,8']);
+  await page.click('td[data-ligne="1"][data-colonne="3"]');
+  await taperColonne(page, [
+    '=NB.SI(B1:B3;">2")',
+    '=SOMME.SI(A1:A3;"P*";B1:B3)',
+    '=RECHERCHEV("poire";A1:B3;2;FAUX)',
+    '=MAJUSCULE(A1)&" à "&B1&" €"',
+    '=RECHERCHEV("Kiwi";A1:B3;2;FAUX)',
+    '=AUJOURDHUI()',
+  ]);
+  assert.equal(await texteCellule(page, 'C1'), '2');
+  assert.equal(await texteCellule(page, 'C2'), '5,5');
+  assert.equal(await texteCellule(page, 'C3'), '3');
+  assert.equal(await texteCellule(page, 'C4'), 'POMME à 2,5 €');
+  assert.equal(await texteCellule(page, 'C5'), '#N/A');
+  assert.match(await texteCellule(page, 'C6'), /^\d\d\/\d\d\/\d{4}$/);
+  // L'erreur #N/A est expliquée en bas de l'écran.
+  await page.click('td[data-ligne="5"][data-colonne="3"]');
+  assert.match(await page.textContent('#message'), /RECHERCHEV n’a pas trouvé/);
+  // Changer un prix met à jour toutes les formules qui l'utilisent.
+  await page.click('td[data-ligne="2"][data-colonne="2"]');
+  await page.keyboard.type('4');
+  await page.keyboard.press('Enter');
+  assert.equal(await texteCellule(page, 'C2'), '6,5');
+  assert.equal(await texteCellule(page, 'C3'), '4');
+  assert.deepEqual(page.erreurs, []);
+  await contexte.close();
+});

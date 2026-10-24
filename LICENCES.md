@@ -30,8 +30,10 @@ Remarques :
 - La licence Apache 2.0 demande de fournir son texte avec le logiciel (c'est
   fait) et de reproduire un éventuel fichier « NOTICE » : Chevrotain et bessel
   n'en ont pas.
-- Les compléments écrits pour l'application (fonctions MIN et MAX, correction
-  de MOYENNE, traduction française) sont dans `js/calcul/fonctions.js` et
+- Les compléments écrits pour l'application (MIN, MAX, MAJUSCULE, NBVAL,
+  NB.SI, SOMME.SI, MOYENNE.SI, RECHERCHEV, CONCATENER, AUJOURDHUI, correction
+  de MOYENNE, comparaisons et « & » à la française, traduction française)
+  sont dans `js/calcul/fonctions.js`, `js/calcul/comparaisons.js` et
   `js/calcul/traduction.js`, sans toucher au fichier de la bibliothèque.
 
 ## Éléments propres au projet
@@ -40,9 +42,12 @@ Remarques :
   Ferrus Dantioch (repris de Plume).
 - Les icônes de l'application (`icons/`) sont dessinées par le script
   `outils/creer-icones.py` de ce projet.
-- Le code de Tableur appartient à Ferrus Dantioch. Aucune licence de
-  diffusion n'est choisie pour l'instant (`"license": "UNLICENSED"` dans
-  `package.json`) : à décider avant une éventuelle diffusion.
+- Le code de Tableur appartient à Ferrus Dantioch. Il est distribué sous
+  licence **Creative Commons BY-NC-ND 4.0** (fichier [`LICENSE`](LICENSE) :
+  texte officiel anglais puis traduction française officielle) : utilisation
+  et partage à l'identique, en citant l'auteur, sans usage commercial ni
+  modification. Les licences des éléments ci-dessus (MIT, Apache 2.0, OFL)
+  permettent de les inclure dans ce projet.
 
 ## Outils de vérification (non publiés avec l'application)
 

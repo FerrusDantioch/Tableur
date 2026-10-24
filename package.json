@@ -1,6 +1,6 @@
 {
   "name": "tableur",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Tableur hors ligne de la Suite bureautique de l'Omni-système",
   "private": true,
   "type": "module",

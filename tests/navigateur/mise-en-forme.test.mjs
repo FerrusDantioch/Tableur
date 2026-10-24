@@ -1,8 +1,9 @@
-// Étape 3 : gras, couleur de fond et largeur des colonnes.
+// Étape 4 : mise en forme (gras, italique, couleurs, alignement, formats,
+// bordures) et largeur des colonnes.
 
 import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { demarrerServeur, lancerNavigateur, ouvrirApplication } from './outils.mjs';
+import { demarrerServeur, lancerNavigateur, ouvrirApplication, cliquerOutil } from './outils.mjs';
 
 const td = (ligne, colonne) => `td[data-ligne="${ligne}"][data-colonne="${colonne}"]`;
 const largeurColonne = (page, colonne) =>
@@ -29,7 +30,7 @@ test('gras : bouton et Ctrl+B, sur une plage, annulable', async () => {
   await page.keyboard.press('Enter');
   await page.keyboard.press('Control+Home');
   await page.keyboard.press('Shift+ArrowRight');
-  await page.click('#bouton-gras');
+  await cliquerOutil(page, '#bouton-gras');
   assert.match(await page.getAttribute(td(1, 1), 'class'), /gras/);
   assert.match(await page.getAttribute(td(1, 2), 'class'), /gras/);
   assert.equal(await page.getAttribute('#bouton-gras', 'aria-pressed'), 'true');
@@ -51,7 +52,7 @@ test('gras : bouton et Ctrl+B, sur une plage, annulable', async () => {
 test('couleur de fond : nuancier, aucune couleur, annulation', async () => {
   const { contexte, page } = await ouvrirApplication(navigateur, serveur.url);
   await page.keyboard.press('Shift+ArrowDown');
-  await page.click('#bouton-fond');
+  await cliquerOutil(page, '#bouton-fond');
   assert.ok(await page.isVisible('#panneau-fond'));
   await page.click('#panneau-fond .pastille[data-fond="vert"]');
   assert.equal(await page.isVisible('#panneau-fond'), false);
@@ -70,7 +71,7 @@ test('couleur de fond : nuancier, aucune couleur, annulation', async () => {
   });
   assert.equal(couleur, attendue);
   // « Aucune » retire la couleur.
-  await page.click('#bouton-fond');
+  await cliquerOutil(page, '#bouton-fond');
   await page.click('#panneau-fond .pastille.aucune');
   assert.equal(await page.getAttribute(td(1, 1), 'data-fond'), null);
   await page.click('#bouton-annuler');
@@ -114,7 +115,7 @@ test('largeur des colonnes : glisser, double-clic, panneau', async () => {
   // Panneau « Largeur » : + et − sur deux colonnes sélectionnées.
   await page.click(td(1, 3));
   await page.click(td(1, 4), { modifiers: ['Shift'] });
-  await page.click('#bouton-largeur');
+  await cliquerOutil(page, '#bouton-largeur');
   assert.match(await page.textContent('#largeur-colonnes'), /C à D/);
   await page.click('#largeur-plus');
   await page.click('#largeur-plus');
@@ -133,7 +134,7 @@ test('largeur au doigt (téléphone)', async () => {
   const telephone = { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true };
   const { contexte, page } = await ouvrirApplication(navigateur, serveur.url, telephone);
   await page.tap(td(1, 2));
-  await page.tap('#bouton-largeur');
+  await cliquerOutil(page, '#bouton-largeur', { doigt: true });
   await page.tap('#largeur-plus');
   assert.equal(await largeurColonne(page, 2), 120);
   // Un appui en dehors du panneau le ferme.
@@ -150,5 +151,121 @@ test('largeur au doigt (téléphone)', async () => {
   }
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   assert.equal(await largeurColonne(page, 1), 140);
+  await contexte.close();
+});
+
+const style = (page, adr, propriete) =>
+  page.evaluate(
+    ([a, p]) => {
+      const m = /^([A-Z]+)(\d+)$/.exec(a);
+      const colonne = m[1].charCodeAt(0) - 64;
+      return getComputedStyle(window.tableur.grille.td(Number(m[2]), colonne))[p];
+    },
+    [adr, propriete],
+  );
+
+test('italique, couleur du texte et alignement', async () => {
+  const { contexte, page } = await ouvrirApplication(navigateur, serveur.url);
+  await page.keyboard.type('Bonjour');
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('ArrowUp');
+  await page.keyboard.press('Control+i');
+  assert.equal(await style(page, 'A1', 'fontStyle'), 'italic');
+  await cliquerOutil(page, '#bouton-italique');
+  assert.equal(await style(page, 'A1', 'fontStyle'), 'normal');
+  assert.equal(await page.getAttribute('#bouton-italique', 'aria-pressed'), 'false');
+  // Couleur du texte : rouge, puis automatique.
+  const avant = await style(page, 'A1', 'color');
+  await cliquerOutil(page, '#bouton-encre');
+  await page.click('#panneau-encre .pastille[data-encre="rouge"]');
+  const rouge = await style(page, 'A1', 'color');
+  assert.notEqual(rouge, avant);
+  assert.equal(await page.getAttribute('#temoin-encre', 'data-encre'), 'rouge');
+  await cliquerOutil(page, '#bouton-encre');
+  await page.click('#panneau-encre .pastille.aucune');
+  assert.equal(await style(page, 'A1', 'color'), avant);
+  // Alignement : centre, puis un second appui revient à l'automatique (texte à gauche).
+  await cliquerOutil(page, '#bouton-centre');
+  assert.equal(await style(page, 'A1', 'textAlign'), 'center');
+  assert.equal(await page.getAttribute('#bouton-centre', 'aria-pressed'), 'true');
+  await cliquerOutil(page, '#bouton-droite');
+  assert.equal(await style(page, 'A1', 'textAlign'), 'right');
+  await cliquerOutil(page, '#bouton-droite');
+  assert.equal(await style(page, 'A1', 'textAlign'), 'start');
+  assert.deepEqual(page.erreurs, []);
+  await contexte.close();
+});
+
+test('formats de nombre : euros, pourcentage, date, décimales', async () => {
+  const { contexte, page } = await ouvrirApplication(navigateur, serveur.url);
+  const texte = (adr) => page.evaluate((a) => window.tableur.grille.td(1, a).textContent.replace(/[\u202f\u00a0]/g, ' '), adr);
+  for (const valeur of ['1234,5', '0,125', '46318', '2,567']) {
+    await page.keyboard.type(valeur);
+    await page.keyboard.press('Tab');
+  }
+  // A1 en euros.
+  await page.click(td(1, 1));
+  await cliquerOutil(page, '#bouton-format');
+  await page.click('#panneau-format [data-format="euro"]');
+  assert.equal(await texte(1), '1 234,50 €');
+  // B1 en pourcentage, avec une décimale de plus.
+  await page.click(td(1, 2));
+  await cliquerOutil(page, '#bouton-format');
+  await page.click('#panneau-format [data-format="pourcent"]');
+  assert.equal(await texte(2), '13 %');
+  await cliquerOutil(page, '#bouton-format');
+  await page.click('#decimales-plus');
+  assert.equal(await page.textContent('#decimales-valeur'), '1 décimale');
+  await page.keyboard.press('Escape');
+  assert.equal(await texte(2), '12,5 %');
+  // C1 en date.
+  await page.click(td(1, 3));
+  await cliquerOutil(page, '#bouton-format');
+  await page.click('#panneau-format [data-format="date"]');
+  assert.equal(await texte(3), '23/10/2026');
+  // D1 : « − décimale » en partant du format automatique (2,567 → 2,57).
+  await page.click(td(1, 4));
+  await cliquerOutil(page, '#bouton-format');
+  await page.click('#decimales-moins');
+  await page.keyboard.press('Escape');
+  assert.equal(await texte(4), '2,57');
+  // La valeur reste entière pour les calculs, et « Automatique » revient à l'affichage d'origine.
+  assert.equal(await page.evaluate(() => window.tableur.moteur.valeur(window.tableur.feuille, 'D1')), 2.567);
+  await cliquerOutil(page, '#bouton-format');
+  await page.click('#panneau-format [data-format=""]');
+  assert.equal(await texte(4), '2,567');
+  assert.deepEqual(page.erreurs, []);
+  await contexte.close();
+});
+
+test('bordures : toutes, extérieure épaisse en couleur, aucune', async () => {
+  const { contexte, page } = await ouvrirApplication(navigateur, serveur.url);
+  await page.click(td(2, 2));
+  await page.click(td(3, 3), { modifiers: ['Shift'] });
+  await cliquerOutil(page, '#groupe-bordures [data-bordures="toutes"]');
+  // B2 dessine son bas et sa droite ; A2 dessine la gauche de B2 ; B1 son haut.
+  assert.equal(await style(page, 'B2', 'borderBottomWidth'), '1px');
+  assert.equal(await style(page, 'A2', 'borderRightWidth'), '1px');
+  assert.equal(await style(page, 'B1', 'borderBottomWidth'), '1px');
+  const quadrillage = await style(page, 'E5', 'borderBottomColor');
+  assert.notEqual(await style(page, 'B2', 'borderBottomColor'), quadrillage);
+  // Trait épais, couleur bleue, bordure extérieure.
+  await cliquerOutil(page, '#trait-epais');
+  await cliquerOutil(page, '#bouton-couleur-bordure');
+  await page.click('#panneau-couleur-bordure .pastille[data-encre="bleu"]');
+  await cliquerOutil(page, '#groupe-bordures [data-bordures="exterieur"]');
+  assert.equal(await style(page, 'C3', 'borderBottomWidth'), '2px');
+  assert.equal(await style(page, 'B2', 'borderBottomWidth'), '1px'); // l'intérieur reste fin
+  const bleu = await style(page, 'C3', 'borderBottomColor');
+  assert.notEqual(bleu, await style(page, 'B2', 'borderBottomColor'));
+  // Le choix du trait est mémorisé.
+  assert.equal(await page.getAttribute('#trait-epais', 'aria-pressed'), 'true');
+  // Aucune : tout disparaît ; Annuler remet.
+  await cliquerOutil(page, '#groupe-bordures [data-bordures="aucune"]');
+  assert.equal(await style(page, 'B2', 'borderBottomColor'), quadrillage);
+  assert.equal(await style(page, 'C3', 'borderBottomWidth'), '1px');
+  await page.click('#bouton-annuler');
+  assert.equal(await style(page, 'C3', 'borderBottomWidth'), '2px');
+  assert.deepEqual(page.erreurs, []);
   await contexte.close();
 });

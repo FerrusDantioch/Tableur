@@ -9,7 +9,7 @@
 const DELAI = 700; // millisecondes
 
 /** Types d'événements du classeur qui modifient son contenu. */
-const MODIFICATIONS = new Set(['cellules', 'largeurs', 'dimensions', 'feuille', 'titre']);
+const MODIFICATIONS = new Set(['cellules', 'largeurs', 'dimensions', 'structure', 'onglets', 'active', 'titre']);
 
 export class SauvegardeAuto {
   #minuterie = null;

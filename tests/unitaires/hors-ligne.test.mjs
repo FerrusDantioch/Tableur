@@ -66,9 +66,13 @@ test('index.html ne charge rien depuis internet', () => {
   const page = lire('index.html');
   const adresses = [...page.matchAll(/(?:src|href)="([^"#]+)"/g)].map((m) => m[1]);
   for (const adresse of adresses) {
-    if (adresse.startsWith('http')) {
-      // Seul le lien vers le site de l'Omni-système (ouvert à la demande) est permis.
-      assert.match(adresse, /^https:\/\/ferrusdantioch\.github\.io\//, `ressource externe : ${adresse}`);
+    if (adresse.startsWith('mailto:')) {
+      // Lien « écrire un e-mail » (À propos) : il ouvre la messagerie, rien n'est chargé.
+      assert.match(adresse, /^mailto:omni-systeme\.choking513@passmail\.net\?subject=/, `adresse e-mail inattendue : ${adresse}`);
+    } else if (adresse.startsWith('http')) {
+      // Seuls des liens ouverts à la demande sont permis : le site de
+      // l'Omni-système et le résumé de la licence chez Creative Commons.
+      assert.match(adresse, /^https:\/\/(ferrusdantioch\.github\.io|creativecommons\.org)\//, `ressource externe : ${adresse}`);
     } else {
       assert.ok(existsSync(join(RACINE, adresse)), `fichier introuvable : ${adresse}`);
     }

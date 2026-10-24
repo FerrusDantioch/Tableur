@@ -2,7 +2,7 @@
 
 import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { demarrerServeur, lancerNavigateur, ouvrirApplication, texteCellule } from './outils.mjs';
+import { demarrerServeur, lancerNavigateur, ouvrirApplication, texteCellule, cliquerOutil } from './outils.mjs';
 
 const td = (ligne, colonne) => `td[data-ligne="${ligne}"][data-colonne="${colonne}"]`;
 const attendreEnregistrement = (page) =>
@@ -37,8 +37,8 @@ test('sauvegarde automatique : tout est retrouvé après fermeture', async () =>
   await page.keyboard.type('=B1*12');
   await page.keyboard.press('Enter');
   await page.click(td(1, 1));
-  await page.click('#bouton-gras');
-  await page.click('#bouton-fond');
+  await cliquerOutil(page, '#bouton-gras');
+  await cliquerOutil(page, '#bouton-fond');
   await page.click('#panneau-fond .pastille[data-fond="jaune"]');
   await page.evaluate(() => window.tableur.classeur.modifierLargeurs(window.tableur.feuille, [1], 180));
   await attendreEnregistrement(page);
@@ -99,12 +99,80 @@ test('trois thèmes, mémorisés', async () => {
   await contexte.close();
 });
 
+test('sauvegarde automatique : plusieurs feuilles, mise en forme, bordures, ligne figée', async () => {
+  const { contexte, page } = await ouvrirApplication(navigateur, serveur.url);
+  await page.evaluate(() => {
+    const { classeur } = window.tableur;
+    const premiere = classeur.feuilleActive;
+    classeur.modifierCellules(premiere, [
+      { adresse: 'A1', brut: 'Total', gras: true, italique: true, couleur: 'bleu', alignement: 'centre' },
+      { adresse: 'B1', brut: '1234,5', format: { type: 'euro', decimales: 2 }, bordures: { bas: { style: 'epais', couleur: 'rouge' } } },
+    ]);
+    classeur.figerPremiereLigne(premiere, true);
+    const ventes = classeur.ajouterFeuille({ nom: 'Ventes 2026' });
+    classeur.modifierCellules(ventes, [{ adresse: 'A1', brut: '=Feuille1!B1*2' }]);
+  });
+  await attendreEnregistrement(page);
+  await recharger(page);
+  // La feuille affichée au moment de fermer est rouverte.
+  assert.deepEqual(await page.$$eval('.onglet-feuille', (o) => o.map((e) => `${e.textContent}:${e.getAttribute('aria-selected')}`)), [
+    'Feuille1:false',
+    'Ventes 2026:true',
+  ]);
+  assert.equal(await texteCellule(page, 'A1'), '2469');
+  await page.click('.onglet-feuille:text-is("Feuille1")');
+  const etat = await page.evaluate(() => {
+    const { feuille, grille } = window.tableur;
+    const a1 = grille.td(1, 1);
+    const b1 = grille.td(1, 2);
+    return {
+      figee: feuille.figee,
+      classes: a1.className,
+      encre: a1.dataset.encre,
+      align: a1.dataset.align,
+      montant: b1.textContent.replace(/[\u202f\u00a0]/g, ' '),
+      bordure: getComputedStyle(b1).borderBottomWidth,
+    };
+  });
+  assert.deepEqual(etat, { figee: true, classes: 'texte gras italique', encre: 'bleu', align: 'centre', montant: '1 234,50 €', bordure: '2px' });
+  assert.deepEqual(page.erreurs, []);
+  await contexte.close();
+});
+
+test('À propos : bouton direct, contact, licence et bibliothèques', async () => {
+  const { contexte, page } = await ouvrirApplication(navigateur, serveur.url, { permissions: ['clipboard-read', 'clipboard-write'] });
+  await page.click('#bouton-a-propos');
+  assert.ok(await page.isVisible('#fenetre-a-propos'));
+  const texte = await page.textContent('#fenetre-a-propos');
+  assert.match(texte, /Tableur/);
+  assert.match(texte, /Version \d+\.\d+\.\d+/);
+  assert.match(texte, /Application créée par Ferrus Dantioch et Claude/);
+  assert.match(texte, /Un retour, une idée, un problème \?/);
+  assert.match(texte, /Creative Commons BY-NC-ND 4\.0/);
+  for (const nom of ['fast-formula-parser', 'Chevrotain', 'jStat', 'bessel', 'bahttext', 'Oxanium', 'Literata', 'JetBrains Mono']) assert.match(texte, new RegExp(nom));
+  // Lien qui ouvre la messagerie, avec l'objet déjà rempli ; adresse affichée en clair.
+  assert.equal(
+    await page.getAttribute('#lien-contact', 'href'),
+    'mailto:omni-systeme.choking513@passmail.net?subject=Retour%20sur%20Tableur',
+  );
+  assert.equal(await page.textContent('#adresse-contact'), 'omni-systeme.choking513@passmail.net');
+  await page.click('#copier-adresse');
+  await page.waitForFunction(() => document.getElementById('adresse-copiee').textContent !== '');
+  assert.equal(await page.evaluate(() => navigator.clipboard.readText()), 'omni-systeme.choking513@passmail.net');
+  await page.keyboard.press('Escape');
+  assert.equal(await page.isVisible('#fenetre-a-propos'), false);
+  await contexte.close();
+});
+
 test('menu : lignes et colonnes en plus, aide, à propos', async () => {
   const { contexte, page } = await ouvrirApplication(navigateur, serveur.url);
   await page.click('#bouton-menu');
   await page.click('#menu-lignes');
   await page.click('#menu-colonnes');
   assert.match(await page.textContent('#taille-feuille'), /150 lignes × 31 colonnes/);
+  assert.ok(await page.$('th.entete-colonne[data-colonne="31"]'));
+  // La ligne 150 n'est dessinée qu'une fois arrivée à l'écran (grille virtuelle).
+  await page.evaluate(() => window.tableur.grille.rendreVisible(150, 31));
   assert.ok(await page.$(td(150, 31)));
   await page.click('#menu-aide');
   assert.ok(await page.isVisible('#fenetre-aide'));
@@ -113,8 +181,8 @@ test('menu : lignes et colonnes en plus, aide, à propos', async () => {
   await page.click('#bouton-menu');
   await page.click('#menu-a-propos');
   const texte = await page.textContent('#fenetre-a-propos');
-  assert.match(texte, /Application faite par Ferrus Dantioch et Claude/);
-  assert.match(texte, /Version 1\.\d+\.\d+/);
+  assert.match(texte, /Application créée par Ferrus Dantioch et Claude/);
+  assert.match(texte, /Version \d+\.\d+\.\d+/);
   assert.match(texte, /fast-formula-parser/);
   await page.click('#fenetre-a-propos [data-fermer]');
   assert.equal(await page.isVisible('#fenetre-a-propos'), false);
@@ -136,6 +204,8 @@ test('nouveau classeur : confirmation, puis annulable', async () => {
   await page.click('#bouton-menu');
   await page.click('#menu-nouveau');
   await page.click('#fenetre-confirmation [data-fermer="effacer"]');
+  // La fenêtre se ferme juste après le clic (événement « close ») : on attend l'effacement.
+  await page.waitForFunction(() => window.tableur.classeur.titre === 'Sans titre' && !window.tableur.classeur.feuilles[0].brut('A1'));
   assert.equal(await texteCellule(page, 'A1'), '');
   await page.click('#bouton-annuler');
   assert.equal(await texteCellule(page, 'A1'), 'précieux');

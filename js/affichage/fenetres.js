@@ -22,7 +22,12 @@ export function preparerFenetres(apresFermeture) {
     });
     fenetre.addEventListener('close', () => {
       // Si une autre fenêtre est encore ouverte (menu → aide), on ne fait rien.
-      if (!document.querySelector('dialog[open]')) apresFermeture?.();
+      if (document.querySelector('dialog[open]')) return;
+      // Le navigateur rend le focus à l'élément d'avant ; après deux fenêtres
+      // à la suite, Chrome peut laisser le champ de saisie sans réaction au
+      // clavier. On retire donc ce focus avant de le redonner proprement.
+      if (document.activeElement instanceof HTMLInputElement) document.activeElement.blur();
+      apresFermeture?.();
     });
   }
 }
