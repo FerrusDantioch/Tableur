@@ -16,6 +16,10 @@
 // Toutes les lignes ont la même hauteur : la position d'une cellule se
 // calcule donc directement (ligne × hauteur), sans la chercher dans la page.
 //
+// Cellules fusionnées : chacune est dessinée par-dessus les cellules qu'elle
+// couvre (un bloc posé sur la grille, avec le texte et la mise en forme de
+// la cellule en haut à gauche). Le tableau lui-même ne change pas.
+//
 // Zoom : toutes les tailles (hauteur des lignes, largeur des colonnes, texte)
 // sont multipliées par le même facteur. Le classeur, lui, garde les largeurs
 // « à 100 % » : le zoom ne change que l'affichage.
@@ -25,7 +29,7 @@
 // le champ de saisie qui la concernent sont placés dans une « couche figée »
 // qui reste, elle aussi, collée en haut.
 
-import { lettresColonne, lireAdresse } from '../donnees/adresses.js';
+import { adresse, lettresColonne, lireAdresse } from '../donnees/adresses.js';
 
 /** Largeur de la colonne des numéros de ligne (1, 2, 3…), en pixels, à 100 %. */
 const LARGEUR_NUMEROS = 52;
@@ -61,6 +65,7 @@ export class Grille {
   #poigneeRecopie; // petit carré (à la souris) : recopie la sélection
   #cadreRecopie; // contour pointillé pendant une recopie
   #plageSelection = null; // dernière plage dessinée (pour surligner les en-têtes)
+  #blocsFusion = []; // blocs qui dessinent les cellules fusionnées
 
   /**
    * @param {object} options
@@ -249,6 +254,8 @@ export class Grille {
     // Ligne 1 figée : toujours dessinée, en premier.
     if (this.#figee) corps.prepend(this.#creerLigne(1).tr);
     this.#mettreAJourFenetre(true);
+    this.#blocsFusion = [];
+    this.#dessinerFusions();
   }
 
   #creerEspace() {
@@ -362,13 +369,59 @@ export class Grille {
   }
 
   rafraichirCellules(adresses) {
-    for (const adresse of adresses) this.rafraichirCellule(adresse);
+    for (const adr of adresses) this.rafraichirCellule(adr);
+    this.#dessinerFusions();
   }
 
   /** Redessine toutes les cellules dessinées (après un changement de thème de bordures, etc.). */
   rafraichirTout() {
     for (const [l, { tds }] of this.#lignes) {
       for (let c = 1; c < tds.length; c++) this.#remplir(tds[c], l, c);
+    }
+    this.#dessinerFusions();
+  }
+
+  /**
+   * Dessine les cellules fusionnées : un bloc par fusion, posé sur les
+   * cellules qu'elle couvre, avec le texte, la mise en forme et les bordures
+   * extérieures (le bas pris à la cellule en bas à gauche, la droite à celle
+   * en haut à droite).
+   */
+  #dessinerFusions() {
+    for (const bloc of this.#blocsFusion) bloc.remove();
+    this.#blocsFusion = [];
+    for (const { debut, fin } of this.feuille.fusions) {
+      const bloc = document.createElement('div');
+      bloc.className = 'cellule-fusionnee';
+      bloc.dataset.ligne = debut.ligne;
+      bloc.dataset.colonne = debut.colonne;
+      const vue = this.presenterCellule(adresse(debut.ligne, debut.colonne), debut.ligne, debut.colonne);
+      const texte = document.createElement('span');
+      texte.textContent = vue.texte;
+      bloc.append(texte);
+      if (vue.genre !== 'vide') bloc.classList.add(vue.genre);
+      if (vue.gras) bloc.classList.add('gras');
+      if (vue.italique) bloc.classList.add('italique');
+      if (vue.fond) bloc.dataset.fond = vue.fond;
+      if (vue.couleur) bloc.dataset.encre = vue.couleur;
+      if (vue.alignement) bloc.dataset.align = vue.alignement;
+      if (vue.explication) bloc.title = vue.explication;
+      const basGauche = this.presenterCellule(adresse(fin.ligne, debut.colonne), fin.ligne, debut.colonne);
+      const hautDroite = this.presenterCellule(adresse(debut.ligne, fin.colonne), debut.ligne, fin.colonne);
+      this.#dessinerBordures(bloc, {
+        haut: vue.bordures?.haut,
+        gauche: vue.bordures?.gauche,
+        bas: basGauche.bordures?.bas,
+        droite: hautDroite.bordures?.droite,
+      });
+      const zone = this.#zoneCellule(debut.ligne, debut.colonne);
+      bloc.style.transform = `translate(${zone.gauche}px, ${zone.haut}px)`;
+      bloc.style.width = `${zone.droite - zone.gauche}px`;
+      bloc.style.height = `${zone.bas - zone.haut}px`;
+      // Sous les cadres de sélection (dans la couche figée pour la ligne 1 figée).
+      if (zone.couche) this.#couche.prepend(bloc);
+      else this.#contenu.insertBefore(bloc, this.#cadres.plage);
+      this.#blocsFusion.push(bloc);
     }
   }
 
@@ -427,12 +480,14 @@ export class Grille {
       if (this.#colonnes[c]) this.#colonnes[c].style.width = `${this.#largeurEcran(this.feuille.largeur(c))}px`;
     }
     this.#calculerPositions();
+    this.#dessinerFusions();
   }
 
   /** Largeur provisoire d'une colonne pendant qu'on la fait glisser (largeur à 100 %). */
   apercuLargeur(colonne, largeur) {
     if (this.#colonnes[colonne]) this.#colonnes[colonne].style.width = `${this.#largeurEcran(largeur)}px`;
     this.#calculerPositions();
+    this.#dessinerFusions();
   }
 
   // --- Positions ----------------------------------------------------------------------------
@@ -453,27 +508,47 @@ export class Grille {
     return { gauche, haut, droite, bas: haut + this.#hauteur };
   }
 
-  /** Rectangle d'une cellule dans son conteneur (pour placer l'éditeur). */
-  rectangleContenu(ligne, colonne) {
-    if (ligne < 1 || colonne < 1 || ligne > this.feuille.lignes || colonne > this.feuille.colonnes) return null;
-    return this.#rectangle(ligne, colonne);
+  /**
+   * Rectangle d'une cellule, ou de toute sa fusion si elle est fusionnée.
+   * `couche` : vrai s'il est dans la couche figée (ligne 1 figée).
+   */
+  #zoneCellule(ligne, colonne) {
+    const fusion = this.feuille.fusionEn(ligne, colonne);
+    const debut = fusion?.debut ?? { ligne, colonne };
+    const fin = fusion?.fin ?? { ligne, colonne };
+    const couche = this.#figee && fin.ligne === 1;
+    const gauche = this.#positions[debut.colonne] ?? 0;
+    return {
+      couche,
+      gauche,
+      droite: this.#positions[fin.colonne + 1] ?? gauche,
+      haut: couche ? 0 : this.#hauteur * debut.ligne,
+      bas: couche ? this.#hauteur : this.#hauteur * (fin.ligne + 1),
+    };
   }
 
-  /** Rectangle d'une cellule à l'écran (coordonnées de la fenêtre). */
+  /** Rectangle d'une cellule (ou de sa fusion) dans son conteneur (pour placer l'éditeur). */
+  rectangleContenu(ligne, colonne) {
+    if (ligne < 1 || colonne < 1 || ligne > this.feuille.lignes || colonne > this.feuille.colonnes) return null;
+    return this.#zoneCellule(ligne, colonne);
+  }
+
+  /** Rectangle d'une cellule (ou de sa fusion) à l'écran (coordonnées de la fenêtre). */
   rectangleEcran(ligne, colonne) {
     const r = this.rectangleContenu(ligne, colonne);
     if (!r) return null;
-    const origine = (this.#estFigee(ligne) ? this.#couche : this.#contenu).getBoundingClientRect();
+    const origine = (r.couche ? this.#couche : this.#contenu).getBoundingClientRect();
     return new DOMRect(origine.left + r.gauche, origine.top + r.haut, r.droite - r.gauche, r.bas - r.haut);
   }
 
   /**
-   * Place un élément (le champ de saisie) dans le bon conteneur pour la ligne
-   * donnée : la couche figée pour la ligne 1 figée, le contenu sinon. Le focus
-   * est conservé si l'élément change de conteneur.
+   * Place un élément (le champ de saisie) dans le bon conteneur pour la
+   * cellule donnée : la couche figée pour la ligne 1 figée, le contenu sinon.
+   * Le focus est conservé si l'élément change de conteneur.
    */
-  accueillir(element, ligne) {
-    const conteneur = this.#estFigee(ligne) ? this.#couche : this.#contenu;
+  accueillir(element, ligne, colonne = null) {
+    const couche = colonne === null ? this.#estFigee(ligne) : this.#zoneCellule(ligne, colonne).couche;
+    const conteneur = couche ? this.#couche : this.#contenu;
     if (element.parentElement === conteneur) return;
     const avaitLeFocus = document.activeElement === element;
     conteneur.append(element);
@@ -508,8 +583,9 @@ export class Grille {
         placer(plage, this.#rectangle(ligneDebut, debut.colonne), this.#rectangle(fin.ligne, fin.colonne), partieFigee, false);
       }
     }
-    const rActive = this.#rectangle(active.ligne, active.colonne);
-    placer(this.#estFigee(active.ligne) ? actifFige : actif, rActive, rActive);
+    // Cellule active (toute sa fusion si elle est fusionnée).
+    const rActive = this.#zoneCellule(active.ligne, active.colonne);
+    placer(rActive.couche ? actifFige : actif, rActive, rActive);
 
     // Poignées (ronde au doigt, carrée à la souris) dans le coin en bas à droite.
     const coin = this.#rectangle(fin.ligne, fin.colonne);
@@ -583,7 +659,7 @@ export class Grille {
     if (poignee) return { type: 'largeur', colonne: Number(poignee.dataset.colonne) };
     if (element.closest('.poignee-selection')) return { type: 'poignee' };
     if (element.closest('.poignee-recopie')) return { type: 'recopie' };
-    const td = element.closest('td[data-ligne]');
+    const td = element.closest('td[data-ligne], .cellule-fusionnee');
     if (td) return { type: 'cellule', ligne: Number(td.dataset.ligne), colonne: Number(td.dataset.colonne) };
     const thColonne = element.closest('th.entete-colonne');
     if (thColonne) return { type: 'colonne', colonne: Number(thColonne.dataset.colonne) };

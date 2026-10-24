@@ -37,6 +37,11 @@ des données d'avant le renommage (`stockage.js`, `theme-initial.js`,
   (plusieurs feuilles en une seule annulation, « Tout remplacer »).
 - Zoom : `affichage/zoom.js` + `Grille.changerZoom` ; les largeurs enregistrées
   restent à 100 % (`#largeurEcran` multiplie à l'affichage).
+- Cellules fusionnées : `Feuille.fusions` (plages, enregistrées `"fusions":
+  ["A1:D1"]`), `donnees/fusions.js`, `Classeur.fusionner/defusionner`. À
+  l'écran, un bloc `.cellule-fusionnee` est posé sur les cases couvertes
+  (`Grille.#dessinerFusions`) ; la `Selection` agrandit les plages aux fusions.
+  Les cases couvertes restent vides (`modifierFeuilles` ignore leur texte).
 
 ## Tests
 

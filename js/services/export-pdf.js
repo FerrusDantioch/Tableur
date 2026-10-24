@@ -115,6 +115,12 @@ export function zoneImprimee(feuille) {
     lignes = Math.max(lignes, ligne);
     colonnes = Math.max(colonnes, colonne);
   }
+  // Une cellule fusionnée remplie est imprimée en entier.
+  for (const { debut, fin } of feuille.fusions ?? []) {
+    if (debut.ligne > lignes || debut.colonne > colonnes) continue;
+    lignes = Math.max(lignes, fin.ligne);
+    colonnes = Math.max(colonnes, fin.colonne);
+  }
   return { lignes, colonnes, bordures };
 }
 
@@ -161,12 +167,38 @@ export function construireImpression(titre, feuille, presenterCellule, { quadril
   table.style.width = reduire ? '100%' : `${total}px`;
   table.append(groupe);
 
+  // Cellules fusionnées : la cellule en haut à gauche s'étend (colspan,
+  // rowspan) ; les cellules qu'elle couvre ne sont pas créées.
+  const fusions = (feuille.fusions ?? []).filter((f) => f.debut.ligne <= lignes && f.debut.colonne <= colonnes);
+  const couvertes = new Set();
+  for (const { debut, fin } of fusions) {
+    for (let l = debut.ligne; l <= Math.min(fin.ligne, lignes); l++) {
+      for (let c = debut.colonne; c <= Math.min(fin.colonne, colonnes); c++) {
+        if (l !== debut.ligne || c !== debut.colonne) couvertes.add(adresse(l, c));
+      }
+    }
+  }
+
   const corps = document.createElement('tbody');
   for (let l = 1; l <= lignes; l++) {
     const tr = document.createElement('tr');
     for (let c = 1; c <= colonnes; c++) {
+      if (couvertes.has(adresse(l, c))) continue;
       const td = document.createElement('td');
       const vue = presenterCellule(adresse(l, c), l, c);
+      const fusion = fusions.find((f) => f.debut.ligne === l && f.debut.colonne === c);
+      if (fusion) {
+        td.colSpan = Math.min(fusion.fin.colonne, colonnes) - c + 1;
+        td.rowSpan = Math.min(fusion.fin.ligne, lignes) - l + 1;
+        // Bordures du bas et de droite : celles des cellules du bord de la fusion.
+        const finL = l + td.rowSpan - 1;
+        const finC = c + td.colSpan - 1;
+        vue.bordures = {
+          ...vue.bordures,
+          bas: presenterCellule(adresse(finL, c), finL, c).bordures?.bas,
+          droite: presenterCellule(adresse(l, finC), l, finC).bordures?.droite,
+        };
+      }
       td.textContent = vue.texte;
       if (vue.genre !== 'vide') td.className = vue.genre;
       if (vue.gras) td.classList.add('gras');

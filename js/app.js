@@ -21,6 +21,7 @@ import { CommandesEdition } from './affichage/commandes-edition.js';
 import { OutilsBordures } from './affichage/outils-bordures.js';
 import { OngletsFeuilles } from './affichage/onglets-feuilles.js';
 import { CommandesDonnees } from './affichage/commandes-donnees.js';
+import { CommandesFusion } from './affichage/commandes-fusion.js';
 import { installerBarreOutils } from './affichage/barre-outils.js';
 import { demander, ouvrirFenetre, preparerFenetres } from './affichage/fenetres.js';
 import { installerMenu } from './affichage/menu.js';
@@ -86,7 +87,10 @@ function presenterCellule(adr, ligne, colonne) {
 
 const zone = element('zone-grille');
 const grille = new Grille({ racine: zone, feuille: feuilleActive(), presenterCellule });
-const selection = new Selection(() => ({ lignes: feuilleActive().lignes, colonnes: feuilleActive().colonnes }));
+const selection = new Selection(
+  () => ({ lignes: feuilleActive().lignes, colonnes: feuilleActive().colonnes }),
+  () => feuilleActive().fusions,
+);
 const edition = new Edition({
   champCellule: element('editeur-cellule'),
   champBarre: element('champ-formule'),
@@ -210,6 +214,7 @@ commandesEdition = new CommandesEdition({ classeur, selection, avantAction, apre
 new OutilsBordures({ classeur, selection, preferences, avantAction, apresAction });
 new OngletsFeuilles({ classeur, avantAction, apresAction, demander, ouvrirFenetre, signaler });
 new CommandesDonnees({ classeur, selection, valeur: (feuille, adr) => moteur.valeur(feuille, adr), avantAction, apresAction, signaler });
+new CommandesFusion({ classeur, selection, demander, avantAction, apresAction, signaler });
 const recherche = new RechercheRemplacement({ classeur, selection, grille, avantAction, apresAction, signaler });
 commandes.rechercher = (remplacer) => recherche.ouvrir({ remplacer });
 

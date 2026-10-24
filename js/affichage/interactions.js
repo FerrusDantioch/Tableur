@@ -116,7 +116,7 @@ export class Interactions {
       }
     });
     nomCellule.addEventListener('blur', () => {
-      nomCellule.value = textePlage(selection.plage);
+      nomCellule.value = this.#texteSelection();
     });
 
     // --- Souris et doigt ---
@@ -170,8 +170,14 @@ export class Interactions {
     const { ligne, colonne } = this.selection.active;
     this.grille.afficherSelection(this.selection);
     this.edition.suivre(ligne, colonne, this.feuille.brut(adresse(ligne, colonne)));
-    if (document.activeElement !== this.nomCellule) this.nomCellule.value = textePlage(this.selection.plage);
+    if (document.activeElement !== this.nomCellule) this.nomCellule.value = this.#texteSelection();
     this.commandes.selectionChangee?.(this.selection);
+  }
+
+  /** Texte de la case « A1 » : la cellule active, ou la plage (« B2:D5 »). Une cellule fusionnée seule : « A1 ». */
+  #texteSelection() {
+    const { ligne, colonne } = this.selection.active;
+    return this.selection.unique ? adresse(ligne, colonne) : textePlage(this.selection.plage);
   }
 
   /** Fait défiler la grille jusqu'au coin de la sélection qui vient de bouger. */

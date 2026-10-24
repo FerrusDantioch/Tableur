@@ -14,11 +14,12 @@
 //     "titre": "Budget",
 //     "feuilleActive": 0,
 //     "affichage": { "zoom": 100, "theme": "omni" },
-//     "feuilles": [ { "nom", "lignes", "colonnes", "figee", "largeurs", "cellules" } ]
+//     "feuilles": [ { "nom", "lignes", "colonnes", "figee", "largeurs", "cellules", "fusions" } ]
 //   }
 // Chaque feuille garde les noms et l'ordre des feuilles, le texte et les
 // formules des cellules, toute la mise en forme et les bordures, la largeur
-// des colonnes et la ligne figée (voir Feuille.versJSON dans classeur.js).
+// des colonnes, la ligne figée et les cellules fusionnées (« fusions » :
+// ["A1:D1", …], facultatif) (voir Feuille.versJSON dans classeur.js).
 //
 // Si le format change un jour, on augmentera VERSION_FICHIER et on gardera
 // ici la lecture des anciennes versions : les anciens fichiers resteront lisibles.
@@ -27,7 +28,8 @@
 // puis vérifié entièrement AVANT de toucher au classeur. Au moindre doute, il
 // est refusé avec une explication en français.
 
-import { COLONNES_MAX, LIGNES_MAX, lireAdresse, numeroColonne } from './adresses.js';
+import { COLONNES_MAX, LIGNES_MAX, lireAdresse, lirePlage, numeroColonne } from './adresses.js';
+import { nombreCellules, seChevauchent } from './fusions.js';
 import {
   ALIGNEMENTS,
   COTES,
@@ -151,6 +153,17 @@ function verifierFeuille(feuille, numero) {
       if (colonne < 1 || colonne > COLONNES_MAX || !Number.isFinite(largeur) || largeur <= 0) {
         throw abime(`${ici} a une largeur de colonne impossible (${lettres})`);
       }
+    }
+  }
+  if (feuille.fusions !== undefined) {
+    if (!Array.isArray(feuille.fusions)) throw abime(`les cellules fusionnées de ${ici} sont illisibles`);
+    const vues = [];
+    for (const texte of feuille.fusions) {
+      const plage = typeof texte === 'string' && /^[A-Z]{1,2}[1-9]\d{0,3}:[A-Z]{1,2}[1-9]\d{0,3}$/.test(texte) ? lirePlage(texte) : null;
+      const valable =
+        plage && nombreCellules(plage) >= 2 && plage.fin.ligne <= LIGNES_MAX && plage.fin.colonne <= COLONNES_MAX && !vues.some((autre) => seChevauchent(autre, plage));
+      if (!valable) throw abime(`${ici} a des cellules fusionnées impossibles`);
+      vues.push(plage);
     }
   }
   if (!estObjet(feuille.cellules)) throw abime(`les cellules de ${ici} sont illisibles`);

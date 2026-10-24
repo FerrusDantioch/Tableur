@@ -13,8 +13,19 @@
 // Plus tard, les graphiques ou l'import Excel s'appuieront sur ces mêmes
 // fonctions : ils n'auront pas besoin de toucher à l'affichage.
 
-import { COLONNES_MAX, LIGNES_MAX, adresse as versAdresse, lireAdresse, lettresColonne, numeroColonne } from './adresses.js';
+import {
+  COLONNES_MAX,
+  LIGNES_MAX,
+  adresse as versAdresse,
+  dansPlage,
+  lireAdresse,
+  lirePlage,
+  lettresColonne,
+  numeroColonne,
+  textePlage,
+} from './adresses.js';
 import { ajusterReferences, decalerReferences, oublierFeuilleDansFormule, renommerFeuilleDansFormule } from './formules.js';
+import { ajusterFusions, contient, fusionContenant, nombreCellules, seChevauchent } from './fusions.js';
 
 export { COLONNES_MAX, LIGNES_MAX };
 export const LIGNES_PAR_DEFAUT = 100;
@@ -147,6 +158,8 @@ export class Feuille {
   #cellules = new Map();
   /** @type {Map<number, number>} numéro de colonne → largeur en pixels */
   #largeurs = new Map();
+  /** Cellules fusionnées : plages (gelées) qui ne se chevauchent pas. Voir fusions.js. */
+  #fusions = [];
 
   constructor({ nom = 'Feuille1', lignes = LIGNES_PAR_DEFAUT, colonnes = COLONNES_PAR_DEFAUT } = {}) {
     /** Identifiant fixe pendant la session (le nom, lui, peut changer). */
@@ -181,6 +194,21 @@ export class Feuille {
   /** Adresses de toutes les cellules non vides (texte ou mise en forme). */
   adresses() {
     return [...this.#cellules.keys()];
+  }
+
+  /** Les cellules fusionnées (plages { debut, fin }, en lecture seule). */
+  get fusions() {
+    return this.#fusions;
+  }
+
+  /** La fusion qui contient la cellule, ou null. */
+  fusionEn(ligne, colonne) {
+    return fusionContenant(this.#fusions, ligne, colonne);
+  }
+
+  /** Remplace la liste des fusions. Usage interne : passer par le Classeur. */
+  poserFusions(fusions) {
+    this.#fusions = fusions.map((f) => Object.freeze({ debut: Object.freeze({ ...f.debut }), fin: Object.freeze({ ...f.fin }) }));
   }
 
   /**
@@ -244,6 +272,7 @@ export class Feuille {
     for (const [colonne, largeur] of this.#largeurs) largeurs[lettresColonne(colonne)] = largeur;
     const donnees = { nom: this.nom, lignes: this.lignes, colonnes: this.colonnes, largeurs, cellules };
     if (this.figee) donnees.figee = true;
+    if (this.#fusions.length) donnees.fusions = this.#fusions.map(textePlage);
     return donnees;
   }
 
@@ -268,6 +297,18 @@ export class Feuille {
       const colonne = numeroColonne(lettres);
       if (colonne >= 1 && colonne <= COLONNES_MAX && Number.isFinite(largeur)) this.poserLargeur(colonne, largeur);
     }
+    // Fusions (« A1:C1 ») : celles qui sont impossibles ou qui en chevauchent
+    // une autre sont ignorées.
+    const fusions = [];
+    for (const texte of Array.isArray(donnees.fusions) ? donnees.fusions : []) {
+      const plage = typeof texte === 'string' ? lirePlage(texte) : null;
+      if (!plage || nombreCellules(plage) < 2 || plage.fin.ligne > LIGNES_MAX || plage.fin.colonne > COLONNES_MAX) continue;
+      if (fusions.some((autre) => seChevauchent(autre, plage))) continue;
+      fusions.push(plage);
+      this.lignes = Math.max(this.lignes, plage.fin.ligne);
+      this.colonnes = Math.max(this.colonnes, plage.fin.colonne);
+    }
+    this.poserFusions(fusions);
   }
 
   static depuisJSON(donnees) {
@@ -412,10 +453,15 @@ export class Classeur {
       const avant = [];
       const apres = [];
       const dejaVues = new Set();
-      for (const modification of modifications) {
+      for (let modification of modifications) {
         if (dejaVues.has(modification.adresse)) continue;
         dejaVues.add(modification.adresse);
         const ancienne = feuille.cellule(modification.adresse);
+        // Une cellule couverte par une fusion (pas celle en haut à gauche)
+        // reste vide : un collage ou une recopie n'y met pas de texte caché.
+        if (feuille.fusions.length && modification.brut !== undefined && estCouverte(feuille, modification.adresse)) {
+          modification = { ...modification, brut: ancienne?.brut ?? '' };
+        }
         const nouvelle = nettoyerCellule(modification.remplacer ? modification : fusionner(ancienne, modification));
         if (memesCellules(ancienne, nouvelle)) continue;
         avant.push({ adresse: modification.adresse, cellule: ancienne });
@@ -580,6 +626,7 @@ export class Classeur {
         feuille.colonnes = Math.min(COLONNES_MAX, feuille.colonnes + nombre);
         feuille.deplacerLargeurs((colonne) => (decaler(colonne) <= COLONNES_MAX ? decaler(colonne) : null));
       }
+      feuille.poserFusions(ajusterFusions(feuille.fusions, { axe, type: 'insertion', position, nombre, maximum }));
       const changement = { feuille: feuille.nom, axe, type: 'insertion', position, nombre };
       this.#reecrireFormules((brut, f) => ajusterReferences(brut, f.nom, changement));
     });
@@ -603,6 +650,7 @@ export class Classeur {
         return lignes ? { ligne: valeur, colonne } : { ligne, colonne: valeur };
       });
       if (!lignes) feuille.deplacerLargeurs(nouvelle);
+      feuille.poserFusions(ajusterFusions(feuille.fusions, { axe, type: 'suppression', position, nombre }));
       const changement = { feuille: feuille.nom, axe, type: 'suppression', position, nombre };
       this.#reecrireFormules((brut, f) => ajusterReferences(brut, f.nom, changement));
     });
@@ -621,6 +669,11 @@ export class Classeur {
     const premiere = zone.debut.ligne;
     if (ordre.every((ancienne, i) => ancienne === premiere + i)) return false;
     const derniere = premiere + ordre.length - 1;
+    // Des cellules fusionnées dans les lignes à trier seraient coupées : refusé
+    // (l'affichage le dit avant, voir fusionsGenantes).
+    if (this.fusionsGenantes(feuille, { debut: { ligne: premiere, colonne: zone.debut.colonne }, fin: { ligne: derniere, colonne: zone.fin.colonne } }).length) {
+      return false;
+    }
     const destination = new Map(ordre.map((ancienne, i) => [ancienne, premiere + i]));
     const dansZone = (ligne, colonne) =>
       ligne >= premiere && ligne <= derniere && colonne >= zone.debut.colonne && colonne <= zone.fin.colonne;
@@ -638,6 +691,66 @@ export class Classeur {
         if (brut !== cellule.brut) feuille.poser(adresse, { ...cellule, brut });
       }
     });
+  }
+
+  // --- Cellules fusionnées (voir fusions.js) ------------------------------------
+
+  /** Une fusion qui commence en ligne 1 et descend plus bas (elle empêche de figer la ligne 1), ou null. */
+  fusionCoupeeParLigneFigee(feuille) {
+    return feuille.fusions.find((f) => f.debut.ligne === 1 && f.fin.ligne > 1) ?? null;
+  }
+
+  /** Fusions qui touchent une zone (par exemple les lignes à trier). */
+  fusionsGenantes(feuille, zone) {
+    return feuille.fusions.filter((f) => seChevauchent(f, zone));
+  }
+
+  /** Raison pour laquelle la plage ne peut pas être fusionnée (texte en français), ou null. */
+  pourquoiPasFusionner(feuille, plage) {
+    if (nombreCellules(plage) < 2) return 'Sélectionnez au moins deux cellules à fusionner.';
+    const coupee = feuille.fusions.find((f) => seChevauchent(f, plage) && !contient(plage, f));
+    if (coupee) return `La sélection coupe la cellule fusionnée ${textePlage(coupee)} : sélectionnez-la en entier.`;
+    if (feuille.figee && plage.debut.ligne === 1 && plage.fin.ligne > 1) {
+      return 'La ligne 1 est figée : une cellule fusionnée ne peut pas commencer en ligne 1 et descendre plus bas. Libérez d’abord la ligne 1 (onglet « Données »).';
+    }
+    return null;
+  }
+
+  /**
+   * Fusionne une plage (au moins deux cellules). Seule la cellule en haut à
+   * gauche garde son contenu ; les autres sont vidées (leur mise en forme
+   * reste). Les fusions entièrement dans la plage sont remplacées. Le texte
+   * est centré, sauf si la cellule avait déjà un alignement. Annulable.
+   * @returns {{ok: boolean, message?: string}}
+   */
+  fusionner(feuille, plage, selection = null) {
+    const refus = this.pourquoiPasFusionner(feuille, plage);
+    if (refus) return { ok: false, message: refus };
+    const coin = versAdresse(plage.debut.ligne, plage.debut.colonne);
+    this.#modifierStructure({ feuille, selection }, () => {
+      for (const adresse of feuille.adresses()) {
+        const { ligne, colonne } = lireAdresse(adresse);
+        const cellule = feuille.cellule(adresse);
+        if (adresse !== coin && dansPlage(plage, ligne, colonne) && cellule.brut !== '') feuille.poser(adresse, { ...cellule, brut: '' });
+      }
+      const haut = feuille.cellule(coin);
+      if (!haut?.alignement) feuille.poser(coin, { ...(haut ?? { brut: '' }), alignement: 'centre' });
+      feuille.poserFusions([...feuille.fusions.filter((f) => !seChevauchent(f, plage)), plage]);
+    });
+    return { ok: true };
+  }
+
+  /**
+   * Défusionne toutes les fusions qui touchent la plage. Le contenu reste
+   * dans la cellule en haut à gauche. Renvoie le nombre de fusions défaites.
+   */
+  defusionner(feuille, plage, selection = null) {
+    const touchees = feuille.fusions.filter((f) => seChevauchent(f, plage));
+    if (touchees.length === 0) return 0;
+    this.#modifierStructure({ feuille, selection }, () => {
+      feuille.poserFusions(feuille.fusions.filter((f) => !touchees.includes(f)));
+    });
+    return touchees.length;
   }
 
   /** Vide entièrement une feuille (texte, mise en forme, largeurs). Annulable. */
@@ -663,6 +776,8 @@ export class Classeur {
   /** Fige (ou libère) la première ligne d'une feuille. Annulable. */
   figerPremiereLigne(feuille, figee) {
     if (feuille.figee === figee) return false;
+    // Une cellule fusionnée sur les lignes 1 et 2 serait coupée en deux.
+    if (figee && this.fusionCoupeeParLigneFigee(feuille)) return false;
     return this.#modifierStructure({ feuille }, () => {
       feuille.figee = figee;
     });
@@ -821,6 +936,13 @@ export class Classeur {
     this.#annoncer({ type: 'active', feuille: this.#active });
     this.#annoncer({ type: 'historique' });
   }
+}
+
+/** Vrai si la cellule est couverte par une fusion (sans en être le coin en haut à gauche). */
+function estCouverte(feuille, adresse) {
+  const position = lireAdresse(adresse);
+  const fusion = position && feuille.fusionEn(position.ligne, position.colonne);
+  return Boolean(fusion) && (fusion.debut.ligne !== position.ligne || fusion.debut.colonne !== position.colonne);
 }
 
 /**

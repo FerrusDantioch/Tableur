@@ -109,6 +109,20 @@ barre (plus de place pour la grille sur téléphone). **Annuler**,
   ajuster au contenu, ou bouton « Largeur »).
 - Bordures : toutes, extérieure, haut, bas, gauche, droite, aucune ; trait
   fin ou épais ; couleur au choix. Elles sont aussi dans le PDF.
+- **Fusionner** des cellules (idéal pour un titre au-dessus d'un tableau) :
+  sélectionner la plage, puis « Fusionner ». Règles, comme dans Excel :
+  - seule la cellule en haut à gauche garde son contenu ; si d'autres cellules
+    sont remplies, une question est posée avant de les vider ;
+  - le texte est centré (sauf alignement déjà choisi) ;
+  - une cellule fusionnée se choisit d'un seul clic, les flèches sautent
+    par-dessus, et les formules l'utilisent par son adresse en haut à gauche ;
+  - sur une cellule fusionnée, le bouton devient « Défusionner » ; « Annuler »
+    marche aussi ;
+  - insérer ou supprimer des lignes ou colonnes agrandit, réduit ou déplace la
+    fusion ; on ne peut pas trier des lignes qui en contiennent (un titre
+    fusionné juste au-dessus du tableau est, lui, laissé à sa place) ;
+  - avec la ligne 1 figée, une fusion ne peut pas déborder de la ligne 1 ;
+  - les fusions sont dans le PDF et dans le fichier .json.
 
 **Données** (onglet « Données » et onglets des feuilles en bas)
 
@@ -265,6 +279,7 @@ js/donnees/              (a) LES DONNÉES — ce que tu as saisi
   classeur.js            le classeur : feuilles, cellules, mise en forme, annuler/rétablir,
                          insertion/suppression de lignes, feuilles, enregistrement
   formules.js            lit et réécrit les références des formules (A1, $A$1, Feuille2!A1…)
+  fusions.js             cellules fusionnées : sélection agrandie, insertion et suppression
   fichier-classeur.js    fichier de sauvegarde complète (.json) : création et vérification
   recopie.js             poignée de recopie : formules adaptées, suites 1, 2, 3…
   recherche.js           rechercher et remplacer (texte cherché, ordre de lecture, remplacements)
@@ -288,6 +303,7 @@ js/affichage/            (c) L'AFFICHAGE
   format.js              nombres à la française (3,5 ; 12,50 € ; 23/10/2026)
   barre-outils.js        onglets de la barre d'outils, panneaux
   commandes-edition.js   recopier, insérer, supprimer, effacer
+  commandes-fusion.js    bouton « Fusionner / Défusionner »
   mise-en-forme.js       gras, italique, couleurs, alignement, formats, largeurs
   outils-bordures.js     onglet « Bordures »
   commandes-donnees.js   trier, figer la 1re ligne, importer un CSV
@@ -394,8 +410,9 @@ tests/                   vérifications automatiques
 
 - Un seul classeur à la fois (avec autant de feuilles que l'on veut) ;
   1000 lignes × 52 colonnes au maximum par feuille.
-- Pas de cellules fusionnées, pas de retour à la ligne dans une cellule (un
-  texte trop long est coupé avec « … »), pas de tableaux de valeurs (formules matricielles).
+- Pas de retour à la ligne dans une cellule (un texte trop long est coupé
+  avec « … »), pas de tableaux de valeurs (formules matricielles).
+- Copier une cellule fusionnée colle son contenu, pas la fusion elle-même.
 - Le tri trie les lignes du tableau entier ; pour trier une partie précise,
   il faut d'abord la sélectionner (plusieurs lignes et colonnes).
 - Dates : jour/mois/année seulement (pas d'heures).

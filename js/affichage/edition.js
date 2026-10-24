@@ -71,7 +71,7 @@ export class Edition {
     if (!r) return;
     const champ = this.#champCellule;
     // La ligne figée a son propre conteneur (voir grille.js).
-    this.#grille.accueillir(champ, ligne);
+    this.#grille.accueillir(champ, ligne, colonne);
     champ.style.transform = `translate(${r.gauche}px, ${r.haut}px)`;
     champ.style.height = `${r.bas - r.haut}px`;
     champ.style.minWidth = `${r.droite - r.gauche}px`;

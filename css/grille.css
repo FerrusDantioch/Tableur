@@ -100,6 +100,49 @@
 [data-encre="violet"] { color: var(--encre-violet); }
 [data-encre="gris"] { color: var(--encre-gris); }
 
+/* --- Cellules fusionnées ---------------------------------------------------------
+   Un bloc posé sur les cellules couvertes (voir grille.js), qui ressemble à une
+   cellule ordinaire : même fond, même police, même quadrillage à droite et en bas.
+   Il passe sous les cadres de sélection (z-index 1) et sous la ligne figée. */
+.cellule-fusionnee {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding: 0 calc(8px * var(--zoom));
+  overflow: hidden;
+  background: var(--teinte, var(--cellule));
+  border-right: 1px solid var(--quadrillage);
+  border-bottom: 1px solid var(--quadrillage);
+  /* (Pas de « color » ici : la couleur du texte vient de data-encre ou de la page.) */
+  font-family: var(--police-cellules);
+  font-size: calc(0.95rem * var(--zoom));
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+  cursor: cell;
+}
+
+.cellule-fusionnee > span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.cellule-fusionnee.nombre { text-align: right; }
+.cellule-fusionnee.booleen,
+.cellule-fusionnee.erreur { text-align: center; }
+.cellule-fusionnee.erreur { color: var(--erreur); }
+.cellule-fusionnee.gras { font-weight: 700; }
+.cellule-fusionnee.italique { font-style: italic; }
+.cellule-fusionnee[data-align="gauche"] { text-align: left; }
+.cellule-fusionnee[data-align="centre"] { text-align: center; }
+.cellule-fusionnee[data-align="droite"] { text-align: right; }
+
 /* Lignes d'espacement de la grille virtuelle : elles remplacent les lignes
    qui ne sont pas dessinées (hors de l'écran). Des traits horizontaux
    imitent les lignes pendant un défilement très rapide. */
