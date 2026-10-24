@@ -62,6 +62,14 @@ barre (plus de place pour la grille sur téléphone). **Annuler**,
 - Insérer et supprimer des lignes ou des colonnes : les formules de tout le
   classeur suivent les cellules (`#REF!` si une cellule utilisée disparaît).
 - Effacer le contenu (comme **Suppr**), en gardant la mise en forme.
+- **Rechercher et remplacer** (bouton « Rechercher » ou **Ctrl + F**) : une
+  barre s'ouvre sous les outils, avec « Rechercher », « Remplacer par »,
+  **Suivant**, **Remplacer**, **Tout remplacer**, le nombre de résultats
+  (« 2 sur 5 ») et deux options : « Respecter la casse » et « Dans toutes les
+  feuilles ». « Tout remplacer » s'annule d'un seul « Annuler », même sur
+  plusieurs feuilles. La recherche porte sur ce qui a été tapé (pour une
+  formule, son texte). Sur téléphone, la barre d'outils se replie pendant la
+  recherche pour laisser de la place à la grille.
 
 **Formules**
 
@@ -259,6 +267,7 @@ js/donnees/              (a) LES DONNÉES — ce que tu as saisi
   formules.js            lit et réécrit les références des formules (A1, $A$1, Feuille2!A1…)
   fichier-classeur.js    fichier de sauvegarde complète (.json) : création et vérification
   recopie.js             poignée de recopie : formules adaptées, suites 1, 2, 3…
+  recherche.js           rechercher et remplacer (texte cherché, ordre de lecture, remplacements)
   bordures.js            pose des bordures (toutes, extérieure…) et traits à dessiner
   tri.js                 tri : tableau autour de la cellule, ligne de titres, ordre
 
@@ -284,6 +293,7 @@ js/affichage/            (c) L'AFFICHAGE
   commandes-donnees.js   trier, figer la 1re ligne, importer un CSV
   onglets-feuilles.js    onglets des feuilles (ajouter, renommer, supprimer)
   presse-papiers.js      copier, couper, coller
+  recherche.js           barre « Rechercher et remplacer »
   sauvegarde-fichier.js  boutons « Exporter / Importer un classeur (.json) »
   menu.js, fenetres.js   menu, « À propos » et fenêtres
 

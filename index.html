@@ -72,6 +72,7 @@
       <symbol id="i-importer" viewBox="0 0 24 24"><path d="M3 7.5a2 2 0 0 1 2-2h4.2l2 2.2H19a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /></symbol>
       <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2" /><path d="M12 11v5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" /><circle cx="12" cy="7.8" r="1.3" fill="currentColor" /></symbol>
       <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" /></symbol>
+      <symbol id="i-rechercher" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2.2" /><path d="m15 15 5 5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" /></symbol>
       <symbol id="i-moins" viewBox="0 0 24 24"><path d="M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" /></symbol>
       <symbol id="i-effacer" viewBox="0 0 24 24"><path d="M14.5 4.5 20 10l-8.5 8.5H7l-3-3a1.5 1.5 0 0 1 0-2.1z M9 10l5.5 5.5 M12 20.5h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
     </svg>
@@ -134,6 +135,10 @@
         </button>
         <button id="bouton-effacer" class="outil" type="button" title="Effacer le contenu des cellules sélectionnées (Suppr)">
           <svg aria-hidden="true"><use href="#i-effacer" /></svg><span class="libelle">Effacer</span>
+        </button>
+        <span class="separateur" aria-hidden="true"></span>
+        <button id="bouton-rechercher" class="outil" type="button" title="Rechercher et remplacer (Ctrl+F)" aria-pressed="false" aria-controls="barre-recherche">
+          <svg aria-hidden="true"><use href="#i-rechercher" /></svg><span class="libelle">Rechercher</span>
         </button>
       </div>
 
@@ -227,6 +232,34 @@
         <button id="bouton-exporter" class="outil" type="button" title="Exporter le classeur (.json), ou la feuille en CSV ou en PDF" popovertarget="panneau-exporter">
           <svg aria-hidden="true"><use href="#i-exporter" /></svg><span class="libelle">Exporter</span>
         </button>
+      </div>
+
+      <!-- Barre « Rechercher et remplacer » (bouton « Rechercher » ou Ctrl+F).
+           Elle pousse la grille vers le bas au lieu de la cacher. -->
+      <div id="barre-recherche" class="barre-recherche" role="search" aria-label="Rechercher et remplacer" hidden>
+        <div class="recherche-ligne">
+          <label class="recherche-champ">
+            <span class="recherche-etiquette">Rechercher</span>
+            <input id="recherche-texte" type="text" autocomplete="off" spellcheck="false" enterkeyhint="search" placeholder="Texte à chercher" />
+          </label>
+          <button id="recherche-suivant" class="outil" type="button" title="Aller à la cellule suivante qui contient ce texte (Entrée)">Suivant</button>
+          <button id="recherche-fermer" class="outil-rond" type="button" title="Fermer (Échap)" aria-label="Fermer la recherche">
+            <svg aria-hidden="true"><use href="#i-fermer" /></svg>
+          </button>
+        </div>
+        <div class="recherche-ligne">
+          <label class="recherche-champ">
+            <span class="recherche-etiquette">Remplacer par</span>
+            <input id="recherche-remplacement" type="text" autocomplete="off" spellcheck="false" enterkeyhint="done" placeholder="Nouveau texte" />
+          </label>
+          <button id="recherche-remplacer" class="outil" type="button" title="Remplacer dans la cellule sélectionnée, puis aller à la suivante">Remplacer</button>
+          <button id="recherche-tout-remplacer" class="outil" type="button" title="Remplacer partout, en une seule étape (un seul « Annuler »)">Tout remplacer</button>
+        </div>
+        <div class="recherche-options">
+          <output id="recherche-compte" class="recherche-compte" aria-live="polite"></output>
+          <label class="case"><input id="recherche-casse" type="checkbox" /> <span>Respecter la casse<span class="precision"> (majuscules et minuscules)</span></span></label>
+          <label class="case"><input id="recherche-toutes-feuilles" type="checkbox" /> Dans toutes les feuilles</label>
+        </div>
       </div>
     </div>
 
@@ -570,6 +603,7 @@
             <li>Au doigt (ou au clavier) : sélectionnez la cellule de départ et les cellules à remplir, puis <strong>Recopier en bas</strong> (<strong>Ctrl + D</strong>) ou <strong>Recopier à droite</strong> (<strong>Ctrl + R</strong>).</li>
             <li><strong>Insérer</strong> des lignes ou des colonnes, ou les <strong>Supprimer</strong> : autant qu'il y en a de sélectionnées. Les formules suivent les cellules ; si une cellule utilisée par une formule est supprimée, la formule affiche <code>#REF!</code>.</li>
             <li><strong>Effacer</strong> (ou la touche <strong>Suppr</strong>) vide les cellules sélectionnées, en gardant leur mise en forme.</li>
+            <li><strong>Rechercher</strong> (<strong>Ctrl + F</strong>) : tapez le texte, puis <strong>Suivant</strong> (ou Entrée) sélectionne chaque cellule qui le contient ; le nombre de résultats s'affiche. <strong>Remplacer</strong> change la cellule sélectionnée puis passe à la suivante ; <strong>Tout remplacer</strong> change tout d'un coup (un seul « Annuler » remet tout). Options : respecter les majuscules, chercher dans toutes les feuilles. La recherche porte sur ce qui a été tapé (pour une formule, son texte : <code>SOMME</code>…).</li>
           </ul>
         </section>
         <section>
@@ -645,7 +679,7 @@
           <h3>Raccourcis</h3>
           <ul>
             <li><strong>Ctrl + Z</strong> annuler, <strong>Ctrl + Y</strong> rétablir, <strong>Ctrl + B</strong> gras, <strong>Ctrl + I</strong> italique, <strong>Suppr</strong> vider les cellules, <strong>Ctrl + A</strong> tout sélectionner, <strong>Ctrl + P</strong> exporter en PDF.</li>
-            <li><strong>Ctrl + C</strong> copier, <strong>Ctrl + X</strong> couper, <strong>Ctrl + V</strong> coller, <strong>Ctrl + D</strong> recopier vers le bas, <strong>Ctrl + R</strong> recopier vers la droite.</li>
+            <li><strong>Ctrl + C</strong> copier, <strong>Ctrl + X</strong> couper, <strong>Ctrl + V</strong> coller, <strong>Ctrl + D</strong> recopier vers le bas, <strong>Ctrl + R</strong> recopier vers la droite, <strong>Ctrl + F</strong> rechercher, <strong>Ctrl + H</strong> remplacer, <strong>Ctrl + molette</strong> zoom.</li>
           </ul>
         </section>
       </div>

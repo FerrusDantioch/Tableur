@@ -611,6 +611,117 @@ svg {
   border-top-color: var(--accent);
 }
 
+/* --- Barre « Rechercher et remplacer » (sous la barre d'outils) ------------ */
+
+.barre-recherche {
+  display: grid;
+  gap: 6px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--trait);
+  background: var(--surface);
+}
+
+.barre-recherche[hidden] {
+  display: none;
+}
+
+.recherche-ligne {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.recherche-champ {
+  flex: 1 1 10em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.recherche-etiquette {
+  flex: none;
+  width: 7.5em;
+  color: var(--discret);
+  font-size: 0.92rem;
+}
+
+.recherche-champ input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 4px 10px;
+  border: 1px solid var(--trait);
+  border-radius: 10px;
+  background: var(--fond);
+  font-size: 1rem;
+}
+
+.recherche-champ input:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.recherche-compte {
+  min-width: 7.5em;
+  font-weight: 700;
+  color: var(--discret);
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.recherche-compte.aucun {
+  color: var(--erreur);
+}
+
+.recherche-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 18px;
+  font-size: 0.92rem;
+}
+
+.recherche-options .case {
+  min-height: 36px;
+}
+
+/* Téléphone : les étiquettes laissent la place aux champs (le texte gris
+   dans le champ dit à quoi il sert). */
+@media (max-width: 520px) {
+  .recherche-etiquette {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .recherche-compte {
+    min-width: 0;
+  }
+
+  .barre-recherche {
+    padding: 6px 8px;
+    gap: 4px;
+  }
+
+  .recherche-options {
+    gap: 0 12px;
+  }
+
+  .recherche-options .case {
+    min-height: 32px;
+    gap: 6px;
+  }
+
+  .recherche-options .precision {
+    display: none;
+  }
+}
+
 .panneau-texte {
   margin: 0 0 8px;
 }

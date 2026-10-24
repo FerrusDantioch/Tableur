@@ -396,24 +396,41 @@ export class Classeur {
    * @returns {boolean} vrai si quelque chose a changé
    */
   modifierCellules(feuille, modifications, selection = null) {
-    const avant = [];
-    const apres = [];
-    const dejaVues = new Set();
-    for (const modification of modifications) {
-      if (dejaVues.has(modification.adresse)) continue;
-      dejaVues.add(modification.adresse);
-      const ancienne = feuille.cellule(modification.adresse);
-      const nouvelle = nettoyerCellule(modification.remplacer ? modification : fusionner(ancienne, modification));
-      if (memesCellules(ancienne, nouvelle)) continue;
-      avant.push({ adresse: modification.adresse, cellule: ancienne });
-      apres.push({ adresse: modification.adresse, cellule: nouvelle });
+    return this.modifierFeuilles([{ feuille, modifications }], selection);
+  }
+
+  /**
+   * Comme modifierCellules, mais sur plusieurs feuilles à la fois, en UNE
+   * seule action (un seul « Annuler » : « Tout remplacer » dans toutes les feuilles).
+   * @param {Array<{feuille: Feuille, modifications: Array<object>}>} liste
+   * @param {object} [selection]  plage à resélectionner en cas d'annulation
+   * @returns {boolean} vrai si quelque chose a changé
+   */
+  modifierFeuilles(liste, selection = null) {
+    const changements = [];
+    for (const { feuille, modifications } of liste) {
+      const avant = [];
+      const apres = [];
+      const dejaVues = new Set();
+      for (const modification of modifications) {
+        if (dejaVues.has(modification.adresse)) continue;
+        dejaVues.add(modification.adresse);
+        const ancienne = feuille.cellule(modification.adresse);
+        const nouvelle = nettoyerCellule(modification.remplacer ? modification : fusionner(ancienne, modification));
+        if (memesCellules(ancienne, nouvelle)) continue;
+        avant.push({ adresse: modification.adresse, cellule: ancienne });
+        apres.push({ adresse: modification.adresse, cellule: nouvelle });
+      }
+      if (apres.length) changements.push({ feuille, avant, apres });
     }
-    if (apres.length === 0) return false;
+    if (changements.length === 0) return false;
+    // Feuille à montrer après une annulation : celle affichée si elle a changé.
+    const feuille = changements.some((c) => c.feuille === this.#active) ? this.#active : changements[0].feuille;
     this.#executer({
       feuille,
       selection,
-      faire: () => this.#poserCellules(feuille, apres),
-      defaire: () => this.#poserCellules(feuille, avant),
+      faire: () => changements.forEach((c) => this.#poserCellules(c.feuille, c.apres)),
+      defaire: () => changements.forEach((c) => this.#poserCellules(c.feuille, c.avant)),
     });
     return true;
   }

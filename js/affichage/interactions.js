@@ -302,6 +302,9 @@ export class Interactions {
       else if (lettre === 'd') action = () => this.commandes.recopier?.('bas');
       else if (lettre === 'r') action = () => this.commandes.recopier?.('droite');
       else if (lettre === 'p') action = this.commandes.exporterPdf;
+      // Ctrl+F : rechercher ; Ctrl+H : remplacer (au lieu de la recherche et de l'historique du navigateur).
+      else if (lettre === 'f') action = () => this.commandes.rechercher?.(false);
+      else if (lettre === 'h') action = () => this.commandes.rechercher?.(true);
       else if (lettre === 'a') action = () => selection.tout();
       else if (fleche) action = () => selection.allerAuBord(fleche[0], fleche[1], maj);
       else if (e.key === 'Home') action = () => selection.choisir(1, 1);

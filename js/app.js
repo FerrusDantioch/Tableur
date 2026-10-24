@@ -26,6 +26,7 @@ import { demander, ouvrirFenetre, preparerFenetres } from './affichage/fenetres.
 import { installerMenu } from './affichage/menu.js';
 import { PressePapiers } from './affichage/presse-papiers.js';
 import { SauvegardeFichier } from './affichage/sauvegarde-fichier.js';
+import { RechercheRemplacement } from './affichage/recherche.js';
 import { Zoom } from './affichage/zoom.js';
 import { demanderStockagePersistant, ecrireClasseur, lireClasseur, mettreDeCote, preferences } from './services/stockage.js';
 import { SauvegardeAuto } from './services/sauvegarde-auto.js';
@@ -209,6 +210,8 @@ commandesEdition = new CommandesEdition({ classeur, selection, avantAction, apre
 new OutilsBordures({ classeur, selection, preferences, avantAction, apresAction });
 new OngletsFeuilles({ classeur, avantAction, apresAction, demander, ouvrirFenetre, signaler });
 new CommandesDonnees({ classeur, selection, valeur: (feuille, adr) => moteur.valeur(feuille, adr), avantAction, apresAction, signaler });
+const recherche = new RechercheRemplacement({ classeur, selection, grille, avantAction, apresAction, signaler });
+commandes.rechercher = (remplacer) => recherche.ouvrir({ remplacer });
 
 installerBarreOutils({ preferences, avantAction, apresAction, surChangement: () => interactions.actualiser() });
 boutonAnnuler.addEventListener('click', () => commandes.annuler());
@@ -506,5 +509,6 @@ window.omniTableur = {
   pressePapiers,
   sauvegardeFichier,
   zoom,
+  recherche,
   adresse,
 };
