@@ -61,7 +61,7 @@ describe('Au clavier', () => {
     // La cellule active est visible (la grille a défilé).
     const visible = await page.evaluate(() => {
       const zone = document.getElementById('zone-grille').getBoundingClientRect();
-      const r = window.tableur.grille.td(100, 26).getBoundingClientRect();
+      const r = window.omniTableur.grille.td(100, 26).getBoundingClientRect();
       return r.bottom <= zone.bottom + 1 && r.right <= zone.right + 1;
     });
     assert.ok(visible, 'la cellule Z100 doit être visible');
@@ -186,7 +186,7 @@ describe('Grande feuille (grille virtuelle)', () => {
   test('seules les lignes visibles sont dessinées ; le défilement dessine la suite', async () => {
     const { contexte, page } = await ouvrirApplication(navigateur, serveur.url);
     const duree = await page.evaluate(() => {
-      const { classeur, feuille } = window.tableur;
+      const { classeur, feuille } = window.omniTableur;
       const debut = performance.now();
       classeur.agrandir(feuille, { lignes: 900, colonnes: 26 });
       document.body.offsetHeight; // force le dessin
@@ -198,7 +198,7 @@ describe('Grande feuille (grille virtuelle)', () => {
     // La barre de défilement correspond bien aux 1000 lignes.
     const hauteur = await page.evaluate(() => {
       const zone = document.getElementById('zone-grille');
-      return zone.scrollHeight / window.tableur.grille.hauteurLigne;
+      return zone.scrollHeight / window.omniTableur.grille.hauteurLigne;
     });
     assert.ok(Math.abs(hauteur - 1001) < 1, `hauteur de la grille : ${hauteur} lignes`);
 
@@ -210,7 +210,7 @@ describe('Grande feuille (grille virtuelle)', () => {
     assert.equal(await texteCellule(page, 'A1000'), 'tout en bas');
     const visible = await page.evaluate(() => {
       const zone = document.getElementById('zone-grille').getBoundingClientRect();
-      const r = window.tableur.grille.td(1000, 1).getBoundingClientRect();
+      const r = window.omniTableur.grille.td(1000, 1).getBoundingClientRect();
       return r.bottom <= zone.bottom + 1 && r.top >= zone.top;
     });
     assert.ok(visible, 'A1000 est visible');

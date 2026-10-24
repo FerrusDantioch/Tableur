@@ -13,8 +13,8 @@
 // (ajout ou remplacement de fonctions), sans modifier son fichier.
 //
 // Deux fonctions « internes » servent à la traduction des formules (voir
-// traduction.js) : TABLEUR.CONCAT remplace l'opérateur « & », et
-// TABLEUR.COMPARER remplace les comparaisons (=, <>, <, >, <=, >=).
+// traduction.js) : INTERNE.CONCAT remplace l'opérateur « & », et
+// INTERNE.COMPARER remplace les comparaisons (=, <>, <, >, <=, >=).
 
 import { serieAujourdhui } from '../donnees/saisie.js';
 import { comparer, creerCritere, ordre, texteDe, textesEgaux } from './comparaisons.js';
@@ -176,7 +176,7 @@ export function completerFonctions(parseur, FormulaParser) {
     return texte;
   };
   f.CONCATENATE = assembler;
-  f['TABLEUR.CONCAT'] = assembler;
+  f['INTERNE.CONCAT'] = assembler;
 
   /** MAJUSCULE et MINUSCULE (avec les accents : « é » → « É »). */
   const changerCasse = (majuscules) => (parametre) => {
@@ -191,8 +191,8 @@ export function completerFonctions(parseur, FormulaParser) {
 
   // --- Comparaisons ---------------------------------------------------------------------
 
-  /** TABLEUR.COMPARER(a ; "opérateur" ; b) : remplace =, <>, <, >, <=, >= dans les formules. */
-  f['TABLEUR.COMPARER'] = (a, operateur, b) => {
+  /** INTERNE.COMPARER(a ; "opérateur" ; b) : remplace =, <>, <, >, <=, >= dans les formules. */
+  f['INTERNE.COMPARER'] = (a, operateur, b) => {
     const gauche = valeurSimple(a);
     const droite = valeurSimple(b);
     if (estErreur(gauche)) return gauche;

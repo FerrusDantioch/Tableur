@@ -16,7 +16,7 @@
 //
 // Avec les boutons, le navigateur peut demander l'autorisation de lire le
 // presse-papiers (pour coller un texte venu d'une autre application). Sans
-// cette autorisation, « Coller » colle ce qui a été copié dans Tableur.
+// cette autorisation, « Coller » colle ce qui a été copié dans Omni-Tableur.
 
 import { adresse, plage as creerPlage, taillePlage } from '../donnees/adresses.js';
 import { COLONNES_MAX, LIGNES_MAX } from '../donnees/classeur.js';
@@ -103,7 +103,7 @@ export class PressePapiers {
     return this.classeur.feuilleActive;
   }
 
-  /** Vrai si quelque chose a été copié dans Tableur. */
+  /** Vrai si quelque chose a été copié dans Omni-Tableur. */
   get contientQuelqueChose() {
     return this.#interne !== null;
   }
@@ -130,7 +130,7 @@ export class PressePapiers {
     try {
       await navigator.clipboard.writeText(texte);
     } catch {
-      // Le navigateur refuse : la copie reste utilisable dans Tableur.
+      // Le navigateur refuse : la copie reste utilisable dans Omni-Tableur.
     }
     const { lignes, colonnes } = taillePlage(this.selection.plage);
     const nombre = lignes * colonnes;

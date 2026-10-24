@@ -1,7 +1,8 @@
 // Commandes de l'onglet « Données » : trier, figer la première ligne,
-// importer un fichier CSV.
+// importer un fichier CSV. (Import et export du classeur en .json :
+// voir sauvegarde-fichier.js.)
 
-import { adresse, lettresColonne, plage as creerPlage } from '../donnees/adresses.js';
+import { adresse, lettresColonne, plage as creerPlage, textePlage } from '../donnees/adresses.js';
 import { ordreDeTri, sembleTitres, zoneAutour } from '../donnees/tri.js';
 import { decoderFichier, feuilleDepuisCSV, nomDepuisFichier } from '../services/import-csv.js';
 
@@ -39,7 +40,8 @@ export class CommandesDonnees {
     element('trier-decroissant').addEventListener('click', () => this.trier(false));
 
     this.boutonFiger.addEventListener('click', () => this.figer());
-    element('bouton-importer').addEventListener('click', () => {
+    element('importer-csv').addEventListener('click', () => {
+      element('panneau-importer').hidePopover();
       this.avantAction();
       this.champFichier.value = '';
       this.champFichier.click();
@@ -72,7 +74,14 @@ export class CommandesDonnees {
     const plage = this.selection.plage;
     const { ligne, colonne } = this.selection.active;
     const bloc = plage.fin.ligne > plage.debut.ligne && plage.fin.colonne > plage.debut.colonne;
-    const zone = bloc ? plage : zoneAutour((a) => feuille.brut(a), feuille, ligne, colonne);
+    let zone = bloc ? plage : zoneAutour((a) => feuille.brut(a), feuille, ligne, colonne);
+    // Un titre fusionné juste au-dessus du tableau (ex. A1:D1) ne fait pas
+    // partie des lignes à trier : le tableau commence sous lui.
+    if (zone && !bloc) {
+      for (let f = this.#fusionEnHaut(zone); f && f.fin.ligne < zone.fin.ligne && f.fin.ligne < ligne; f = this.#fusionEnHaut(zone)) {
+        zone = creerPlage({ ligne: f.fin.ligne + 1, colonne: zone.debut.colonne }, zone.fin);
+      }
+    }
     if (!zone || zone.fin.ligne === zone.debut.ligne) {
       this.tri = null;
       this.description.textContent = 'Rien à trier ici : placez-vous dans un tableau d’au moins deux lignes.';
@@ -87,6 +96,12 @@ export class CommandesDonnees {
     this.caseTitres.checked = titres;
     this.#activerBoutons(true);
     this.#decrireTri();
+  }
+
+  /** Une cellule fusionnée sur la première ligne de la zone, ou null. */
+  #fusionEnHaut(zone) {
+    const premiereLigne = creerPlage({ ligne: zone.debut.ligne, colonne: zone.debut.colonne }, { ligne: zone.debut.ligne, colonne: zone.fin.colonne });
+    return this.classeur.fusionsGenantes(this.feuille, premiereLigne)[0] ?? null;
   }
 
   #activerBoutons(oui) {
@@ -106,11 +121,16 @@ export class CommandesDonnees {
     const { zone, colonneCle } = this.tri;
     const { premiere, derniere } = this.#lignesTriees();
     const colonnes = `colonnes ${lettresColonne(zone.debut.colonne)} à ${lettresColonne(zone.fin.colonne)}`;
-    this.description.textContent =
-      premiere >= derniere
-        ? 'Il faut au moins deux lignes à trier.'
-        : `Trier les lignes ${premiere} à ${derniere} (${colonnes}) selon la colonne ${lettresColonne(colonneCle)}.`;
-    for (const id of ['trier-croissant', 'trier-decroissant']) document.getElementById(id).disabled = premiere >= derniere;
+    // Des cellules fusionnées dans les lignes à trier seraient coupées en morceaux.
+    const triees = creerPlage({ ligne: premiere, colonne: zone.debut.colonne }, { ligne: derniere, colonne: zone.fin.colonne });
+    const genantes = premiere < derniere ? this.classeur.fusionsGenantes(this.feuille, triees) : [];
+    let texte = `Trier les lignes ${premiere} à ${derniere} (${colonnes}) selon la colonne ${lettresColonne(colonneCle)}.`;
+    if (premiere >= derniere) texte = 'Il faut au moins deux lignes à trier.';
+    else if (genantes.length) {
+      texte = `Impossible de trier : les lignes ${premiere} à ${derniere} contiennent des cellules fusionnées (${genantes.map(textePlage).join(', ')}). Défusionnez-les d’abord (onglet « Mise en forme »).`;
+    }
+    this.description.textContent = texte;
+    for (const id of ['trier-croissant', 'trier-decroissant']) document.getElementById(id).disabled = premiere >= derniere || genantes.length > 0;
   }
 
   /** Trie dans l'ordre croissant (ou décroissant). */
@@ -141,6 +161,15 @@ export class CommandesDonnees {
   figer() {
     this.avantAction();
     const figee = !this.feuille.figee;
+    const coupee = figee ? this.classeur.fusionCoupeeParLigneFigee(this.feuille) : null;
+    if (coupee) {
+      this.signaler(
+        `Impossible de figer la ligne 1 : la cellule fusionnée ${textePlage(coupee)} serait coupée en deux. Défusionnez-la d’abord (onglet « Mise en forme »).`,
+        true,
+      );
+      this.apresAction();
+      return;
+    }
     this.classeur.figerPremiereLigne(this.feuille, figee);
     this.actualiser();
     this.signaler(figee ? 'La ligne 1 reste visible quand on fait défiler.' : 'La ligne 1 défile de nouveau avec le reste.');

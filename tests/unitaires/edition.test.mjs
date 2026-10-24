@@ -3,7 +3,7 @@
 
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { creerTableur } from './outils.mjs';
+import { creerClasseurDeTest } from './outils.mjs';
 import { calculerRecopie } from '../../js/donnees/recopie.js';
 import { lirePlage } from '../../js/donnees/adresses.js';
 
@@ -16,7 +16,7 @@ function recopier(t, source, direction, nombre, adresses) {
 
 describe('Recopie (poignée de recopie)', () => {
   test('une formule recopiée adapte ses références', () => {
-    const t = creerTableur({ A1: '1', A2: '2', A3: '3', B1: '=A1*10' });
+    const t = creerClasseurDeTest({ A1: '1', A2: '2', A3: '3', B1: '=A1*10' });
     assert.deepEqual(recopier(t, 'B1', 'bas', 2, ['B2', 'B3']), ['=A2*10', '=A3*10']);
     assert.deepEqual([t.affiche('B2'), t.affiche('B3')], ['20', '30']);
     // Références absolues : elles ne bougent pas.
@@ -28,7 +28,7 @@ describe('Recopie (poignée de recopie)', () => {
   });
 
   test('suites de nombres, de dates, de jours et de textes numérotés', () => {
-    const t = creerTableur({ A1: '1', A2: '2', B1: '10', B2: '20', C1: '5' });
+    const t = creerClasseurDeTest({ A1: '1', A2: '2', B1: '10', B2: '20', C1: '5' });
     assert.deepEqual(recopier(t, 'A1:C2', 'bas', 3, ['A3', 'A4', 'A5', 'B3', 'B5', 'C3', 'C4']), ['3', '4', '5', '30', '50', '5', '']);
     // C1:C2 : un seul nombre (C1) puis une cellule vide → simple répétition.
     t.remplir({ D1: '0,5', D2: '1' });
@@ -45,7 +45,7 @@ describe('Recopie (poignée de recopie)', () => {
   });
 
   test('la mise en forme est recopiée, et tout s’annule d’un coup', () => {
-    const t = creerTableur();
+    const t = creerClasseurDeTest();
     t.classeur.modifierCellules(t.feuille, [{ adresse: 'A1', brut: 'x', gras: true, fond: 'vert' }]);
     recopier(t, 'A1', 'bas', 3, []);
     assert.equal(t.feuille.cellule('A4').gras, true);
@@ -55,7 +55,7 @@ describe('Recopie (poignée de recopie)', () => {
   });
 
   test('sans suite (Ctrl+D) : simple copie', () => {
-    const t = creerTableur({ A1: '1', A2: '2' });
+    const t = creerClasseurDeTest({ A1: '1', A2: '2' });
     const modifications = calculerRecopie(t.feuille, lirePlage('A1:A2'), 'bas', 2, { suites: false });
     assert.deepEqual(
       modifications.map((m) => m.brut),
@@ -66,7 +66,7 @@ describe('Recopie (poignée de recopie)', () => {
 
 describe('Insérer et supprimer des lignes et des colonnes', () => {
   test('insérer des lignes : les cellules descendent, les formules suivent', () => {
-    const t = creerTableur({ A1: '1', A2: '2', A3: '3', B1: '=SOMME(A1:A3)', B5: '=A3*2' });
+    const t = creerClasseurDeTest({ A1: '1', A2: '2', A3: '3', B1: '=SOMME(A1:A3)', B5: '=A3*2' });
     assert.equal(t.affiche('B1'), '6');
     const resultat = t.classeur.inserer(t.feuille, 'lignes', 2, 2);
     assert.deepEqual(resultat, { ok: true });
@@ -90,7 +90,7 @@ describe('Insérer et supprimer des lignes et des colonnes', () => {
   });
 
   test('supprimer des lignes : #REF! si la cellule utilisée disparaît', () => {
-    const t = creerTableur({ A1: '1', A2: '2', A3: '3', A4: '4', B1: '=SOMME(A1:A4)', C1: '=A2', C2: '=A4' });
+    const t = creerClasseurDeTest({ A1: '1', A2: '2', A3: '3', A4: '4', B1: '=SOMME(A1:A4)', C1: '=A2', C2: '=A4' });
     t.classeur.supprimer(t.feuille, 'lignes', 2, 1);
     assert.equal(t.feuille.brut('A2'), '3');
     assert.equal(t.feuille.brut('B1'), '=SOMME(A1:A3)');
@@ -106,7 +106,7 @@ describe('Insérer et supprimer des lignes et des colonnes', () => {
   });
 
   test('insérer et supprimer des colonnes (avec les largeurs)', () => {
-    const t = creerTableur({ A1: '5', B1: '7', C1: '=A1+B1' });
+    const t = creerClasseurDeTest({ A1: '5', B1: '7', C1: '=A1+B1' });
     t.classeur.modifierLargeurs(t.feuille, [2], 160);
     t.classeur.inserer(t.feuille, 'colonnes', 2, 1);
     assert.equal(t.feuille.brut('C1'), '7');
@@ -120,7 +120,7 @@ describe('Insérer et supprimer des lignes et des colonnes', () => {
   });
 
   test('insertion refusée si des cellules sortiraient de la feuille', () => {
-    const t = creerTableur({ A1000: 'fin' });
+    const t = creerClasseurDeTest({ A1000: 'fin' });
     const resultat = t.classeur.inserer(t.feuille, 'lignes', 5, 1);
     assert.equal(resultat.ok, false);
     assert.match(resultat.message, /ligne 1000/);
@@ -128,7 +128,7 @@ describe('Insérer et supprimer des lignes et des colonnes', () => {
   });
 
   test('les formules des autres feuilles suivent aussi', () => {
-    const t = creerTableur({ A1: '1', A2: '2' });
+    const t = creerClasseurDeTest({ A1: '1', A2: '2' });
     const bilan = t.classeur.ajouterFeuille({ nom: 'Bilan' });
     t.classeur.modifierCellules(bilan, [{ adresse: 'A1', brut: '=Feuille1!A2*100' }]);
     assert.equal(t.moteur.valeur(bilan, 'A1'), 200);

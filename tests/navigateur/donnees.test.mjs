@@ -8,7 +8,7 @@ import { celluleActive, cliquerOutil, demarrerServeur, lancerNavigateur, ouvrirA
 const td = (ligne, colonne) => `td[data-ligne="${ligne}"][data-colonne="${colonne}"]`;
 const onglet = (nom) => `.onglet-feuille:text-is("${nom}")`;
 const nomsOnglets = (page) => page.$$eval('.onglet-feuille', (onglets) => onglets.map((o) => o.textContent));
-const brut = (page, adr) => page.evaluate((a) => window.tableur.feuille.brut(a), adr);
+const brut = (page, adr) => page.evaluate((a) => window.omniTableur.feuille.brut(a), adr);
 
 let serveur;
 let navigateur;
@@ -68,7 +68,7 @@ test('onglets : ajouter, changer, renommer, supprimer ; formules entre feuilles'
   await page.click(onglet('Mes ventes'));
   await page.click('#feuille-supprimer');
   await page.click('#fenetre-supprimer-feuille [data-fermer="supprimer"]');
-  await page.waitForFunction(() => window.tableur.classeur.feuilles.length === 1);
+  await page.waitForFunction(() => window.omniTableur.classeur.feuilles.length === 1);
   assert.deepEqual(await nomsOnglets(page), ['Feuille1']);
   assert.equal(await texteCellule(page, 'A2'), '#REF!');
   await page.click('#bouton-annuler');
@@ -111,7 +111,7 @@ test('trier une colonne (croissant, décroissant), avec la ligne de titres', asy
 test('figer la première ligne : elle reste visible et utilisable en défilant', async () => {
   const { contexte, page } = await ouvrirApplication(navigateur, serveur.url);
   await taperColonne(page, ['Titre']);
-  await page.evaluate(() => window.tableur.classeur.agrandir(window.tableur.feuille, { lignes: 200 }));
+  await page.evaluate(() => window.omniTableur.classeur.agrandir(window.omniTableur.feuille, { lignes: 200 }));
   await cliquerOutil(page, '#bouton-figer');
   assert.equal(await page.getAttribute('#bouton-figer', 'aria-pressed'), 'true');
   // Défiler loin : la ligne 1 reste juste sous les en-têtes A, B, C…
@@ -121,8 +121,8 @@ test('figer la première ligne : elle reste visible et utilisable en défilant',
   await page.waitForTimeout(100);
   const position = await page.evaluate(() => {
     const entete = document.querySelector('th.coin').getBoundingClientRect();
-    const titre = window.tableur.grille.td(1, 1).getBoundingClientRect();
-    return { ecart: Math.round(titre.top - entete.bottom), texte: window.tableur.grille.td(1, 1).textContent };
+    const titre = window.omniTableur.grille.td(1, 1).getBoundingClientRect();
+    return { ecart: Math.round(titre.top - entete.bottom), texte: window.omniTableur.grille.td(1, 1).textContent };
   });
   assert.ok(Math.abs(position.ecart) <= 1, `la ligne 1 est collée sous les en-têtes (écart ${position.ecart})`);
   assert.equal(position.texte, 'Titre');
@@ -143,11 +143,12 @@ test('importer un fichier CSV dans une nouvelle feuille', async () => {
   const contenu = '\uFEFFDate;Libellé;Montant\r\n02/03/2026;Boulangerie;-4,20\r\n05/03/2026;"Salaire; mars";1850\r\n';
   const { contexte, page } = await ouvrirApplication(navigateur, serveur.url);
   await taperColonne(page, ['ne bouge pas']);
-  // Le bouton « Importer CSV » ouvre le choix de fichier du système ; le test donne le fichier directement.
-  const choix = page.waitForEvent('filechooser');
+  // « Importer » → « Importer un CSV » ouvre le choix de fichier du système ; le test donne le fichier directement.
   await cliquerOutil(page, '#bouton-importer');
+  const choix = page.waitForEvent('filechooser');
+  await page.click('#importer-csv');
   await (await choix).setFiles({ name: 'Relevé mars.csv', mimeType: 'text/csv', buffer: Buffer.from(contenu, 'utf8') });
-  await page.waitForFunction(() => window.tableur.classeur.feuilles.length === 2);
+  await page.waitForFunction(() => window.omniTableur.classeur.feuilles.length === 2);
   assert.deepEqual(await nomsOnglets(page), ['Feuille1', 'Relevé mars']);
   assert.equal(await texteCellule(page, 'B3'), 'Salaire; mars');
   assert.equal(await texteCellule(page, 'C2'), '-4,2');

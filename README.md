@@ -1,6 +1,6 @@
-# Tableur — tableur hors ligne
+# Omni-Tableur — tableur hors ligne
 
-Tableur est un tableur simple (comme Excel ou Google Sheets, pour les
+Omni-Tableur est un tableur simple (comme Excel ou Google Sheets, pour les
 analyses courantes) qui s'installe sur un ordinateur ou un téléphone Android,
 comme une application classique.
 
@@ -13,6 +13,10 @@ comme une application classique.
 
 Adresse une fois publiée : `https://ferrusdantioch.github.io/Tableur/`
 (dépôt GitHub `FerrusDantioch/Tableur`).
+
+L'application s'appelait « Tableur » jusqu'à la version 2.0.0. L'adresse et le
+nom du dépôt sont gardés tels quels : les changer casserait les favoris et
+l'application déjà installée sur les appareils (voir partie 6).
 
 ---
 
@@ -35,8 +39,17 @@ barre (plus de place pour la grille sur téléphone). **Annuler**,
   **Suppr** pour vider ; **Ctrl + flèche** pour aller au bord.
 - Au doigt : un appui sélectionne, un second appui ouvre le clavier ; la
   poignée ronde étend la sélection ; la barre « fx » permet aussi d'écrire.
-- Sélection de plages (Maj + flèches, glisser, clic sur un en-tête A/B/C ou 1/2/3).
+- Sélection de plages (Maj + flèches, glisser). Toucher ou cliquer un en-tête
+  (A, B, C… ou 1, 2, 3…) sélectionne toute la colonne ou toute la ligne : la
+  mise en forme, Copier/Coller, Insérer et Supprimer s'appliquent alors à
+  elle (les panneaux « Insérer » et « Supprimer » ne proposent plus que des
+  colonnes, ou que des lignes).
 - Annuler / Rétablir (boutons, **Ctrl + Z**, **Ctrl + Y**), pour toutes les actions.
+- **Zoom** de 50 % à 200 % (par pas de 10 %) : boutons **−** et **+** en bas
+  à droite (un appui sur le pourcentage revient à 100 %), pincement à deux
+  doigts sur la grille, ou **Ctrl + molette**. Il est mémorisé sur l'appareil
+  et ne change que l'affichage (ni le classeur, ni les largeurs enregistrées,
+  ni le PDF).
 
 **Édition** (onglet « Édition »)
 
@@ -49,6 +62,14 @@ barre (plus de place pour la grille sur téléphone). **Annuler**,
 - Insérer et supprimer des lignes ou des colonnes : les formules de tout le
   classeur suivent les cellules (`#REF!` si une cellule utilisée disparaît).
 - Effacer le contenu (comme **Suppr**), en gardant la mise en forme.
+- **Rechercher et remplacer** (bouton « Rechercher » ou **Ctrl + F**) : une
+  barre s'ouvre sous les outils, avec « Rechercher », « Remplacer par »,
+  **Suivant**, **Remplacer**, **Tout remplacer**, le nombre de résultats
+  (« 2 sur 5 ») et deux options : « Respecter la casse » et « Dans toutes les
+  feuilles ». « Tout remplacer » s'annule d'un seul « Annuler », même sur
+  plusieurs feuilles. La recherche porte sur ce qui a été tapé (pour une
+  formule, son texte). Sur téléphone, la barre d'outils se replie pendant la
+  recherche pour laisser de la place à la grille.
 
 **Formules**
 
@@ -88,6 +109,25 @@ barre (plus de place pour la grille sur téléphone). **Annuler**,
   ajuster au contenu, ou bouton « Largeur »).
 - Bordures : toutes, extérieure, haut, bas, gauche, droite, aucune ; trait
   fin ou épais ; couleur au choix. Elles sont aussi dans le PDF.
+- **Fusionner** des cellules (idéal pour un titre au-dessus d'un tableau) :
+  sélectionner la plage, puis « Fusionner ». Règles, comme dans Excel :
+  - seule la cellule en haut à gauche garde son contenu ; si d'autres cellules
+    sont remplies, une question est posée avant de les vider ;
+  - le texte est centré (sauf alignement déjà choisi) ; les couleurs et les
+    bordures s'appliquent à toute la zone fusionnée (au moment de la fusion,
+    toute la zone prend la mise en forme de la cellule en haut à gauche) ;
+  - une formule qui vise une case de la zone (`=B1` quand A1:C1 est
+    fusionnée) utilise la cellule en haut à gauche ; une plage
+    (`=SOMME(A1:C1)`) compte chaque case une seule fois, comme dans Excel ;
+  - une cellule fusionnée se choisit d'un seul clic, les flèches sautent
+    par-dessus, et les formules l'utilisent par son adresse en haut à gauche ;
+  - sur une cellule fusionnée, le bouton devient « Défusionner » ; « Annuler »
+    marche aussi ;
+  - insérer ou supprimer des lignes ou colonnes agrandit, réduit ou déplace la
+    fusion ; on ne peut pas trier des lignes qui en contiennent (un titre
+    fusionné juste au-dessus du tableau est, lui, laissé à sa place) ;
+  - avec la ligne 1 figée, une fusion ne peut pas déborder de la ligne 1 ;
+  - les fusions sont dans le PDF et dans le fichier .json.
 
 **Données** (onglet « Données » et onglets des feuilles en bas)
 
@@ -97,8 +137,10 @@ barre (plus de place pour la grille sur téléphone). **Annuler**,
   cellule active est trié, la ligne de titres est reconnue, les lignes
   restent entières.
 - Figer la première ligne (elle reste visible quand on fait défiler).
-- Importer un fichier CSV dans une nouvelle feuille ; exporter la feuille
-  affichée en **PDF** (avec la mise en forme et les bordures) ou en **CSV**.
+- **Importer** : « Importer un classeur (.json) » (une sauvegarde complète,
+  voir plus bas) ou « Importer un CSV » (dans une nouvelle feuille).
+- **Exporter** : « Exporter le classeur (.json) », « Exporter la feuille
+  (.csv) » ou « Exporter la feuille (.pdf) » (avec la mise en forme et les bordures).
 
 **Le reste** : sauvegarde automatique (toutes les feuilles, toute la mise en
 forme), trois thèmes (Omni-système, Sombre classique, Clair), aide intégrée
@@ -175,7 +217,7 @@ Sans changement de version, les utilisateurs gardent l'ancienne version
 
 ## 4. Installer l'application sur un appareil
 
-- **Ordinateur (Chrome, Edge)** : Menu de Tableur → « Installer l'application
+- **Ordinateur (Chrome, Edge)** : Menu d'Omni-Tableur → « Installer l'application
   sur cet appareil » (ou l'icône d'installation dans la barre d'adresse).
 - **Android (Chrome, Brave)** : menu du navigateur (⋮) → « Installer
   l'application » ou « Ajouter à l'écran d'accueil ».
@@ -196,11 +238,23 @@ Sans changement de version, les utilisateurs gardent l'ancienne version
 - Les classeurs créés avec l'ancienne version (1.x) s'ouvrent normalement
   avec la nouvelle : rien n'est perdu.
 - Rien ne quitte l'appareil. Si tu effaces les données du site dans le
-  navigateur, le classeur disparaît : pour garder une copie, exporte-le en CSV
-  ou en PDF.
+  navigateur, ou si tu changes d'appareil, le classeur enregistré
+  automatiquement disparaît. **Pour garder une copie complète** : onglet
+  « Données » → **Exporter** → **Exporter le classeur (.json)**. Le fichier
+  `omni-tableur-AAAA-MM-JJ.json` arrive dans les téléchargements ; range-le où
+  tu veux (clé USB, cloud, e-mail…).
+- Pour le rouvrir (sur le même appareil ou un autre) : **Importer** →
+  **Importer un classeur (.json)**. Une confirmation est demandée (« Cela
+  remplacera votre classeur actuel. Continuer ? ») ; « Annuler » permet ensuite
+  de revenir au classeur d'avant. Un fichier abîmé ou venant d'une autre
+  application est refusé avec un message, sans rien modifier.
+- Le fichier contient tout : feuilles (noms et ordre), textes et formules,
+  mise en forme, bordures, largeurs, ligne figée, feuille affichée, thème et
+  zoom. Il porte un numéro de version de format (`"version": 1`) : les
+  versions futures sauront relire les anciens fichiers.
 - Le classeur d'un téléphone et celui d'un ordinateur sont indépendants
-  (pas de synchronisation pour l'instant).
-- Ouvre Tableur dans **un seul onglet à la fois** : un bandeau prévient si ce
+  (pas de synchronisation) : le fichier .json sert à passer de l'un à l'autre.
+- Ouvre Omni-Tableur dans **un seul onglet à la fois** : un bandeau prévient si ce
   n'est pas le cas (sinon un onglet pourrait écraser les modifications de l'autre).
 - Sur Firefox, une question peut apparaître (« stocker des données de façon
   persistante ») : réponds « Autoriser ».
@@ -230,14 +284,17 @@ js/donnees/              (a) LES DONNÉES — ce que tu as saisi
   classeur.js            le classeur : feuilles, cellules, mise en forme, annuler/rétablir,
                          insertion/suppression de lignes, feuilles, enregistrement
   formules.js            lit et réécrit les références des formules (A1, $A$1, Feuille2!A1…)
+  fusions.js             cellules fusionnées : sélection agrandie, insertion et suppression
+  fichier-classeur.js    fichier de sauvegarde complète (.json) : création et vérification
   recopie.js             poignée de recopie : formules adaptées, suites 1, 2, 3…
+  recherche.js           rechercher et remplacer (texte cherché, ordre de lecture, remplacements)
   bordures.js            pose des bordures (toutes, extérieure…) et traits à dessiner
   tri.js                 tri : tableau autour de la cellule, ligne de titres, ordre
 
 js/calcul/               (b) LE CALCUL DES FORMULES
   traduction.js          formules françaises → bibliothèque (SOMME → SUM, « ; » → « , »)
   moteur.js              calcule, suit les dépendances (entre feuilles aussi), recalcule
-  fonctions.js           fonctions écrites pour Tableur (NB.SI, RECHERCHEV, MAJUSCULE…)
+  fonctions.js           fonctions écrites pour Omni-Tableur (NB.SI, RECHERCHEV, MAJUSCULE…)
   comparaisons.js        comparaisons et critères à la française
   erreurs.js             #DIV/0!, #REF!… et leurs explications
   bibliotheque.js        accès à la bibliothèque fast-formula-parser
@@ -247,14 +304,18 @@ js/affichage/            (c) L'AFFICHAGE
   interactions.js        clavier, souris, doigt, poignée de recopie
   edition.js             saisie dans la cellule et dans la barre « fx »
   selection.js           cellule active et plage sélectionnée
+  zoom.js                zoom de la grille (boutons, deux doigts, Ctrl + molette)
   format.js              nombres à la française (3,5 ; 12,50 € ; 23/10/2026)
   barre-outils.js        onglets de la barre d'outils, panneaux
   commandes-edition.js   recopier, insérer, supprimer, effacer
+  commandes-fusion.js    bouton « Fusionner / Défusionner »
   mise-en-forme.js       gras, italique, couleurs, alignement, formats, largeurs
   outils-bordures.js     onglet « Bordures »
   commandes-donnees.js   trier, figer la 1re ligne, importer un CSV
   onglets-feuilles.js    onglets des feuilles (ajouter, renommer, supprimer)
   presse-papiers.js      copier, couper, coller
+  recherche.js           barre « Rechercher et remplacer »
+  sauvegarde-fichier.js  boutons « Exporter / Importer un classeur (.json) »
   menu.js, fenetres.js   menu, « À propos » et fenêtres
 
 js/services/             sauvegarde, thèmes, exports PDF et CSV, import CSV, application installable
@@ -270,8 +331,13 @@ tests/                   vérifications automatiques
 
 - **Nom ou version** : `js/config.js`. Si tu changes le nom, change-le aussi
   dans `manifest.webmanifest` (un test vérifie que les deux correspondent).
-- **Ne change jamais** `idStockage: 'tableur'` dans `js/config.js` : les
-  classeurs déjà enregistrés deviendraient invisibles.
+- **Ne change jamais** `idStockage: 'omni-tableur'` dans `js/config.js` : les
+  classeurs déjà enregistrés deviendraient invisibles. (Il valait `'tableur'`
+  avant le renommage : `js/services/stockage.js` déplace une seule fois les
+  données de l'ancien nom vers le nouveau — copie, vérification, puis
+  effacement de l'ancien exemplaire.)
+- **Ne renomme pas** le dépôt GitHub ni le dossier `Tableur` : l'adresse de
+  l'application (`…github.io/Tableur/`) changerait.
 - **Ne change jamais** `"id": "/Tableur/"` dans `manifest.webmanifest`. Chrome
   le lit à partir de la racine du site (`https://ferrusdantioch.github.io/`) :
   `"./"` aurait donné à l'application l'identité de la racine, la même que
@@ -324,7 +390,9 @@ tests/                   vérifications automatiques
   dates jj/mm/aaaa, UTF-8 avec BOM.
 - **Sécurité** : la page ne charge que ses propres fichiers (règle CSP dans
   `index.html`), le contenu des cellules est toujours affiché comme du texte,
-  un fichier CSV importé ne peut pas lancer de formule.
+  un fichier CSV importé ne peut pas lancer de formule, et un fichier .json
+  importé est lu comme de simples données (`JSON.parse`), vérifié en entier
+  avant de remplacer quoi que ce soit.
 
 ---
 
@@ -347,8 +415,9 @@ tests/                   vérifications automatiques
 
 - Un seul classeur à la fois (avec autant de feuilles que l'on veut) ;
   1000 lignes × 52 colonnes au maximum par feuille.
-- Pas de cellules fusionnées, pas de retour à la ligne dans une cellule (un
-  texte trop long est coupé avec « … »), pas de tableaux de valeurs (formules matricielles).
+- Pas de retour à la ligne dans une cellule (un texte trop long est coupé
+  avec « … »), pas de tableaux de valeurs (formules matricielles).
+- Copier une cellule fusionnée colle son contenu, pas la fusion elle-même.
 - Le tri trie les lignes du tableau entier ; pour trier une partie précise,
   il faut d'abord la sélectionner (plusieurs lignes et colonnes).
 - Dates : jour/mois/année seulement (pas d'heures).

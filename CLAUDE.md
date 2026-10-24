@@ -1,7 +1,8 @@
-# Tableur — notes pour Claude
+# Omni-Tableur — notes pour Claude
 
-PWA de tableur (suite bureautique de l'Omni-système) en **HTML/CSS/JS pur,
-modules ES, sans framework ni compilation**. Code, commentaires et messages de
+PWA de tableur « Omni-Tableur » (appelée « Tableur » jusqu'à la 2.0.0 ; suite
+bureautique de l'Omni-système) en **HTML/CSS/JS pur, modules ES, sans
+framework ni compilation**. Code, commentaires et messages de
 commit en français, rédigés pour un débutant : garder ce niveau d'explication.
 L'utilisateur est novice : toujours lui parler en français, simplement.
 
@@ -12,7 +13,10 @@ nomme son cache avec ce numéro : sans changement, les appareils gardent
 l'ancienne version. Tout nouveau fichier de l'application doit aussi aller
 dans la liste `FICHIERS` de `sw.js` (le test `tests/unitaires/hors-ligne.test.mjs`
 le vérifie). Ne jamais changer `idStockage` (`config.js`) ni `"id": "/Tableur/"`
-(`manifest.webmanifest`).
+(`manifest.webmanifest`). Le dépôt et le dossier restent `Tableur` (adresse
+GitHub Pages `…/Tableur/`). `ancienIdStockage: 'tableur'` sert à la migration
+des données d'avant le renommage (`stockage.js`, `theme-initial.js`,
+`onglets.js`, `sw.js`) : ne pas le retirer.
 
 ## Architecture (trois couches)
 
@@ -23,10 +27,21 @@ le vérifie). Ne jamais changer `idStockage` (`config.js`) ni `"id": "/Tableur/"
   `structure`, `onglets`, `active`…).
 - `js/calcul/` : moteur multi-feuilles (clé de cellule = `idFeuille:adresse`),
   traduction FR → fast-formula-parser. `&` et les comparaisons sont réécrits en
-  `TABLEUR.CONCAT` / `TABLEUR.COMPARER` (voir `fonctions.js`).
+  `INTERNE.CONCAT` / `INTERNE.COMPARER` (voir `fonctions.js`).
 - `js/affichage/` : grille **virtuelle** (seules les lignes visibles existent :
   `grille.td(l, c)` peut renvoyer `undefined`), barre d'outils en onglets.
-- `js/app.js` relie tout ; `window.tableur` sert aux tests.
+- `js/app.js` relie tout ; `window.omniTableur` sert aux tests.
+- Fichier de sauvegarde `.json` : `donnees/fichier-classeur.js` (format
+  `omni-tableur/classeur`, `version: 1` ; vérification complète avant import).
+  `Classeur.remplacer` (import, annulable) ; `Classeur.modifierFeuilles`
+  (plusieurs feuilles en une seule annulation, « Tout remplacer »).
+- Zoom : `affichage/zoom.js` + `Grille.changerZoom` ; les largeurs enregistrées
+  restent à 100 % (`#largeurEcran` multiplie à l'affichage).
+- Cellules fusionnées : `Feuille.fusions` (plages, enregistrées `"fusions":
+  ["A1:D1"]`), `donnees/fusions.js`, `Classeur.fusionner/defusionner`. À
+  l'écran, un bloc `.cellule-fusionnee` est posé sur les cases couvertes
+  (`Grille.#dessinerFusions`) ; la `Selection` agrandit les plages aux fusions.
+  Les cases couvertes restent vides (`modifierFeuilles` ignore leur texte).
 
 ## Tests
 
@@ -50,6 +65,13 @@ Ne pas annoncer un travail terminé avant que les deux passent.
   de classe sans `[hidden]` correspondant (`.barre-outils[hidden]`…).
 - Playwright : `setInputFiles` avec un chemin contenant des accents échoue en
   silence ; donner le fichier sous forme `{ name, mimeType, buffer }`.
+- `.outil { display: inline-flex }` l'emporterait sur `hidden` : la règle
+  `.outil[hidden]` existe pour ça (même piège pour tout nouveau composant).
+- Pincement : redessiner la grille retire de la page la case touchée, et le
+  navigateur continue d'envoyer les événements tactiles à cette case retirée
+  (ils ne remontent plus) : `zoom.js` écoute donc les cases touchées.
+- Tests navigateur : le serveur démarre avec `PORT=0` (port libre choisi par
+  le système) ; un port tiré au hasard entrait parfois en conflit.
 
 ## Licence
 
@@ -63,4 +85,4 @@ dans `LICENCES.md` et dans « À propos ». Aucun CDN, aucun appel réseau (CSP
 Chrome Android n'installe qu'une seule application par origine : les autres
 affichent « Cette appli est déjà installée ». Brave installe tout ; sinon
 « Créer un raccourci ». Une même origine partage aussi le stockage : tous les
-noms de stockage commencent par `tableur`.
+noms de stockage commencent par `omni-tableur`.

@@ -195,7 +195,34 @@ export class CommandesEdition {
     return nombre > 1 ? `${nombre} ${nom}s ${participe}s.` : `${nom[0].toUpperCase()}${nom.slice(1)} ${participe}.`;
   }
 
+  /**
+   * Ce que couvre la sélection : 'colonnes' si des colonnes entières sont
+   * sélectionnées (clic sur A, B…), 'lignes' pour des lignes entières (clic
+   * sur 1, 2…), 'tout' pour toute la feuille, sinon null.
+   */
+  #entieres() {
+    const { debut, fin } = this.selection.plage;
+    const colonnesEntieres = debut.ligne === 1 && fin.ligne === this.feuille.lignes;
+    const lignesEntieres = debut.colonne === 1 && fin.colonne === this.feuille.colonnes;
+    if (colonnesEntieres && lignesEntieres) return 'tout';
+    if (colonnesEntieres) return 'colonnes';
+    if (lignesEntieres) return 'lignes';
+    return null;
+  }
+
+  /**
+   * Colonnes entières sélectionnées : seuls les choix « colonnes » sont
+   * proposés (et inversement pour des lignes entières). On évite ainsi
+   * d'insérer 100 lignes, ou de supprimer toutes les lignes, par erreur.
+   */
+  #montrerChoix(idsLignes, idsColonnes) {
+    const entieres = this.#entieres();
+    for (const id of idsLignes) document.getElementById(id).hidden = entieres === 'colonnes';
+    for (const id of idsColonnes) document.getElementById(id).hidden = entieres === 'lignes';
+  }
+
   #libellerInsertion() {
+    this.#montrerChoix(['inserer-lignes-dessus', 'inserer-lignes-dessous'], ['inserer-colonnes-gauche', 'inserer-colonnes-droite']);
     const { lignes, colonnes } = taillePlage(this.selection.plage);
     const texte = (id, nombre, singulier, pluriel, ou) => {
       document.getElementById(id).textContent = nombre > 1 ? `${nombre} ${pluriel} ${ou}` : `${singulier} ${ou}`;
@@ -207,6 +234,7 @@ export class CommandesEdition {
   }
 
   #libellerSuppression() {
+    this.#montrerChoix(['supprimer-lignes'], ['supprimer-colonnes']);
     const { debut, fin } = this.selection.plage;
     document.getElementById('supprimer-lignes').textContent =
       debut.ligne === fin.ligne ? `Supprimer la ligne ${debut.ligne}` : `Supprimer les lignes ${debut.ligne} à ${fin.ligne}`;

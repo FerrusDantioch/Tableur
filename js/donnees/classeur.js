@@ -13,8 +13,19 @@
 // Plus tard, les graphiques ou l'import Excel s'appuieront sur ces mêmes
 // fonctions : ils n'auront pas besoin de toucher à l'affichage.
 
-import { COLONNES_MAX, LIGNES_MAX, adresse as versAdresse, lireAdresse, lettresColonne, numeroColonne } from './adresses.js';
+import {
+  COLONNES_MAX,
+  LIGNES_MAX,
+  adresse as versAdresse,
+  dansPlage,
+  lireAdresse,
+  lirePlage,
+  lettresColonne,
+  numeroColonne,
+  textePlage,
+} from './adresses.js';
 import { ajusterReferences, decalerReferences, oublierFeuilleDansFormule, renommerFeuilleDansFormule } from './formules.js';
+import { ajusterFusions, contient, fusionContenant, nombreCellules, seChevauchent } from './fusions.js';
 
 export { COLONNES_MAX, LIGNES_MAX };
 export const LIGNES_PAR_DEFAUT = 100;
@@ -46,6 +57,13 @@ const TAILLE_HISTORIQUE = 200;
 
 /** Longueur maximale d'un nom de feuille (comme dans Excel). */
 export const NOM_FEUILLE_MAX = 31;
+
+/**
+ * Marque écrite dans chaque classeur enregistré. Les classeurs enregistrés
+ * avant le renommage en « Omni-Tableur » portent l'ancienne marque, « tableur ».
+ */
+export const FORMAT_CLASSEUR = 'omni-tableur';
+const FORMATS_ACCEPTES = [FORMAT_CLASSEUR, 'tableur'];
 
 const bornes = (valeur, min, max) => Math.min(max, Math.max(min, Math.round(valeur)));
 
@@ -140,6 +158,8 @@ export class Feuille {
   #cellules = new Map();
   /** @type {Map<number, number>} numéro de colonne → largeur en pixels */
   #largeurs = new Map();
+  /** Cellules fusionnées : plages (gelées) qui ne se chevauchent pas. Voir fusions.js. */
+  #fusions = [];
 
   constructor({ nom = 'Feuille1', lignes = LIGNES_PAR_DEFAUT, colonnes = COLONNES_PAR_DEFAUT } = {}) {
     /** Identifiant fixe pendant la session (le nom, lui, peut changer). */
@@ -174,6 +194,21 @@ export class Feuille {
   /** Adresses de toutes les cellules non vides (texte ou mise en forme). */
   adresses() {
     return [...this.#cellules.keys()];
+  }
+
+  /** Les cellules fusionnées (plages { debut, fin }, en lecture seule). */
+  get fusions() {
+    return this.#fusions;
+  }
+
+  /** La fusion qui contient la cellule, ou null. */
+  fusionEn(ligne, colonne) {
+    return fusionContenant(this.#fusions, ligne, colonne);
+  }
+
+  /** Remplace la liste des fusions. Usage interne : passer par le Classeur. */
+  poserFusions(fusions) {
+    this.#fusions = fusions.map((f) => Object.freeze({ debut: Object.freeze({ ...f.debut }), fin: Object.freeze({ ...f.fin }) }));
   }
 
   /**
@@ -237,6 +272,7 @@ export class Feuille {
     for (const [colonne, largeur] of this.#largeurs) largeurs[lettresColonne(colonne)] = largeur;
     const donnees = { nom: this.nom, lignes: this.lignes, colonnes: this.colonnes, largeurs, cellules };
     if (this.figee) donnees.figee = true;
+    if (this.#fusions.length) donnees.fusions = this.#fusions.map(textePlage);
     return donnees;
   }
 
@@ -261,6 +297,18 @@ export class Feuille {
       const colonne = numeroColonne(lettres);
       if (colonne >= 1 && colonne <= COLONNES_MAX && Number.isFinite(largeur)) this.poserLargeur(colonne, largeur);
     }
+    // Fusions (« A1:C1 ») : celles qui sont impossibles ou qui en chevauchent
+    // une autre sont ignorées.
+    const fusions = [];
+    for (const texte of Array.isArray(donnees.fusions) ? donnees.fusions : []) {
+      const plage = typeof texte === 'string' ? lirePlage(texte) : null;
+      if (!plage || nombreCellules(plage) < 2 || plage.fin.ligne > LIGNES_MAX || plage.fin.colonne > COLONNES_MAX) continue;
+      if (fusions.some((autre) => seChevauchent(autre, plage))) continue;
+      fusions.push(plage);
+      this.lignes = Math.max(this.lignes, plage.fin.ligne);
+      this.colonnes = Math.max(this.colonnes, plage.fin.colonne);
+    }
+    this.poserFusions(fusions);
   }
 
   static depuisJSON(donnees) {
@@ -389,24 +437,46 @@ export class Classeur {
    * @returns {boolean} vrai si quelque chose a changé
    */
   modifierCellules(feuille, modifications, selection = null) {
-    const avant = [];
-    const apres = [];
-    const dejaVues = new Set();
-    for (const modification of modifications) {
-      if (dejaVues.has(modification.adresse)) continue;
-      dejaVues.add(modification.adresse);
-      const ancienne = feuille.cellule(modification.adresse);
-      const nouvelle = nettoyerCellule(modification.remplacer ? modification : fusionner(ancienne, modification));
-      if (memesCellules(ancienne, nouvelle)) continue;
-      avant.push({ adresse: modification.adresse, cellule: ancienne });
-      apres.push({ adresse: modification.adresse, cellule: nouvelle });
+    return this.modifierFeuilles([{ feuille, modifications }], selection);
+  }
+
+  /**
+   * Comme modifierCellules, mais sur plusieurs feuilles à la fois, en UNE
+   * seule action (un seul « Annuler » : « Tout remplacer » dans toutes les feuilles).
+   * @param {Array<{feuille: Feuille, modifications: Array<object>}>} liste
+   * @param {object} [selection]  plage à resélectionner en cas d'annulation
+   * @returns {boolean} vrai si quelque chose a changé
+   */
+  modifierFeuilles(liste, selection = null) {
+    const changements = [];
+    for (const { feuille, modifications } of liste) {
+      const avant = [];
+      const apres = [];
+      const dejaVues = new Set();
+      for (let modification of modifications) {
+        if (dejaVues.has(modification.adresse)) continue;
+        dejaVues.add(modification.adresse);
+        const ancienne = feuille.cellule(modification.adresse);
+        // Une cellule couverte par une fusion (pas celle en haut à gauche)
+        // reste vide : un collage ou une recopie n'y met pas de texte caché.
+        if (feuille.fusions.length && modification.brut !== undefined && estCouverte(feuille, modification.adresse)) {
+          modification = { ...modification, brut: ancienne?.brut ?? '' };
+        }
+        const nouvelle = nettoyerCellule(modification.remplacer ? modification : fusionner(ancienne, modification));
+        if (memesCellules(ancienne, nouvelle)) continue;
+        avant.push({ adresse: modification.adresse, cellule: ancienne });
+        apres.push({ adresse: modification.adresse, cellule: nouvelle });
+      }
+      if (apres.length) changements.push({ feuille, avant, apres });
     }
-    if (apres.length === 0) return false;
+    if (changements.length === 0) return false;
+    // Feuille à montrer après une annulation : celle affichée si elle a changé.
+    const feuille = changements.some((c) => c.feuille === this.#active) ? this.#active : changements[0].feuille;
     this.#executer({
       feuille,
       selection,
-      faire: () => this.#poserCellules(feuille, apres),
-      defaire: () => this.#poserCellules(feuille, avant),
+      faire: () => changements.forEach((c) => this.#poserCellules(c.feuille, c.apres)),
+      defaire: () => changements.forEach((c) => this.#poserCellules(c.feuille, c.avant)),
     });
     return true;
   }
@@ -461,9 +531,10 @@ export class Classeur {
 
   // --- Modifications de structure (annulables) ------------------------------------
 
-  /** Photographie du classeur : ordre des feuilles, feuille active, contenu de chaque feuille. */
+  /** Photographie du classeur : titre, ordre des feuilles, feuille active, contenu de chaque feuille. */
   #photographier() {
     return {
+      titre: this.titre,
       ordre: [...this.feuilles],
       active: this.#active,
       donnees: new Map(this.feuilles.map((feuille) => [feuille, feuille.versJSON()])),
@@ -475,6 +546,10 @@ export class Classeur {
     for (const [feuille, donnees] of photo.donnees) feuille.restaurer(donnees);
     const ancienne = this.#active;
     this.#active = this.feuilles.includes(photo.active) ? photo.active : this.feuilles[0];
+    if ('titre' in photo && photo.titre !== this.titre) {
+      this.titre = photo.titre;
+      this.#annoncer({ type: 'titre' });
+    }
     this.#annoncer({ type: 'onglets' });
     this.#annoncer({ type: 'structure', feuilles: [...photo.donnees.keys()].filter((f) => this.feuilles.includes(f)) });
     if (this.#active !== ancienne) this.#annoncer({ type: 'active', feuille: this.#active });
@@ -490,6 +565,12 @@ export class Classeur {
     const avant = this.#photographier();
     if (travail() === false) return false;
     const apres = this.#photographier();
+    // Titre inchangé : on ne le garde pas (Annuler ne doit pas défaire un
+    // changement de titre fait plus tard, en dehors de cette action).
+    if (avant.titre === apres.titre) {
+      delete avant.titre;
+      delete apres.titre;
+    }
     for (const f of [...avant.donnees.keys()]) {
       if (apres.donnees.has(f) && JSON.stringify(avant.donnees.get(f)) === JSON.stringify(apres.donnees.get(f))) {
         avant.donnees.delete(f);
@@ -498,8 +579,9 @@ export class Classeur {
     }
     const action = { feuille, selection, faire: () => this.#restaurer(apres), defaire: () => this.#restaurer(avant) };
     // Les abonnés sont prévenus comme pour un « Rétablir » (la feuille active
-    // d'avant est remise un instant, pour que son changement soit annoncé).
+    // et le titre d'avant sont remis un instant, pour que leur changement soit annoncé).
     this.#active = avant.active;
+    if ('titre' in avant) this.titre = avant.titre;
     action.faire();
     this.#executer(action, { dejaFaite: true });
     return true;
@@ -544,6 +626,7 @@ export class Classeur {
         feuille.colonnes = Math.min(COLONNES_MAX, feuille.colonnes + nombre);
         feuille.deplacerLargeurs((colonne) => (decaler(colonne) <= COLONNES_MAX ? decaler(colonne) : null));
       }
+      feuille.poserFusions(ajusterFusions(feuille.fusions, { axe, type: 'insertion', position, nombre, maximum }));
       const changement = { feuille: feuille.nom, axe, type: 'insertion', position, nombre };
       this.#reecrireFormules((brut, f) => ajusterReferences(brut, f.nom, changement));
     });
@@ -567,6 +650,7 @@ export class Classeur {
         return lignes ? { ligne: valeur, colonne } : { ligne, colonne: valeur };
       });
       if (!lignes) feuille.deplacerLargeurs(nouvelle);
+      feuille.poserFusions(ajusterFusions(feuille.fusions, { axe, type: 'suppression', position, nombre }));
       const changement = { feuille: feuille.nom, axe, type: 'suppression', position, nombre };
       this.#reecrireFormules((brut, f) => ajusterReferences(brut, f.nom, changement));
     });
@@ -585,6 +669,11 @@ export class Classeur {
     const premiere = zone.debut.ligne;
     if (ordre.every((ancienne, i) => ancienne === premiere + i)) return false;
     const derniere = premiere + ordre.length - 1;
+    // Des cellules fusionnées dans les lignes à trier seraient coupées : refusé
+    // (l'affichage le dit avant, voir fusionsGenantes).
+    if (this.fusionsGenantes(feuille, { debut: { ligne: premiere, colonne: zone.debut.colonne }, fin: { ligne: derniere, colonne: zone.fin.colonne } }).length) {
+      return false;
+    }
     const destination = new Map(ordre.map((ancienne, i) => [ancienne, premiere + i]));
     const dansZone = (ligne, colonne) =>
       ligne >= premiere && ligne <= derniere && colonne >= zone.debut.colonne && colonne <= zone.fin.colonne;
@@ -604,6 +693,87 @@ export class Classeur {
     });
   }
 
+  // --- Cellules fusionnées (voir fusions.js) ------------------------------------
+
+  /** Une fusion qui commence en ligne 1 et descend plus bas (elle empêche de figer la ligne 1), ou null. */
+  fusionCoupeeParLigneFigee(feuille) {
+    return feuille.fusions.find((f) => f.debut.ligne === 1 && f.fin.ligne > 1) ?? null;
+  }
+
+  /** Fusions qui touchent une zone (par exemple les lignes à trier). */
+  fusionsGenantes(feuille, zone) {
+    return feuille.fusions.filter((f) => seChevauchent(f, zone));
+  }
+
+  /** Raison pour laquelle la plage ne peut pas être fusionnée (texte en français), ou null. */
+  pourquoiPasFusionner(feuille, plage) {
+    if (nombreCellules(plage) < 2) return 'Sélectionnez au moins deux cellules à fusionner.';
+    const coupee = feuille.fusions.find((f) => seChevauchent(f, plage) && !contient(plage, f));
+    if (coupee) return `La sélection coupe la cellule fusionnée ${textePlage(coupee)} : sélectionnez-la en entier.`;
+    if (feuille.figee && plage.debut.ligne === 1 && plage.fin.ligne > 1) {
+      return 'La ligne 1 est figée : une cellule fusionnée ne peut pas commencer en ligne 1 et descendre plus bas. Libérez d’abord la ligne 1 (onglet « Données »).';
+    }
+    return null;
+  }
+
+  /**
+   * Fusionne une plage (au moins deux cellules). Annulable.
+   *   - Seule la cellule en haut à gauche garde son contenu ; les autres sont vidées.
+   *   - Toute la zone prend la mise en forme de la cellule en haut à gauche
+   *     (couleurs, gras, format…), et ses bordures font le tour de la zone
+   *     entière : haut et gauche de la cellule en haut à gauche, bas de celle
+   *     en bas à gauche, droite de celle en haut à droite. Ainsi, après
+   *     « Défusionner », les cellules gardent l'aspect de la zone fusionnée.
+   *   - Le texte est centré, sauf si la cellule avait déjà un alignement.
+   *   - Les fusions entièrement dans la plage sont remplacées.
+   * @returns {{ok: boolean, message?: string}}
+   */
+  fusionner(feuille, plage, selection = null) {
+    const refus = this.pourquoiPasFusionner(feuille, plage);
+    if (refus) return { ok: false, message: refus };
+    const { debut, fin } = plage;
+    const coin = versAdresse(debut.ligne, debut.colonne);
+    this.#modifierStructure({ feuille, selection }, () => {
+      const hautGauche = feuille.cellule(coin) ?? { brut: '' };
+      const style = {};
+      for (const nom of PROPRIETES_STYLE) if (nom !== 'bordures') style[nom] = hautGauche[nom] ?? null;
+      if (!style.alignement) style.alignement = 'centre';
+      const tour = {
+        haut: hautGauche.bordures?.haut,
+        gauche: hautGauche.bordures?.gauche,
+        bas: feuille.cellule(versAdresse(fin.ligne, debut.colonne))?.bordures?.bas,
+        droite: feuille.cellule(versAdresse(debut.ligne, fin.colonne))?.bordures?.droite,
+      };
+      for (let l = debut.ligne; l <= fin.ligne; l++) {
+        for (let c = debut.colonne; c <= fin.colonne; c++) {
+          const adresse = versAdresse(l, c);
+          const bordures = {};
+          if (l === debut.ligne && tour.haut) bordures.haut = tour.haut;
+          if (l === fin.ligne && tour.bas) bordures.bas = tour.bas;
+          if (c === debut.colonne && tour.gauche) bordures.gauche = tour.gauche;
+          if (c === fin.colonne && tour.droite) bordures.droite = tour.droite;
+          const brut = adresse === coin ? hautGauche.brut : '';
+          feuille.poser(adresse, { brut, ...style, bordures });
+        }
+      }
+      feuille.poserFusions([...feuille.fusions.filter((f) => !seChevauchent(f, plage)), plage]);
+    });
+    return { ok: true };
+  }
+
+  /**
+   * Défusionne toutes les fusions qui touchent la plage. Le contenu reste
+   * dans la cellule en haut à gauche. Renvoie le nombre de fusions défaites.
+   */
+  defusionner(feuille, plage, selection = null) {
+    const touchees = feuille.fusions.filter((f) => seChevauchent(f, plage));
+    if (touchees.length === 0) return 0;
+    this.#modifierStructure({ feuille, selection }, () => {
+      feuille.poserFusions(feuille.fusions.filter((f) => !touchees.includes(f)));
+    });
+    return touchees.length;
+  }
+
   /** Vide entièrement une feuille (texte, mise en forme, largeurs). Annulable. */
   viderFeuille(feuille) {
     this.#modifierStructure({ feuille }, () => {
@@ -611,7 +781,7 @@ export class Classeur {
     });
   }
 
-  /** Remet le classeur à zéro : une seule feuille vide, sans titre. Annulable. */
+  /** Remet le classeur à zéro : une seule feuille vide, sans titre. Annulable (titre compris). */
   reinitialiser() {
     const titreAvant = this.titre;
     const premiere = this.feuilles[0];
@@ -619,14 +789,16 @@ export class Classeur {
       this.feuilles = [premiere];
       premiere.restaurer({ nom: 'Feuille1' });
       this.#active = premiere;
+      this.titre = 'Sans titre';
     });
-    this.renommer('Sans titre');
     return titreAvant;
   }
 
   /** Fige (ou libère) la première ligne d'une feuille. Annulable. */
   figerPremiereLigne(feuille, figee) {
     if (feuille.figee === figee) return false;
+    // Une cellule fusionnée sur les lignes 1 et 2 serait coupée en deux.
+    if (figee && this.fusionCoupeeParLigneFigee(feuille)) return false;
     return this.#modifierStructure({ feuille }, () => {
       feuille.figee = figee;
     });
@@ -718,7 +890,7 @@ export class Classeur {
   /** Le classeur entier sous forme d'objet simple, prêt à être enregistré. */
   versJSON() {
     return {
-      format: 'tableur',
+      format: FORMAT_CLASSEUR,
       version: 2,
       titre: this.titre,
       active: Math.max(0, this.feuilles.indexOf(this.#active)),
@@ -727,16 +899,16 @@ export class Classeur {
   }
 
   /**
-   * Remplace tout le contenu par un classeur enregistré (version 1 ou 2).
-   * Les objets Feuille existants sont réutilisés quand c'est possible, et
-   * l'historique d'annulation est vidé.
+   * Lit un classeur enregistré (version 1 ou 2) : titre, feuilles et feuille
+   * active. `reutiliser` donne des objets Feuille à reprendre (dans l'ordre),
+   * les autres feuilles sont neuves.
    */
-  charger(donnees) {
-    if (!donnees || donnees.format !== 'tableur') throw new Error('Ce fichier n’est pas un classeur Tableur.');
-    this.titre = typeof donnees.titre === 'string' && donnees.titre.trim() ? donnees.titre : 'Sans titre';
+  static #lire(donnees, reutiliser = []) {
+    if (!donnees || !FORMATS_ACCEPTES.includes(donnees.format)) throw new Error('Ce fichier n’est pas un classeur Omni-Tableur.');
+    const titre = typeof donnees.titre === 'string' && donnees.titre.trim() ? donnees.titre : 'Sans titre';
     const liste = Array.isArray(donnees.feuilles) && donnees.feuilles.length ? donnees.feuilles : [{}];
     const feuilles = liste.map((donneesFeuille, index) => {
-      const feuille = this.feuilles[index] ?? new Feuille();
+      const feuille = reutiliser[index] ?? new Feuille();
       feuille.restaurer(donneesFeuille);
       return feuille;
     });
@@ -748,8 +920,35 @@ export class Classeur {
       const doublon = feuilles.slice(0, index).some((autre) => autre.nom.toLocaleLowerCase('fr') === feuille.nom.toLocaleLowerCase('fr'));
       if (doublon) feuille.nom = `${feuille.nom.slice(0, NOM_FEUILLE_MAX - 4)} (${index + 1})`;
     }
+    const active = feuilles[Math.min(feuilles.length - 1, Math.max(0, Number(donnees.active) || 0))];
+    return { titre, feuilles, active };
+  }
+
+  /**
+   * Remplace tout le classeur par un autre (fichier importé). Contrairement à
+   * `charger`, c'est une modification ANNULABLE : « Annuler » rend le
+   * classeur d'avant. Lance une erreur (et ne change rien) si les données ne
+   * sont pas un classeur.
+   */
+  remplacer(donnees) {
+    const { titre, feuilles, active } = Classeur.#lire(donnees);
+    this.#modifierStructure({ feuille: active }, () => {
+      this.feuilles = feuilles;
+      this.#active = active;
+      this.titre = titre;
+    });
+  }
+
+  /**
+   * Remplace tout le contenu par un classeur enregistré (au démarrage).
+   * Les objets Feuille existants sont réutilisés quand c'est possible, et
+   * l'historique d'annulation est vidé.
+   */
+  charger(donnees) {
+    const { titre, feuilles, active } = Classeur.#lire(donnees, this.feuilles);
+    this.titre = titre;
     this.feuilles = feuilles;
-    this.#active = feuilles[Math.min(feuilles.length - 1, Math.max(0, Number(donnees.active) || 0))];
+    this.#active = active;
     this.#passe = [];
     this.#futur = [];
     this.#annoncer({ type: 'titre' });
@@ -758,6 +957,13 @@ export class Classeur {
     this.#annoncer({ type: 'active', feuille: this.#active });
     this.#annoncer({ type: 'historique' });
   }
+}
+
+/** Vrai si la cellule est couverte par une fusion (sans en être le coin en haut à gauche). */
+function estCouverte(feuille, adresse) {
+  const position = lireAdresse(adresse);
+  const fusion = position && feuille.fusionEn(position.ligne, position.colonne);
+  return Boolean(fusion) && (fusion.debut.ligne !== position.ligne || fusion.debut.colonne !== position.colonne);
 }
 
 /**

@@ -22,6 +22,17 @@ export function appliquerTheme(id) {
 }
 
 /**
+ * Change de thème depuis le code (classeur importé, par exemple) : applique,
+ * mémorise et coche le bon choix dans le menu. Un thème inconnu est ignoré.
+ */
+export function choisirTheme(id, preferences) {
+  if (!THEMES.some((t) => t.id === id)) return;
+  appliquerTheme(id);
+  preferences.ecrire('theme', id);
+  for (const radio of document.querySelectorAll('input[name="theme"]')) radio.checked = radio.value === id;
+}
+
+/**
  * Construit le choix du thème (boutons radio avec une pastille d'aperçu)
  * dans `conteneur`, et mémorise le choix.
  */

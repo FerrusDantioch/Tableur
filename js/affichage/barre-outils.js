@@ -84,6 +84,18 @@ export function installerBarreOutils({ preferences, avantAction, apresAction, su
   }
 }
 
+/**
+ * Replie la barre d'outils (comme un appui sur l'onglet ouvert). Renvoie
+ * l'onglet qui était ouvert, pour le rouvrir plus tard (null si elle était
+ * déjà repliée).
+ */
+export function replierBarreOutils() {
+  if (document.querySelector('.outils.repliee')) return null;
+  const onglet = document.querySelector('.onglet-outils[aria-selected="true"]');
+  onglet?.click();
+  return onglet?.dataset.groupe ?? null;
+}
+
 /** Ouvre l'onglet d'outils demandé ('edition', 'mise-en-forme', 'bordures', 'donnees'). */
 export function ouvrirOngletOutils(groupe) {
   const onglet = document.querySelector(`.onglet-outils[data-groupe="${groupe}"]`);

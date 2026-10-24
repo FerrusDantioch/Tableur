@@ -116,7 +116,7 @@ export class Interactions {
       }
     });
     nomCellule.addEventListener('blur', () => {
-      nomCellule.value = textePlage(selection.plage);
+      nomCellule.value = this.#texteSelection();
     });
 
     // --- Souris et doigt ---
@@ -170,8 +170,14 @@ export class Interactions {
     const { ligne, colonne } = this.selection.active;
     this.grille.afficherSelection(this.selection);
     this.edition.suivre(ligne, colonne, this.feuille.brut(adresse(ligne, colonne)));
-    if (document.activeElement !== this.nomCellule) this.nomCellule.value = textePlage(this.selection.plage);
+    if (document.activeElement !== this.nomCellule) this.nomCellule.value = this.#texteSelection();
     this.commandes.selectionChangee?.(this.selection);
+  }
+
+  /** Texte de la case « A1 » : la cellule active, ou la plage (« B2:D5 »). Une cellule fusionnée seule : « A1 ». */
+  #texteSelection() {
+    const { ligne, colonne } = this.selection.active;
+    return this.selection.unique ? adresse(ligne, colonne) : textePlage(this.selection.plage);
   }
 
   /** Fait défiler la grille jusqu'au coin de la sélection qui vient de bouger. */
@@ -302,6 +308,9 @@ export class Interactions {
       else if (lettre === 'd') action = () => this.commandes.recopier?.('bas');
       else if (lettre === 'r') action = () => this.commandes.recopier?.('droite');
       else if (lettre === 'p') action = this.commandes.exporterPdf;
+      // Ctrl+F : rechercher ; Ctrl+H : remplacer (au lieu de la recherche et de l'historique du navigateur).
+      else if (lettre === 'f') action = () => this.commandes.rechercher?.(false);
+      else if (lettre === 'h') action = () => this.commandes.rechercher?.(true);
       else if (lettre === 'a') action = () => selection.tout();
       else if (fleche) action = () => selection.allerAuBord(fleche[0], fleche[1], maj);
       else if (e.key === 'Home') action = () => selection.choisir(1, 1);

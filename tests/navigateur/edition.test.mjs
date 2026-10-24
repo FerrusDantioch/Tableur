@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { celluleActive, cliquerOutil, demarrerServeur, lancerNavigateur, ouvrirApplication, texteCellule } from './outils.mjs';
 
 const td = (ligne, colonne) => `td[data-ligne="${ligne}"][data-colonne="${colonne}"]`;
-const brut = (page, adr) => page.evaluate((a) => window.tableur.feuille.brut(a), adr);
+const brut = (page, adr) => page.evaluate((a) => window.omniTableur.feuille.brut(a), adr);
 
 let serveur;
 let navigateur;
@@ -97,7 +97,7 @@ test('boutons Copier, Couper, Coller et Effacer', async () => {
   await page.waitForFunction(() => /2 cellules copiées/.test(document.getElementById('message').textContent));
   await page.click(td(1, 3));
   await cliquerOutil(page, '#bouton-coller');
-  await page.waitForFunction(() => window.tableur.feuille.brut('C2') !== '');
+  await page.waitForFunction(() => window.omniTableur.feuille.brut('C2') !== '');
   assert.equal(await brut(page, 'C2'), '=C1*2');
   assert.equal(await texteCellule(page, 'C2'), '10');
   // Couper puis coller ailleurs : la formule garde ses références.
@@ -106,7 +106,7 @@ test('boutons Copier, Couper, Coller et Effacer', async () => {
   assert.equal(await brut(page, 'C2'), '');
   await page.click(td(5, 5));
   await cliquerOutil(page, '#bouton-coller');
-  await page.waitForFunction(() => window.tableur.feuille.brut('E5') !== '');
+  await page.waitForFunction(() => window.omniTableur.feuille.brut('E5') !== '');
   assert.equal(await brut(page, 'E5'), '=C1*2');
   // Effacer (comme la touche Suppr).
   await cliquerOutil(page, '#bouton-effacer');
@@ -168,7 +168,7 @@ test('au doigt : la barre d’outils en onglets et la recopie par bouton', async
   await page.tap(td(1, 1));
   await page.keyboard.type('=B1+7');
   await page.keyboard.press('Enter');
-  await page.evaluate(() => window.tableur.selection.choisirPlage({ debut: { ligne: 1, colonne: 1 }, fin: { ligne: 3, colonne: 1 } }));
+  await page.evaluate(() => window.omniTableur.selection.choisirPlage({ debut: { ligne: 1, colonne: 1 }, fin: { ligne: 3, colonne: 1 } }));
   await page.tap('#bouton-recopier-bas');
   assert.equal(await brut(page, 'A3'), '=B3+7');
   // La page ne déborde pas de l'écran.

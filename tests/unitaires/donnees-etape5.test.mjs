@@ -2,7 +2,7 @@
 
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { creerTableur } from './outils.mjs';
+import { creerClasseurDeTest } from './outils.mjs';
 import { ordreDeTri, sembleTitres, zoneAutour } from '../../js/donnees/tri.js';
 import { decoderFichier, detecterSeparateur, feuilleDepuisCSV, lireCSV, nomDepuisFichier } from '../../js/services/import-csv.js';
 import { genererCSV } from '../../js/services/export-csv.js';
@@ -20,14 +20,14 @@ describe('Tri', () => {
   });
 
   test('le tableau autour de la cellule active', () => {
-    const t = creerTableur({ B2: 'Nom', C2: 'Âge', B3: 'Léa', C3: '30', B4: 'Paul', D4: 'x', F8: 'loin' });
+    const t = creerClasseurDeTest({ B2: 'Nom', C2: 'Âge', B3: 'Léa', C3: '30', B4: 'Paul', D4: 'x', F8: 'loin' });
     const zone = zoneAutour((a) => t.feuille.brut(a), t.feuille, 3, 2);
     assert.deepEqual(zone, lirePlage('B2:D4')); // D4 touche le tableau, F8 non
     assert.equal(zoneAutour((a) => t.feuille.brut(a), t.feuille, 20, 20), null);
   });
 
   test('ligne de titres reconnue', () => {
-    const t = creerTableur({ A1: 'Article', B1: 'Prix', A2: 'Pomme', B2: '2' });
+    const t = creerClasseurDeTest({ A1: 'Article', B1: 'Prix', A2: 'Pomme', B2: '2' });
     const valeur = (a) => t.valeur(a);
     const cellule = (a) => t.feuille.cellule(a);
     assert.equal(sembleTitres(valeur, cellule, lirePlage('A1:B2'), 2), true); // « Prix » au-dessus d'un nombre
@@ -38,7 +38,7 @@ describe('Tri', () => {
   });
 
   test('trier des lignes : la mise en forme suit, les formules s’adaptent, Annuler remet l’ordre', () => {
-    const t = creerTableur({ A1: 'Poire', B1: '3', C1: '=B1*2', A2: 'Pomme', B2: '1', C2: '=B2*2', A3: 'Kiwi', B3: '2', C3: '=B3*2', E1: 'à côté' });
+    const t = creerClasseurDeTest({ A1: 'Poire', B1: '3', C1: '=B1*2', A2: 'Pomme', B2: '1', C2: '=B2*2', A3: 'Kiwi', B3: '2', C3: '=B3*2', E1: 'à côté' });
     t.classeur.modifierCellules(t.feuille, [{ adresse: 'A2', gras: true }]);
     const zone = lirePlage('A1:C3');
     const cles = [1, 2, 3].map((l) => t.valeur(`B${l}`));
@@ -86,7 +86,7 @@ describe('Import CSV', () => {
     assert.equal(cellules.A4.brut, "'=SOMME(A1)"); // jamais exécuté comme une formule
     assert.equal(cellules.C3, undefined);
     // Les valeurs deviennent des nombres et des dates dans le classeur.
-    const t = creerTableur();
+    const t = creerClasseurDeTest();
     const feuille = t.classeur.ajouterFeuille({ nom: 'Import', donnees: resultat.donnees });
     assert.equal(t.moteur.valeur(feuille, 'B2'), 2.5);
     assert.equal(t.moteur.valeur(feuille, 'B3'), 3.5);
@@ -95,7 +95,7 @@ describe('Import CSV', () => {
   });
 
   test('aller-retour : export CSV puis import donne les mêmes valeurs', () => {
-    const t = creerTableur({ A1: 'Libellé', B1: 'Montant', A2: 'Café ; thé', B2: '3,5', A3: 'Il dit "oui"', B3: '=B2*2', A4: 'Total', B4: '=SOMME(B2:B3)' });
+    const t = creerClasseurDeTest({ A1: 'Libellé', B1: 'Montant', A2: 'Café ; thé', B2: '3,5', A3: 'Il dit "oui"', B3: '=B2*2', A4: 'Total', B4: '=SOMME(B2:B3)' });
     const csv = genererCSV(t.feuille, t.moteur);
     const resultat = feuilleDepuisCSV(decoderFichier(new TextEncoder().encode(csv)));
     const feuille = t.classeur.ajouterFeuille({ nom: 'Retour', donnees: resultat.donnees });
@@ -105,7 +105,7 @@ describe('Import CSV', () => {
   });
 
   test('export CSV : les dates restent des dates (jj/mm/aaaa)', () => {
-    const t = creerTableur({ A1: '14/07/2026', B1: '46318', C1: '=A1+1', D1: '20 %' });
+    const t = creerClasseurDeTest({ A1: '14/07/2026', B1: '46318', C1: '=A1+1', D1: '20 %' });
     t.classeur.modifierCellules(t.feuille, [{ adresse: 'B1', format: { type: 'date', decimales: 0 } }, { adresse: 'C1', format: { type: 'date', decimales: 0 } }]);
     const csv = genererCSV(t.feuille, t.moteur);
     assert.equal(csv.replace(/^\uFEFF/, '').trim(), '14/07/2026;23/10/2026;15/07/2026;0,2');
@@ -129,7 +129,7 @@ describe('Import CSV', () => {
 
 describe('Feuilles (onglets)', () => {
   test('ajouter, renommer, supprimer, avec annulation', () => {
-    const t = creerTableur({ A1: 'un' });
+    const t = creerClasseurDeTest({ A1: 'un' });
     const evenements = [];
     t.classeur.abonner((e) => evenements.push(e.type));
     const deux = t.classeur.ajouterFeuille();
@@ -158,7 +158,7 @@ describe('Feuilles (onglets)', () => {
 
   test('plusieurs feuilles enregistrées et rechargées (feuille affichée comprise)', async () => {
     const { Classeur } = await import('../../js/donnees/classeur.js');
-    const t = creerTableur({ A1: '5' });
+    const t = creerClasseurDeTest({ A1: '5' });
     const ventes = t.classeur.ajouterFeuille({ nom: 'Ventes 2026' });
     t.classeur.modifierCellules(ventes, [{ adresse: 'A1', brut: "=Feuille1!A1*2", bordures: { bas: { style: 'epais', couleur: 'rouge' } } }]);
     t.classeur.figerPremiereLigne(ventes, true);
@@ -181,7 +181,7 @@ describe('Feuilles (onglets)', () => {
   });
 
   test('figer la première ligne : annulable', () => {
-    const t = creerTableur();
+    const t = creerClasseurDeTest();
     assert.equal(t.feuille.figee, false);
     t.classeur.figerPremiereLigne(t.feuille, true);
     assert.equal(t.feuille.figee, true);

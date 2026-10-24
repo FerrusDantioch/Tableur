@@ -11,12 +11,21 @@
   background: var(--fond);
   outline: none;
   overscroll-behavior: contain;
+  /* Le doigt fait défiler la grille ; le pincement à deux doigts est géré par
+     l'application (zoom de la grille, voir js/affichage/zoom.js) au lieu
+     d'agrandir toute la page. */
+  touch-action: pan-x pan-y;
+  /* Zoom (1 = 100 %) et hauteur des lignes à 100 %. grille.js calcule la
+     hauteur réelle (--hauteur-ligne = hauteur à 100 % × zoom). */
+  --zoom: 1;
+  --hauteur-base: 32px;
   --hauteur-ligne: 32px;
 }
 
 /* Au doigt : lignes un peu plus hautes. */
 @media (pointer: coarse) {
   .zone-grille {
+    --hauteur-base: 36px;
     --hauteur-ligne: 36px;
   }
 }
@@ -31,10 +40,10 @@
   border-collapse: separate;
   border-spacing: 0;
   font-family: var(--police-cellules);
-  font-size: 0.95rem;
+  font-size: calc(0.95rem * var(--zoom));
   font-variant-numeric: tabular-nums;
   /* Un appui rapide au doigt sélectionne, sans zoom par double appui. */
-  touch-action: manipulation;
+  touch-action: pan-x pan-y;
   user-select: none;
   -webkit-user-select: none;
 }
@@ -43,7 +52,7 @@
 
 .grille td {
   height: var(--hauteur-ligne);
-  padding: 0 8px;
+  padding: 0 calc(8px * var(--zoom));
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -66,7 +75,7 @@
 .grille td.erreur {
   color: var(--erreur);
   font-family: var(--police-entetes);
-  font-size: 0.85rem;
+  font-size: calc(0.85rem * var(--zoom));
 }
 
 .grille td.gras {
@@ -90,6 +99,49 @@
 [data-encre="bleu"] { color: var(--encre-bleu); }
 [data-encre="violet"] { color: var(--encre-violet); }
 [data-encre="gris"] { color: var(--encre-gris); }
+
+/* --- Cellules fusionnées ---------------------------------------------------------
+   Un bloc posé sur les cellules couvertes (voir grille.js), qui ressemble à une
+   cellule ordinaire : même fond, même police, même quadrillage à droite et en bas.
+   Il passe sous les cadres de sélection (z-index 1) et sous la ligne figée. */
+.cellule-fusionnee {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding: 0 calc(8px * var(--zoom));
+  overflow: hidden;
+  background: var(--teinte, var(--cellule));
+  border-right: 1px solid var(--quadrillage);
+  border-bottom: 1px solid var(--quadrillage);
+  /* (Pas de « color » ici : la couleur du texte vient de data-encre ou de la page.) */
+  font-family: var(--police-cellules);
+  font-size: calc(0.95rem * var(--zoom));
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+  cursor: cell;
+}
+
+.cellule-fusionnee > span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.cellule-fusionnee.nombre { text-align: right; }
+.cellule-fusionnee.booleen,
+.cellule-fusionnee.erreur { text-align: center; }
+.cellule-fusionnee.erreur { color: var(--erreur); }
+.cellule-fusionnee.gras { font-weight: 700; }
+.cellule-fusionnee.italique { font-style: italic; }
+.cellule-fusionnee[data-align="gauche"] { text-align: left; }
+.cellule-fusionnee[data-align="centre"] { text-align: center; }
+.cellule-fusionnee[data-align="droite"] { text-align: right; }
 
 /* Lignes d'espacement de la grille virtuelle : elles remplacent les lignes
    qui ne sont pas dessinées (hors de l'écran). Des traits horizontaux
@@ -124,7 +176,7 @@
   background: var(--entete);
   color: var(--entete-texte);
   font-family: var(--police-entetes);
-  font-size: 0.8rem;
+  font-size: calc(0.8rem * var(--zoom));
   font-weight: 500;
   border-right: 1px solid var(--trait);
   border-bottom: 1px solid var(--trait);
@@ -265,13 +317,15 @@
 
 /* Poignée ronde pour étendre la sélection au doigt (seulement au toucher). */
 .poignee-selection {
+  /* Elle suit un peu le zoom, sans devenir trop petite pour le doigt. */
+  --taille-poignee: calc(26px * clamp(0.75, var(--zoom), 1.25));
   display: none;
   position: absolute;
   top: 0;
   left: 0;
-  width: 26px;
-  height: 26px;
-  margin: -13px 0 0 -13px;
+  width: var(--taille-poignee);
+  height: var(--taille-poignee);
+  margin: calc(var(--taille-poignee) / -2) 0 0 calc(var(--taille-poignee) / -2);
   border-radius: 50%;
   background: var(--selection-trait);
   border: 3px solid var(--cellule);
@@ -331,13 +385,13 @@
   left: 0;
   z-index: 3;
   margin: 0;
-  padding: 0 7px;
+  padding: 0 calc(7px * var(--zoom));
   border: 2px solid var(--selection-trait);
   border-radius: 0;
   background: var(--cellule);
   color: var(--texte);
   font-family: var(--police-cellules);
-  font-size: 0.95rem;
+  font-size: calc(0.95rem * var(--zoom));
   outline: none;
 }
 

@@ -5,7 +5,11 @@
 (function () {
   var theme = 'omni';
   try {
-    var preferences = JSON.parse(localStorage.getItem('tableur.preferences') || '{}');
+    // Au premier lancement après le renommage en « Omni-Tableur », les
+    // préférences sont encore sous l'ancien nom (stockage.js les déplace ensuite).
+    var config = self.CONFIG_APP;
+    var texte = localStorage.getItem(config.idStockage + '.preferences') || localStorage.getItem(config.ancienIdStockage + '.preferences');
+    var preferences = JSON.parse(texte || '{}');
     if (['omni', 'sombre', 'clair'].indexOf(preferences.theme) !== -1) theme = preferences.theme;
   } catch {
     // Stockage indisponible (navigation privée…) : thème par défaut.

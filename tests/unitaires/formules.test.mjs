@@ -4,7 +4,7 @@
 
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { calculer, creerTableur } from './outils.mjs';
+import { calculer, creerClasseurDeTest } from './outils.mjs';
 
 // Cellules de départ utilisées par la plupart des tests.
 const BASE = { A1: '10', A2: '20', A3: 'texte', B1: '0', C1: 'VRAI', D1: '2,5' };
@@ -161,7 +161,7 @@ describe('Erreurs', () => {
       ['=A1/E9', '#DIV/0!'], // E9 est vide
       ['=MOYENNE(E1:E3)', '#DIV/0!'], // aucune valeur à moyenner
     ]);
-    const { remplir, explication } = creerTableur();
+    const { remplir, explication } = creerClasseurDeTest();
     remplir({ A1: '=1/0' });
     assert.match(explication('A1'), /Division par zéro/);
   });
@@ -173,7 +173,7 @@ describe('Erreurs', () => {
       ['=ZZZ1+1', '#REF!'],
       ['=SOMME(A1:A2000)', '#REF!'],
     ]);
-    const { remplir, explication } = creerTableur();
+    const { remplir, explication } = creerClasseurDeTest();
     remplir({ A1: '=A5000' });
     assert.match(explication('A1'), /Référence invalide/);
   });
@@ -193,7 +193,7 @@ describe('Erreurs', () => {
       ['=abc', '#NOM?'],
       ['=total*2', '#NOM?'],
     ]);
-    const { remplir, explication } = creerTableur();
+    const { remplir, explication } = creerClasseurDeTest();
     remplir({ A1: '=TOTO(1)', A2: '=total*2' });
     assert.match(explication('A1'), /TOTO/);
     assert.match(explication('A2'), /total/);
@@ -218,7 +218,7 @@ describe('Erreurs', () => {
   });
 
   test('référence circulaire : #CIRC!', () => {
-    const t = creerTableur();
+    const t = creerClasseurDeTest();
     t.remplir({ A1: '=A1+1' });
     assert.equal(t.affiche('A1'), '#CIRC!');
     assert.match(t.explication('A1'), /circulaire/);
@@ -235,7 +235,7 @@ describe('Erreurs', () => {
   });
 
   test('une erreur se propage aux cellules qui l’utilisent', () => {
-    const t = creerTableur({ A1: '=1/0', A2: '5' });
+    const t = creerClasseurDeTest({ A1: '=1/0', A2: '5' });
     t.remplir({ B1: '=A1+1', B2: '=SOMME(A1:A2)', B3: '=MOYENNE(A1:A2)', B4: '=MAX(A1:A2)', B5: '=NB(A1:A2)', B6: '=SIERREUR(A1;0)' });
     assert.equal(t.affiche('B1'), '#DIV/0!');
     assert.equal(t.affiche('B2'), '#DIV/0!');
@@ -246,7 +246,7 @@ describe('Erreurs', () => {
   });
 
   test('une erreur ne bloque pas les calculs suivants', () => {
-    const t = creerTableur({ A1: '=SOMME(', A2: '=1+1' });
+    const t = creerClasseurDeTest({ A1: '=SOMME(', A2: '=1+1' });
     assert.equal(t.affiche('A1'), '#ERREUR!');
     assert.equal(t.affiche('A2'), '2');
   });
@@ -254,7 +254,7 @@ describe('Erreurs', () => {
 
 describe('Recalcul automatique', () => {
   test('une formule suit les cellules qu’elle utilise', () => {
-    const t = creerTableur({ A1: '2', B1: '=A1*10' });
+    const t = creerClasseurDeTest({ A1: '2', B1: '=A1*10' });
     assert.equal(t.affiche('B1'), '20');
     t.remplir({ A1: '3' });
     assert.equal(t.affiche('B1'), '30');
@@ -263,7 +263,7 @@ describe('Recalcul automatique', () => {
   });
 
   test('cascade : A1 → B1 → C1 → D1', () => {
-    const t = creerTableur({ A1: '1', B1: '=A1+1', C1: '=B1+1', D1: '=C1+B1' });
+    const t = creerClasseurDeTest({ A1: '1', B1: '=A1+1', C1: '=B1+1', D1: '=C1+B1' });
     assert.equal(t.affiche('D1'), '5');
     t.remplir({ A1: '10' });
     assert.equal(t.affiche('B1'), '11');
@@ -272,7 +272,7 @@ describe('Recalcul automatique', () => {
   });
 
   test('formules sur des plages', () => {
-    const t = creerTableur({ A1: '1', A2: '2', A3: '3', B1: '=SOMME(A1:A10)', B2: '=MOYENNE(A:A)', B3: '=NB(A1:A10)' });
+    const t = creerClasseurDeTest({ A1: '1', A2: '2', A3: '3', B1: '=SOMME(A1:A10)', B2: '=MOYENNE(A:A)', B3: '=NB(A1:A10)' });
     assert.equal(t.affiche('B1'), '6');
     t.remplir({ A10: '4' });
     assert.equal(t.affiche('B1'), '10');
@@ -281,7 +281,7 @@ describe('Recalcul automatique', () => {
   });
 
   test('ordre de saisie quelconque (formule tapée avant ses données)', () => {
-    const t = creerTableur({ C1: '=A1+B1' });
+    const t = creerClasseurDeTest({ C1: '=A1+B1' });
     assert.equal(t.affiche('C1'), '0');
     t.remplir({ B1: '=A1*2' });
     t.remplir({ A1: '5' });
@@ -290,7 +290,7 @@ describe('Recalcul automatique', () => {
   });
 
   test('une formule remplacée par un nombre (et l’inverse)', () => {
-    const t = creerTableur({ A1: '1', B1: '=A1+1', C1: '=B1*2' });
+    const t = creerClasseurDeTest({ A1: '1', B1: '=A1+1', C1: '=B1*2' });
     t.remplir({ B1: '100' });
     assert.equal(t.affiche('C1'), '200');
     t.remplir({ A1: '50' }); // B1 n'est plus une formule : C1 ne bouge pas
@@ -300,7 +300,7 @@ describe('Recalcul automatique', () => {
   });
 
   test('annuler / rétablir recalcule aussi', () => {
-    const t = creerTableur({ A1: '1', B1: '=A1*3' });
+    const t = creerClasseurDeTest({ A1: '1', B1: '=A1*3' });
     t.remplir({ A1: '7' });
     assert.equal(t.affiche('B1'), '21');
     t.classeur.annuler();
@@ -310,7 +310,7 @@ describe('Recalcul automatique', () => {
   });
 
   test('le moteur annonce les cellules dont la valeur a changé', () => {
-    const t = creerTableur({ A1: '1', B1: '=A1', C1: '=B1', Z9: '=1' });
+    const t = creerClasseurDeTest({ A1: '1', B1: '=A1', C1: '=B1', Z9: '=1' });
     const annonces = [];
     t.moteur.abonner((e) => annonces.push(...e.adresses));
     t.remplir({ A1: '2' });
@@ -321,7 +321,7 @@ describe('Recalcul automatique', () => {
     const contenus = { A1: '1' };
     for (let ligne = 2; ligne <= 1000; ligne++) contenus[`A${ligne}`] = `=A${ligne - 1}+1`;
     const debut = performance.now();
-    const t = creerTableur(contenus);
+    const t = creerClasseurDeTest(contenus);
     t.remplir({ A1: '1000' });
     const duree = performance.now() - debut;
     assert.equal(t.affiche('A1000'), '1999');
@@ -329,13 +329,13 @@ describe('Recalcul automatique', () => {
   });
 
   test('rechargement d’un classeur entier', () => {
-    const t = creerTableur({ A1: '1' });
+    const t = creerClasseurDeTest({ A1: '1' });
     t.classeur.charger({ format: 'tableur', feuilles: [{ cellules: { A1: { brut: '4' }, A2: { brut: '=A1^2' } } }] });
     assert.equal(t.affiche('A2'), '16');
   });
 
   test('valeurs d’une plage (pour les futurs graphiques)', () => {
-    const t = creerTableur({ A1: 'Mois', B1: 'Total', A2: 'Janvier', B2: '=10*2', A3: 'Février', B3: '15' });
+    const t = creerClasseurDeTest({ A1: 'Mois', B1: 'Total', A2: 'Janvier', B2: '=10*2', A3: 'Février', B3: '15' });
     assert.deepEqual(t.moteur.valeursPlage(t.feuille, 'A1:B3'), [
       ['Mois', 'Total'],
       ['Janvier', 20],

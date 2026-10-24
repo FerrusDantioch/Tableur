@@ -2,17 +2,19 @@
 // qu'elle fonctionne sans connexion internet.
 //
 // - À l'installation, tous les fichiers de la liste FICHIERS sont copiés dans
-//   un cache dont le nom contient la version (ex. « tableur-1.0.0 »).
+//   un cache dont le nom contient la version (ex. « omni-tableur-2.1.0 »).
 // - Ensuite, chaque fichier est servi depuis ce cache (« cache d'abord »).
 // - Quand la version change dans js/config.js, le navigateur détecte ce
 //   service worker modifié, prépare le nouveau cache, et l'application propose
 //   « Recharger ». Les anciens caches de CETTE application sont alors supprimés
-//   (jamais ceux des autres applications du même site).
+//   (jamais ceux des autres applications du même site), y compris ceux d'avant
+//   le renommage en « Omni-Tableur » (préfixe « tableur- »).
 
 importScripts('js/config.js');
 
 const CONFIG = self.CONFIG_APP;
 const PREFIXE = `${CONFIG.idStockage}-`;
+const ANCIEN_PREFIXE = `${CONFIG.ancienIdStockage}-`;
 const CACHE = `${PREFIXE}${CONFIG.version}`;
 
 // Liste de tous les fichiers de l'application. À tenir à jour quand on en
@@ -33,7 +35,10 @@ const FICHIERS = [
   'js/donnees/adresses.js',
   'js/donnees/bordures.js',
   'js/donnees/classeur.js',
+  'js/donnees/fichier-classeur.js',
   'js/donnees/formules.js',
+  'js/donnees/fusions.js',
+  'js/donnees/recherche.js',
   'js/donnees/recopie.js',
   'js/donnees/saisie.js',
   'js/donnees/tri.js',
@@ -46,6 +51,7 @@ const FICHIERS = [
   'js/affichage/barre-outils.js',
   'js/affichage/commandes-donnees.js',
   'js/affichage/commandes-edition.js',
+  'js/affichage/commandes-fusion.js',
   'js/affichage/edition.js',
   'js/affichage/fenetres.js',
   'js/affichage/format.js',
@@ -56,7 +62,10 @@ const FICHIERS = [
   'js/affichage/outils-bordures.js',
   'js/affichage/mise-en-forme.js',
   'js/affichage/presse-papiers.js',
+  'js/affichage/recherche.js',
+  'js/affichage/sauvegarde-fichier.js',
   'js/affichage/selection.js',
+  'js/affichage/zoom.js',
   'js/services/export-csv.js',
   'js/services/export-pdf.js',
   'js/services/fichiers.js',
@@ -107,7 +116,8 @@ self.addEventListener('activate', (evenement) => {
   evenement.waitUntil(
     (async () => {
       for (const nom of await caches.keys()) {
-        if (nom.startsWith(PREFIXE) && nom !== CACHE) await caches.delete(nom);
+        const deCetteApplication = nom.startsWith(PREFIXE) || nom.startsWith(ANCIEN_PREFIXE);
+        if (deCetteApplication && nom !== CACHE) await caches.delete(nom);
       }
       await self.clients.claim();
     })(),

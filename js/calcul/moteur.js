@@ -19,6 +19,11 @@
 // Chaque cellule est repérée par une « clé » : numéro de sa feuille + adresse
 // (ex. « 2:B3 »), car le nom d'une feuille peut changer.
 //
+// Cellules fusionnées : une formule qui vise une case couverte par une
+// fusion (=B1 quand A1:C1 est fusionnée) utilise la cellule en haut à gauche
+// (A1), celle que l'on voit. Une plage (=SOMME(A1:C1)), elle, compte chaque
+// case une seule fois, comme dans Excel (les cases couvertes sont vides).
+//
 // Pour les futurs graphiques : `valeursPlage(feuille, "A1:B10")` donne les
 // valeurs d'une plage, et `abonner()` prévient à chaque changement de valeur.
 
@@ -33,6 +38,12 @@ import { nomsInconnus, traduireFormule } from './traduction.js';
 const TAILLE_CACHE = 5000;
 
 const cle = (feuille, adr) => `${feuille.id}:${adr}`;
+
+/** La cellule elle-même, ou le coin en haut à gauche de la fusion qui la couvre. */
+function coinDeFusion(feuille, ligne, colonne) {
+  const fusion = feuille.fusionEn?.(ligne, colonne);
+  return fusion ? fusion.debut : { ligne, colonne };
+}
 
 /** Clé → { idFeuille, adresse, ligne, colonne }. */
 function lireCle(texte) {
@@ -265,7 +276,8 @@ export class MoteurCalcul {
           },
         });
       } else {
-        cellules.push(cle(cible, adresse(reference.row, reference.col)));
+        const { ligne, colonne } = coinDeFusion(cible, reference.row, reference.col);
+        cellules.push(cle(cible, adresse(ligne, colonne)));
       }
     }
     return { cellules, plages };
@@ -362,7 +374,8 @@ export class MoteurCalcul {
   #lireCellule({ sheet, row, col }) {
     const feuille = this.#feuille(sheet);
     if (!feuille || row > LIGNES_MAX || col > COLONNES_MAX) return this.#bibliotheque.FormulaError.REF;
-    return this.#versBibliotheque(this.#valeurs.get(cle(feuille, adresse(row, col))));
+    const { ligne, colonne } = coinDeFusion(feuille, row, col);
+    return this.#versBibliotheque(this.#valeurs.get(cle(feuille, adresse(ligne, colonne))));
   }
 
   /** Valeurs d'une plage demandées par la bibliothèque (tableau de lignes). */
@@ -420,7 +433,7 @@ export class MoteurCalcul {
   #erreur(erreurBibliotheque) {
     const message = erreurBibliotheque.message ?? '';
     const inconnue = /Function (\S+) is not implemented/.exec(message);
-    if (inconnue) return new ErreurCalcul('#NAME?', `La fonction ${inconnue[1]} n’existe pas dans Tableur.`);
+    if (inconnue) return new ErreurCalcul('#NAME?', `La fonction ${inconnue[1]} n’existe pas dans Omni-Tableur.`);
     const tropArguments = /Function (\S+) has too many arguments/.exec(message);
     if (tropArguments) return new ErreurCalcul('#N/A', `Trop d’arguments pour la fonction ${tropArguments[1]}.`);
     if (/is missing/.test(message)) return new ErreurCalcul('#N/A', 'Il manque un argument à une fonction.');

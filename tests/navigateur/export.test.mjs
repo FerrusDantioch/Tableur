@@ -23,7 +23,7 @@ function outilDisponible(nom) {
 /** Remplit un petit budget dans la page. */
 async function remplirBudget(page, cellules) {
   await page.evaluate((liste) => {
-    const { classeur, feuille } = window.tableur;
+    const { classeur, feuille } = window.omniTableur;
     classeur.renommer('Budget de test');
     classeur.modifierCellules(feuille, liste);
   }, cellules);
@@ -101,7 +101,7 @@ test('export PDF : explication, impression du tableau seul, nom du fichier', asy
   assert.equal(impression.classes, 'impression'); // tableau étroit : page en hauteur
 
   // La seconde fois, plus d'explication (case cochée).
-  await page.evaluate(() => window.tableur.exportPdf.terminer());
+  await page.evaluate(() => window.omniTableur.exportPdf.terminer());
   await page.keyboard.press('Control+p');
   await page.waitForFunction(() => window.impressions.length === 2);
   assert.equal(await page.isVisible('#fenetre-aide-pdf'), false);
@@ -111,7 +111,7 @@ test('export PDF : explication, impression du tableau seul, nom du fichier', asy
 test('export PDF : vrai fichier PDF (rendu d’impression de Chromium)', async () => {
   const { contexte, page } = await ouvrirApplication(navigateur, serveur.url);
   await remplirBudget(page, BUDGET);
-  await page.evaluate(() => window.tableur.exportPdf.preparer());
+  await page.evaluate(() => window.omniTableur.exportPdf.preparer());
   await page.emulateMedia({ media: 'print' });
   // Rien d'autre que le tableau n'est imprimé.
   const visibles = await page.evaluate(() =>
@@ -150,7 +150,7 @@ test('export PDF : bordures, couleurs et formats imprimés ; quadrillage au choi
     { adresse: 'A2', brut: 'Loyer', couleur: 'rouge', bordures: { gauche: epais, bas: epais, droite: fin } },
     { adresse: 'B2', brut: '650', format: { type: 'euro', decimales: 2 }, bordures: { droite: epais, bas: epais } },
   ]);
-  await page.evaluate(() => window.tableur.exportPdf.preparer());
+  await page.evaluate(() => window.omniTableur.exportPdf.preparer());
   const imprime = await page.evaluate(() => {
     const cellule = (l, c) => document.querySelector(`#impression tr:nth-child(${l}) td:nth-child(${c})`);
     return {
@@ -179,13 +179,13 @@ test('export PDF : bordures, couleurs et formats imprimés ; quadrillage au choi
   const trait = await page.evaluate(() => getComputedStyle(document.querySelector('#impression td')).borderTopColor);
   assert.notEqual(trait, 'rgba(0, 0, 0, 0)');
   await page.emulateMedia({ media: 'screen' });
-  await page.evaluate(() => window.tableur.exportPdf.terminer());
+  await page.evaluate(() => window.omniTableur.exportPdf.terminer());
   // La case « Quadrillage » est mémorisée.
   await cliquerOutil(page, '#bouton-exporter');
   assert.equal(await page.isChecked('#quadrillage-pdf'), false);
   await page.check('#quadrillage-pdf');
   await page.keyboard.press('Escape');
-  await page.evaluate(() => window.tableur.exportPdf.preparer());
+  await page.evaluate(() => window.omniTableur.exportPdf.preparer());
   assert.doesNotMatch(await page.getAttribute('#impression', 'class'), /sans-quadrillage/);
   const chemin = `${RESULTATS}bordures.pdf`;
   await page.emulateMedia({ media: 'print' });
@@ -200,7 +200,7 @@ test('export PDF : un tableau large passe en paysage', async () => {
   const cellules = [];
   for (let c = 0; c < 9; c++) cellules.push({ adresse: `${String.fromCharCode(65 + c)}1`, brut: `Colonne ${c + 1}` });
   await remplirBudget(page, cellules);
-  await page.evaluate(() => window.tableur.exportPdf.preparer());
+  await page.evaluate(() => window.omniTableur.exportPdf.preparer());
   assert.match(await page.getAttribute('#impression', 'class'), /paysage/);
   const chemin = `${RESULTATS}large.pdf`;
   await page.pdf({ path: chemin, preferCSSPageSize: true });

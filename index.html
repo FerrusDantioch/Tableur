@@ -5,12 +5,12 @@
     <!-- interactive-widget : quand le clavier du téléphone s'ouvre, la page
          rétrécit au lieu d'être recouverte (la cellule reste visible). -->
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
-    <meta name="description" content="Tableur : un tableur simple qui fonctionne hors ligne. Les données restent sur l'appareil." />
+    <meta name="description" content="Omni-Tableur : un tableur simple qui fonctionne hors ligne. Les données restent sur l'appareil." />
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#1d1929" />
     <!-- Sécurité : la page ne charge que ses propres fichiers (rien d'internet). -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'" />
-    <title>Tableur</title>
+    <title>Omni-Tableur</title>
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
@@ -33,7 +33,7 @@
   <body>
     <!-- Icônes (dessinées pour l'application). On les réutilise avec <use href="#…">. -->
     <svg class="icones" aria-hidden="true" focusable="false">
-      <symbol id="i-tableur" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2.5" fill="none" stroke="currentColor" stroke-width="2" /><path d="M3 9.5h18M3 15h18M9 4v16" fill="none" stroke="currentColor" stroke-width="2" /></symbol>
+      <symbol id="i-marque" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2.5" fill="none" stroke="currentColor" stroke-width="2" /><path d="M3 9.5h18M3 15h18M9 4v16" fill="none" stroke="currentColor" stroke-width="2" /></symbol>
       <symbol id="i-annuler" viewBox="0 0 24 24"><path d="M9 15 4 10l5-5M4 10h10a6 6 0 0 1 0 12h-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
       <symbol id="i-retablir" viewBox="0 0 24 24"><path d="m15 15 5-5-5-5M20 10H10a6 6 0 0 0 0 12h3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
       <symbol id="i-valider" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" /></symbol>
@@ -72,11 +72,14 @@
       <symbol id="i-importer" viewBox="0 0 24 24"><path d="M3 7.5a2 2 0 0 1 2-2h4.2l2 2.2H19a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /></symbol>
       <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2" /><path d="M12 11v5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" /><circle cx="12" cy="7.8" r="1.3" fill="currentColor" /></symbol>
       <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" /></symbol>
+      <symbol id="i-rechercher" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2.2" /><path d="m15 15 5 5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" /></symbol>
+      <symbol id="i-fusionner" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2" /><path d="M6.5 12h4M8.5 10l2 2-2 2M17.5 12h-4M15.5 10l-2 2 2 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></symbol>
+      <symbol id="i-moins" viewBox="0 0 24 24"><path d="M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" /></symbol>
       <symbol id="i-effacer" viewBox="0 0 24 24"><path d="M14.5 4.5 20 10l-8.5 8.5H7l-3-3a1.5 1.5 0 0 1 0-2.1z M9 10l5.5 5.5 M12 20.5h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
     </svg>
 
     <header class="entete">
-      <span class="marque" aria-hidden="true"><svg><use href="#i-tableur" /></svg></span>
+      <span class="marque" aria-hidden="true"><svg><use href="#i-marque" /></svg></span>
       <label class="titre-classeur">
         <span class="visuellement-cache">Titre du classeur</span>
         <input id="titre" type="text" value="Sans titre" maxlength="120" autocomplete="off" spellcheck="false" />
@@ -88,7 +91,7 @@
         <button id="bouton-retablir" class="outil" type="button" title="Rétablir (Ctrl+Y)" disabled>
           <svg aria-hidden="true"><use href="#i-retablir" /></svg><span class="libelle">Rétablir</span>
         </button>
-        <button id="bouton-a-propos" class="outil" type="button" aria-haspopup="dialog" title="À propos de Tableur : version, contact, licence">
+        <button id="bouton-a-propos" class="outil" type="button" aria-haspopup="dialog" title="À propos d'Omni-Tableur : version, contact, licence">
           <svg aria-hidden="true"><use href="#i-info" /></svg><span class="libelle">À propos</span>
         </button>
         <button id="bouton-menu" class="outil" type="button" aria-haspopup="dialog" title="Menu : thème, aide, à propos…">
@@ -134,6 +137,10 @@
         <button id="bouton-effacer" class="outil" type="button" title="Effacer le contenu des cellules sélectionnées (Suppr)">
           <svg aria-hidden="true"><use href="#i-effacer" /></svg><span class="libelle">Effacer</span>
         </button>
+        <span class="separateur" aria-hidden="true"></span>
+        <button id="bouton-rechercher" class="outil" type="button" title="Rechercher et remplacer (Ctrl+F)" aria-pressed="false" aria-controls="barre-recherche">
+          <svg aria-hidden="true"><use href="#i-rechercher" /></svg><span class="libelle">Rechercher</span>
+        </button>
       </div>
 
       <div id="groupe-mise-en-forme" class="barre-outils" role="tabpanel" aria-labelledby="onglet-mise-en-forme" hidden>
@@ -160,6 +167,9 @@
         </button>
         <button id="bouton-droite" class="outil" type="button" title="Aligner à droite" aria-pressed="false" data-alignement="droite">
           <svg aria-hidden="true"><use href="#i-droite" /></svg><span class="libelle">Droite</span>
+        </button>
+        <button id="bouton-fusionner" class="outil" type="button" title="Fusionner les cellules sélectionnées en une seule (idéal pour un titre)" aria-pressed="false">
+          <svg aria-hidden="true"><use href="#i-fusionner" /></svg><span class="libelle">Fusionner</span>
         </button>
         <span class="separateur" aria-hidden="true"></span>
         <button id="bouton-format" class="outil" type="button" title="Format des nombres : décimales, euros, pourcentage, date" popovertarget="panneau-format">
@@ -215,13 +225,45 @@
           <svg aria-hidden="true"><use href="#i-figer" /></svg><span class="libelle">Figer la 1<sup>re</sup> ligne</span>
         </button>
         <span class="separateur" aria-hidden="true"></span>
-        <button id="bouton-importer" class="outil" type="button" title="Importer un fichier CSV dans une nouvelle feuille">
-          <svg aria-hidden="true"><use href="#i-importer" /></svg><span class="libelle">Importer CSV</span>
+        <button id="bouton-importer" class="outil" type="button" title="Importer un classeur (.json) ou un fichier CSV" popovertarget="panneau-importer">
+          <svg aria-hidden="true"><use href="#i-importer" /></svg><span class="libelle">Importer</span>
         </button>
         <input id="fichier-csv" type="file" accept=".csv,.txt,text/csv,text/plain" hidden />
-        <button id="bouton-exporter" class="outil" type="button" title="Exporter en PDF ou en CSV" popovertarget="panneau-exporter">
+        <!-- « accept » : le sélecteur de fichiers d'Android s'ouvre directement sur
+             les documents .json (sans proposer l'appareil photo). Le fichier
+             choisi est de toute façon vérifié avant l'import. -->
+        <input id="fichier-classeur" type="file" accept=".json,application/json" hidden />
+        <button id="bouton-exporter" class="outil" type="button" title="Exporter le classeur (.json), ou la feuille en CSV ou en PDF" popovertarget="panneau-exporter">
           <svg aria-hidden="true"><use href="#i-exporter" /></svg><span class="libelle">Exporter</span>
         </button>
+      </div>
+
+      <!-- Barre « Rechercher et remplacer » (bouton « Rechercher » ou Ctrl+F).
+           Elle pousse la grille vers le bas au lieu de la cacher. -->
+      <div id="barre-recherche" class="barre-recherche" role="search" aria-label="Rechercher et remplacer" hidden>
+        <div class="recherche-ligne">
+          <label class="recherche-champ">
+            <span class="recherche-etiquette">Rechercher</span>
+            <input id="recherche-texte" type="text" autocomplete="off" spellcheck="false" enterkeyhint="search" placeholder="Texte à chercher" />
+          </label>
+          <button id="recherche-suivant" class="outil" type="button" title="Aller à la cellule suivante qui contient ce texte (Entrée)">Suivant</button>
+          <button id="recherche-fermer" class="outil-rond" type="button" title="Fermer (Échap)" aria-label="Fermer la recherche">
+            <svg aria-hidden="true"><use href="#i-fermer" /></svg>
+          </button>
+        </div>
+        <div class="recherche-ligne">
+          <label class="recherche-champ">
+            <span class="recherche-etiquette">Remplacer par</span>
+            <input id="recherche-remplacement" type="text" autocomplete="off" spellcheck="false" enterkeyhint="done" placeholder="Nouveau texte" />
+          </label>
+          <button id="recherche-remplacer" class="outil" type="button" title="Remplacer dans la cellule sélectionnée, puis aller à la suivante">Remplacer</button>
+          <button id="recherche-tout-remplacer" class="outil" type="button" title="Remplacer partout, en une seule étape (un seul « Annuler »)">Tout remplacer</button>
+        </div>
+        <div class="recherche-options">
+          <output id="recherche-compte" class="recherche-compte" aria-live="polite"></output>
+          <label class="case"><input id="recherche-casse" type="checkbox" /> <span>Respecter la casse<span class="precision"> (majuscules et minuscules)</span></span></label>
+          <label class="case"><input id="recherche-toutes-feuilles" type="checkbox" /> Dans toutes les feuilles</label>
+        </div>
       </div>
     </div>
 
@@ -301,16 +343,27 @@
       <button id="largeur-normale" class="outil large" type="button">Largeur normale</button>
       <p class="panneau-aide">Astuce : on peut aussi faire glisser le bord droit d'un en-tête (A, B, C…), ou le double-cliquer.</p>
     </div>
+    <div id="panneau-importer" class="panneau" popover>
+      <p class="panneau-titre">Importer</p>
+      <button id="importer-classeur" class="outil large choix-export" type="button">
+        <strong>Importer un classeur (.json)</strong><small>Rouvre une sauvegarde faite avec « Exporter le classeur ». Remplace le classeur actuel (après confirmation).</small>
+      </button>
+      <button id="importer-csv" class="outil large choix-export" type="button">
+        <strong>Importer un CSV</strong><small>Un tableau d'Excel, d'une banque, de Google Sheets… dans une nouvelle feuille</small>
+      </button>
+    </div>
     <div id="panneau-exporter" class="panneau" popover>
-      <p class="panneau-titre">Exporter la feuille affichée</p>
+      <p class="panneau-titre">Exporter</p>
+      <button id="exporter-classeur" class="outil large choix-export" type="button">
+        <strong>Exporter le classeur (.json)</strong><small>Sauvegarde complète (toutes les feuilles, formules, mise en forme) à garder en lieu sûr ou à rouvrir sur un autre appareil</small>
+      </button>
+      <button id="exporter-csv" class="outil large choix-export" type="button">
+        <strong>Exporter la feuille (.csv)</strong><small>La feuille affichée, pour Excel, LibreOffice ou Google Sheets (formules remplacées par leur résultat)</small>
+      </button>
       <button id="exporter-pdf" class="outil large choix-export" type="button">
-        <strong>PDF</strong><small>Pour imprimer ou envoyer un tableau figé (avec la mise en forme et les bordures)</small>
+        <strong>Exporter la feuille (.pdf)</strong><small>Pour imprimer ou envoyer un tableau figé (avec la mise en forme et les bordures)</small>
       </button>
       <label class="case case-panneau"><input id="quadrillage-pdf" type="checkbox" /> Quadrillage gris dans le PDF</label>
-      <button id="exporter-csv" class="outil large choix-export" type="button">
-        <strong>CSV</strong><small>Pour Excel, LibreOffice ou Google Sheets</small>
-      </button>
-      <p class="panneau-aide">Le fichier porte le titre du classeur. Les formules sont exportées avec leur résultat.</p>
     </div>
 
     <div class="barre-formule">
@@ -336,6 +389,16 @@
         <svg aria-hidden="true"><use href="#i-plus" /></svg>
       </button>
       <div id="liste-feuilles" class="liste-feuilles" role="tablist" aria-label="Feuilles"></div>
+      <!-- Zoom de la grille (50 % à 200 %). On peut aussi pincer à deux doigts, ou Ctrl + molette. -->
+      <div class="zoom" role="group" aria-label="Zoom de la grille">
+        <button id="zoom-moins" class="outil-rond bouton-zoom" type="button" title="Zoom arrière (−10 %)" aria-label="Zoom arrière">
+          <svg aria-hidden="true"><use href="#i-moins" /></svg>
+        </button>
+        <button id="zoom-valeur" class="zoom-valeur" type="button" title="Zoom : taille normale">100 %</button>
+        <button id="zoom-plus" class="outil-rond bouton-zoom" type="button" title="Zoom avant (+10 %)" aria-label="Zoom avant">
+          <svg aria-hidden="true"><use href="#i-plus" /></svg>
+        </button>
+      </div>
     </nav>
 
     <footer class="barre-etat">
@@ -350,9 +413,9 @@
       <button id="bouton-recharger" class="outil" type="button">Recharger</button>
     </div>
 
-    <!-- Bandeau affiché si Tableur est ouvert dans deux onglets ou fenêtres. -->
+    <!-- Bandeau affiché si Omni-Tableur est ouvert dans deux onglets ou fenêtres. -->
     <div id="bandeau-onglets" class="bandeau" role="alert" hidden>
-      <span>Tableur est aussi ouvert ailleurs (autre onglet ou fenêtre). Gardez-en un seul ouvert, sinon des modifications pourraient être perdues.</span>
+      <span>Omni-Tableur est aussi ouvert ailleurs (autre onglet ou fenêtre). Gardez-en un seul ouvert, sinon des modifications pourraient être perdues.</span>
       <button id="bouton-compris" class="outil" type="button">Compris</button>
     </div>
 
@@ -397,6 +460,18 @@
       </div>
     </dialog>
 
+    <dialog id="fenetre-fusion" class="fenetre" aria-labelledby="titre-fusion">
+      <div class="fenetre-tete"><h2 id="titre-fusion">Fusionner les cellules ?</h2></div>
+      <div class="fenetre-corps">
+        <p id="texte-fusion"></p>
+        <p class="note">Le bouton « Annuler » (en haut) permet de revenir en arrière.</p>
+        <div class="boutons-fenetre">
+          <button class="outil" type="button" data-fermer="garder">Ne pas fusionner</button>
+          <button class="outil principal" type="button" data-fermer="fusionner">Fusionner</button>
+        </div>
+      </div>
+    </dialog>
+
     <dialog id="fenetre-renommer-feuille" class="fenetre" aria-labelledby="titre-renommer-feuille">
       <div class="fenetre-tete"><h2 id="titre-renommer-feuille">Renommer la feuille</h2></div>
       <div class="fenetre-corps">
@@ -421,6 +496,30 @@
         <div class="boutons-fenetre">
           <button class="outil" type="button" data-fermer="garder">Garder la feuille</button>
           <button class="outil danger" type="button" data-fermer="supprimer">Supprimer</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="fenetre-importer-classeur" class="fenetre" aria-labelledby="titre-importer-classeur">
+      <div class="fenetre-tete"><h2 id="titre-importer-classeur">Importer un classeur</h2></div>
+      <div class="fenetre-corps">
+        <p><strong>Cela remplacera votre classeur actuel. Continuer ?</strong></p>
+        <p id="resume-import"></p>
+        <p class="note">Tant que l'application reste ouverte, le bouton « Annuler » permet de revenir au classeur d'avant. Pour le garder aussi dans un fichier, choisissez d'abord « Exporter le classeur (.json) ».</p>
+        <div class="boutons-fenetre">
+          <button class="outil" type="button" data-fermer="garder">Garder mon classeur</button>
+          <button class="outil principal" type="button" data-fermer="remplacer">Remplacer</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="fenetre-erreur-fichier" class="fenetre" aria-labelledby="titre-erreur-fichier">
+      <div class="fenetre-tete"><h2 id="titre-erreur-fichier">Import impossible</h2></div>
+      <div class="fenetre-corps">
+        <p id="texte-erreur-fichier" role="alert"></p>
+        <p class="note">Votre classeur actuel n'a pas été modifié.</p>
+        <div class="boutons-fenetre">
+          <button class="outil principal" type="button" data-fermer="">Compris</button>
         </div>
       </div>
     </dialog>
@@ -451,19 +550,19 @@
         <div class="a-propos-identite">
           <img src="assets/logo-omni-systeme.webp" width="88" height="88" alt="Logo de l'Omni-système" />
           <div>
-            <p class="nom-appli" data-config="nom">Tableur</p>
+            <p class="nom-appli" data-config="nom">Omni-Tableur</p>
             <p class="note">Version <span data-config="version"></span></p>
           </div>
         </div>
         <p><strong>Application créée par <span data-config="auteurs">Ferrus Dantioch et Claude</span>.</strong></p>
-        <p>Tableur fait partie de la Suite bureautique de l'Omni-système, aux côtés de Plume (traitement de texte) et de L'Atelier (écriture de romans).</p>
+        <p>Omni-Tableur fait partie de la Suite bureautique de l'Omni-système, aux côtés de Plume (traitement de texte) et de L'Atelier (écriture de romans).</p>
         <p>Vos classeurs restent sur cet appareil : aucun compte, rien n'est envoyé sur internet. L'application fonctionne aussi sans connexion, et chaque modification est enregistrée automatiquement.</p>
         <p><a data-config-lien="siteOmni" href="https://ferrusdantioch.github.io/omni-systeme/" target="_blank" rel="noopener">Site de l'Omni-système</a></p>
         <!-- Retours : une adresse-alias (Proton) créée pour ça. Le lien ouvre seulement
              l'application de messagerie, adresse et objet déjà remplis : rien ne part tout seul. -->
         <section class="a-propos-bloc" aria-labelledby="titre-retours">
           <h3 id="titre-retours">Un retour, une idée, un problème ?</h3>
-          <p>Vos messages sont les bienvenus : <a id="lien-contact" href="mailto:omni-systeme.choking513@passmail.net?subject=Retour%20sur%20Tableur">écrire un message</a> (votre messagerie s'ouvre, avec l'objet « Retour sur Tableur » déjà rempli).</p>
+          <p>Vos messages sont les bienvenus : <a id="lien-contact" href="mailto:omni-systeme.choking513@passmail.net?subject=Retour%20sur%20Omni-Tableur">écrire un message</a> (votre messagerie s'ouvre, avec l'objet « Retour sur Omni-Tableur » déjà rempli).</p>
           <p class="adresse-contact">
             <span id="adresse-contact" class="adresse-mail">omni-systeme.choking513@passmail.net</span>
             <button id="copier-adresse" class="outil" type="button">Copier l'adresse</button>
@@ -472,7 +571,7 @@
         </section>
         <section class="a-propos-bloc" aria-labelledby="titre-licence">
           <h3 id="titre-licence">Licence</h3>
-          <p>Tableur est distribué sous licence <strong>Creative Commons BY-NC-ND 4.0</strong> (Attribution – Pas d'utilisation commerciale – Pas de modification) : vous pouvez l'utiliser et le partager tel quel, gratuitement, en citant son auteur. Il ne peut être ni vendu, ni modifié. Texte complet : fichier LICENSE du projet ; résumé : <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.fr" target="_blank" rel="noopener">site de Creative Commons</a>.</p>
+          <p>Omni-Tableur est distribué sous licence <strong>Creative Commons BY-NC-ND 4.0</strong> (Attribution – Pas d'utilisation commerciale – Pas de modification) : vous pouvez l'utiliser et le partager tel quel, gratuitement, en citant son auteur. Il ne peut être ni vendu, ni modifié. Texte complet : fichier LICENSE du projet ; résumé : <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.fr" target="_blank" rel="noopener">site de Creative Commons</a>.</p>
         </section>
         <section class="a-propos-bloc" aria-labelledby="titre-bibliotheques">
           <h3 id="titre-bibliotheques">Bibliothèques et polices utilisées</h3>
@@ -507,8 +606,9 @@
           <ul>
             <li>Flèches, <strong>Tab</strong> (à droite), <strong>Entrée</strong> (en bas) ; avec <strong>Maj</strong>, dans l'autre sens.</li>
             <li><strong>Ctrl + flèche</strong> : jusqu'au bord du tableau. <strong>Ctrl + Origine</strong> : retour en A1.</li>
-            <li>Plusieurs cellules : <strong>Maj + flèches</strong>, glisser à la souris, ou la poignée ronde au doigt. Un clic sur « A » ou « 1 » sélectionne toute la colonne ou la ligne.</li>
+            <li>Plusieurs cellules : <strong>Maj + flèches</strong>, glisser à la souris, ou la poignée ronde au doigt. Un appui (ou un clic) sur l'en-tête « A » ou « 1 » sélectionne toute la colonne ou toute la ligne (Maj + clic : plusieurs). Mise en forme, Copier, Insérer et Supprimer s'appliquent alors à toute la sélection.</li>
             <li>Dans la case « A1 » en haut à gauche, tapez une adresse (<code>C12</code>) puis Entrée pour y aller.</li>
+            <li><strong>Zoom</strong> (de 50 % à 200 %) : boutons <strong>−</strong> et <strong>+</strong> en bas à droite (un appui sur le pourcentage revient à 100 %), pincement à deux doigts sur la grille, ou <strong>Ctrl + molette</strong>. Le zoom ne change que l'affichage, pas le classeur ni le PDF.</li>
           </ul>
         </section>
         <section>
@@ -519,12 +619,14 @@
             <li>Au doigt (ou au clavier) : sélectionnez la cellule de départ et les cellules à remplir, puis <strong>Recopier en bas</strong> (<strong>Ctrl + D</strong>) ou <strong>Recopier à droite</strong> (<strong>Ctrl + R</strong>).</li>
             <li><strong>Insérer</strong> des lignes ou des colonnes, ou les <strong>Supprimer</strong> : autant qu'il y en a de sélectionnées. Les formules suivent les cellules ; si une cellule utilisée par une formule est supprimée, la formule affiche <code>#REF!</code>.</li>
             <li><strong>Effacer</strong> (ou la touche <strong>Suppr</strong>) vide les cellules sélectionnées, en gardant leur mise en forme.</li>
+            <li><strong>Rechercher</strong> (<strong>Ctrl + F</strong>) : tapez le texte, puis <strong>Suivant</strong> (ou Entrée) sélectionne chaque cellule qui le contient ; le nombre de résultats s'affiche. <strong>Remplacer</strong> change la cellule sélectionnée puis passe à la suivante ; <strong>Tout remplacer</strong> change tout d'un coup (un seul « Annuler » remet tout). Options : respecter les majuscules, chercher dans toutes les feuilles. La recherche porte sur ce qui a été tapé (pour une formule, son texte : <code>SOMME</code>…).</li>
           </ul>
         </section>
         <section>
           <h3>Mise en forme et bordures</h3>
           <ul>
             <li>Onglet <strong>« Mise en forme »</strong> : gras (<strong>Ctrl + B</strong>), italique (<strong>Ctrl + I</strong>), couleur du texte, couleur de fond, alignement (gauche, centre, droite ; un second appui revient à l'automatique), largeur des colonnes.</li>
+            <li><strong>Fusionner</strong> : sélectionnez plusieurs cellules (par exemple A1 à D1 pour un titre) puis « Fusionner » : elles n'en font plus qu'une, au texte centré. Seul le contenu de la cellule en haut à gauche est gardé (une question est posée si d'autres cellules sont remplies) ; ses couleurs et ses bordures s'appliquent à toute la zone. Une formule qui vise une case de la zone (<code>=B1</code>) utilise la cellule en haut à gauche. Sur une cellule fusionnée, le même bouton devient « Défusionner ». On ne peut pas trier des lignes qui contiennent des cellules fusionnées.</li>
             <li><strong>Format</strong> des nombres : nombre (1 234,50), euros, pourcentage, date, et nombre de décimales (− et +). Le format change seulement l'affichage : les calculs gardent le nombre exact.</li>
             <li>Onglet <strong>« Bordures »</strong> : choisissez d'abord le trait (<strong>Fin</strong> ou <strong>Épais</strong>) et la <strong>Couleur</strong>, sélectionnez les cellules, puis <strong>Toutes</strong>, <strong>Extérieure</strong>, <strong>Haut</strong>, <strong>Bas</strong>, <strong>Gauche</strong>, <strong>Droite</strong> ou <strong>Aucune</strong>. Les bordures apparaissent aussi dans le PDF.</li>
           </ul>
@@ -533,9 +635,18 @@
           <h3>Feuilles et données</h3>
           <ul>
             <li><strong>Feuilles</strong> : les onglets en bas de l'écran. <strong>+</strong> ajoute une feuille ; un appui sur un onglet l'affiche ; un appui sur l'onglet affiché ouvre son menu (<strong>Renommer…</strong>, <strong>Supprimer…</strong>). À la souris, un double-clic renomme.</li>
-            <li>Onglet <strong>« Données »</strong> → <strong>Trier</strong> : placez-vous dans la colonne qui décide de l'ordre. Tableur trouve le tableau autour, reconnaît la ligne de titres (case à cocher), puis trie en ordre croissant ou décroissant. Les lignes restent entières.</li>
+            <li>Onglet <strong>« Données »</strong> → <strong>Trier</strong> : placez-vous dans la colonne qui décide de l'ordre. Omni-Tableur trouve le tableau autour, reconnaît la ligne de titres (case à cocher), puis trie en ordre croissant ou décroissant. Les lignes restent entières.</li>
             <li><strong>Figer la 1<sup>re</sup> ligne</strong> : la ligne des titres reste visible quand on fait défiler.</li>
-            <li><strong>Importer CSV</strong> : un fichier CSV (Excel, banque, Google Sheets…) arrive dans une nouvelle feuille. <strong>Exporter</strong> : la feuille affichée en PDF ou en CSV.</li>
+            <li><strong>Importer</strong> → <strong>Importer un CSV</strong> : un fichier CSV (Excel, banque, Google Sheets…) arrive dans une nouvelle feuille.</li>
+            <li><strong>Exporter</strong> → <strong>Exporter la feuille (.csv)</strong> ou <strong>(.pdf)</strong> : la feuille affichée, pour un autre tableur ou pour l'imprimer.</li>
+          </ul>
+        </section>
+        <section>
+          <h3>Sauvegarder dans un fichier</h3>
+          <ul>
+            <li>Le classeur est enregistré automatiquement, mais seulement <strong>dans ce navigateur</strong> : si vous effacez ses données ou changez d'appareil, il disparaît.</li>
+            <li>Pour le garder en lieu sûr : onglet « Données » → <strong>Exporter</strong> → <strong>Exporter le classeur (.json)</strong>. Le fichier <code>omni-tableur-AAAA-MM-JJ.json</code> arrive dans les téléchargements ; rangez-le où vous voulez (clé USB, cloud, e-mail…).</li>
+            <li>Pour le rouvrir (ici ou sur un autre appareil) : <strong>Importer</strong> → <strong>Importer un classeur (.json)</strong>. Il remplace le classeur actuel, après confirmation ; « Annuler » permet de revenir en arrière.</li>
           </ul>
         </section>
         <section>
@@ -585,7 +696,7 @@
           <h3>Raccourcis</h3>
           <ul>
             <li><strong>Ctrl + Z</strong> annuler, <strong>Ctrl + Y</strong> rétablir, <strong>Ctrl + B</strong> gras, <strong>Ctrl + I</strong> italique, <strong>Suppr</strong> vider les cellules, <strong>Ctrl + A</strong> tout sélectionner, <strong>Ctrl + P</strong> exporter en PDF.</li>
-            <li><strong>Ctrl + C</strong> copier, <strong>Ctrl + X</strong> couper, <strong>Ctrl + V</strong> coller, <strong>Ctrl + D</strong> recopier vers le bas, <strong>Ctrl + R</strong> recopier vers la droite.</li>
+            <li><strong>Ctrl + C</strong> copier, <strong>Ctrl + X</strong> couper, <strong>Ctrl + V</strong> coller, <strong>Ctrl + D</strong> recopier vers le bas, <strong>Ctrl + R</strong> recopier vers la droite, <strong>Ctrl + F</strong> rechercher, <strong>Ctrl + H</strong> remplacer, <strong>Ctrl + molette</strong> zoom.</li>
           </ul>
         </section>
       </div>

@@ -322,6 +322,8 @@ export class MiseEnForme {
         mesureur.font = `${vue.italique ? 'italic ' : ''}${vue.gras ? 700 : style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
         largeurTexte = Math.max(largeurTexte, mesureur.measureText(vue.texte).width);
       }
+      // Le texte est mesuré avec la taille affichée (zoom compris) : on revient à 100 %.
+      largeurTexte /= this.grille.zoom;
       // Marges intérieures de la cellule (8 px de chaque côté) et trait de séparation.
       const largeur = largeurTexte ? Math.ceil(largeurTexte) + 20 : LARGEUR_PAR_DEFAUT;
       this.classeur.modifierLargeurs(this.feuille, [colonne], Math.min(LARGEUR_MAX, Math.max(LARGEUR_MIN, largeur)));
@@ -350,7 +352,9 @@ export class MiseEnForme {
 
     const deplacer = (e) => {
       if (e.pointerId !== evenement.pointerId) return;
-      largeur = Math.min(LARGEUR_MAX, Math.max(LARGEUR_MIN, Math.round(largeurDepart + e.clientX - depart)));
+      // Le déplacement à l'écran est divisé par le zoom : la largeur enregistrée est celle à 100 %.
+      const ecart = (e.clientX - depart) / this.grille.zoom;
+      largeur = Math.min(LARGEUR_MAX, Math.max(LARGEUR_MIN, Math.round(largeurDepart + ecart)));
       for (const c of colonnes) this.grille.apercuLargeur(c, largeur);
       this.redessinerSelection();
     };

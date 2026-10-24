@@ -7,7 +7,7 @@ import { demarrerServeur, lancerNavigateur, ouvrirApplication, cliquerOutil } fr
 
 const td = (ligne, colonne) => `td[data-ligne="${ligne}"][data-colonne="${colonne}"]`;
 const largeurColonne = (page, colonne) =>
-  page.evaluate((c) => Math.round(window.tableur.grille.td(1, c).getBoundingClientRect().width), colonne);
+  page.evaluate((c) => Math.round(window.omniTableur.grille.td(1, c).getBoundingClientRect().width), colonne);
 
 let serveur;
 let navigateur;
@@ -35,7 +35,7 @@ test('gras : bouton et Ctrl+B, sur une plage, annulable', async () => {
   assert.match(await page.getAttribute(td(1, 2), 'class'), /gras/);
   assert.equal(await page.getAttribute('#bouton-gras', 'aria-pressed'), 'true');
   // Le gras se voit vraiment (graisse de la police).
-  const graisse = await page.evaluate(() => getComputedStyle(window.tableur.grille.td(1, 1)).fontWeight);
+  const graisse = await page.evaluate(() => getComputedStyle(window.omniTableur.grille.td(1, 1)).fontWeight);
   assert.equal(graisse, '700');
   // Ctrl+B enlève le gras.
   await page.keyboard.press('Control+b');
@@ -60,7 +60,7 @@ test('couleur de fond : nuancier, aucune couleur, annulation', async () => {
   assert.equal(await page.getAttribute(td(2, 1), 'data-fond'), 'vert');
   assert.equal(await page.getAttribute('#temoin-fond', 'data-fond'), 'vert');
   // La couleur affichée vient du thème.
-  const couleur = await page.evaluate(() => getComputedStyle(window.tableur.grille.td(1, 1)).backgroundColor);
+  const couleur = await page.evaluate(() => getComputedStyle(window.omniTableur.grille.td(1, 1)).backgroundColor);
   const attendue = await page.evaluate(() => {
     const essai = document.createElement('div');
     essai.style.background = 'var(--fond-vert)';
@@ -96,7 +96,7 @@ test('largeur des colonnes : glisser, double-clic, panneau', async () => {
   await page.mouse.move(x + 60, y, { steps: 6 });
   await page.mouse.up();
   assert.equal(await largeurColonne(page, 2), 160);
-  assert.equal(await page.evaluate(() => window.tableur.feuille.largeur(2)), 160);
+  assert.equal(await page.evaluate(() => window.omniTableur.feuille.largeur(2)), 160);
   await page.keyboard.press('Control+z');
   assert.equal(await largeurColonne(page, 2), 100);
 
@@ -107,7 +107,7 @@ test('largeur des colonnes : glisser, double-clic, panneau', async () => {
   const ajustee = await largeurColonne(page, 1);
   assert.ok(ajustee > 250, `largeur ajustée : ${ajustee}`);
   const texteVisible = await page.evaluate(() => {
-    const td = window.tableur.grille.td(1, 1);
+    const td = window.omniTableur.grille.td(1, 1);
     return td.scrollWidth <= td.clientWidth;
   });
   assert.ok(texteVisible, 'le texte doit tenir dans la colonne');
@@ -159,7 +159,7 @@ const style = (page, adr, propriete) =>
     ([a, p]) => {
       const m = /^([A-Z]+)(\d+)$/.exec(a);
       const colonne = m[1].charCodeAt(0) - 64;
-      return getComputedStyle(window.tableur.grille.td(Number(m[2]), colonne))[p];
+      return getComputedStyle(window.omniTableur.grille.td(Number(m[2]), colonne))[p];
     },
     [adr, propriete],
   );
@@ -198,7 +198,7 @@ test('italique, couleur du texte et alignement', async () => {
 
 test('formats de nombre : euros, pourcentage, date, décimales', async () => {
   const { contexte, page } = await ouvrirApplication(navigateur, serveur.url);
-  const texte = (adr) => page.evaluate((a) => window.tableur.grille.td(1, a).textContent.replace(/[\u202f\u00a0]/g, ' '), adr);
+  const texte = (adr) => page.evaluate((a) => window.omniTableur.grille.td(1, a).textContent.replace(/[\u202f\u00a0]/g, ' '), adr);
   for (const valeur of ['1234,5', '0,125', '46318', '2,567']) {
     await page.keyboard.type(valeur);
     await page.keyboard.press('Tab');
@@ -230,7 +230,7 @@ test('formats de nombre : euros, pourcentage, date, décimales', async () => {
   await page.keyboard.press('Escape');
   assert.equal(await texte(4), '2,57');
   // La valeur reste entière pour les calculs, et « Automatique » revient à l'affichage d'origine.
-  assert.equal(await page.evaluate(() => window.tableur.moteur.valeur(window.tableur.feuille, 'D1')), 2.567);
+  assert.equal(await page.evaluate(() => window.omniTableur.moteur.valeur(window.omniTableur.feuille, 'D1')), 2.567);
   await cliquerOutil(page, '#bouton-format');
   await page.click('#panneau-format [data-format=""]');
   assert.equal(await texte(4), '2,567');

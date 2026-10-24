@@ -1,6 +1,6 @@
 # Licences des éléments utilisés
 
-Tableur n'utilise que des éléments sous licence libre **permissive** (MIT,
+Omni-Tableur n'utilise que des éléments sous licence libre **permissive** (MIT,
 Apache 2.0, SIL Open Font License). Aucun élément sous licence GPL ou
 commerciale (HyperFormula a été écarté pour cette raison).
 
@@ -42,7 +42,7 @@ Remarques :
   Ferrus Dantioch (repris de Plume).
 - Les icônes de l'application (`icons/`) sont dessinées par le script
   `outils/creer-icones.py` de ce projet.
-- Le code de Tableur appartient à Ferrus Dantioch. Il est distribué sous
+- Le code d'Omni-Tableur appartient à Ferrus Dantioch. Il est distribué sous
   licence **Creative Commons BY-NC-ND 4.0** (fichier [`LICENSE`](LICENSE) :
   texte officiel anglais puis traduction française officielle) : utilisation
   et partage à l'identique, en citant l'auteur, sans usage commercial ni

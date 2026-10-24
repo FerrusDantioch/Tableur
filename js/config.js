@@ -9,10 +9,10 @@
 self.CONFIG_APP = Object.freeze({
   // Nom affiché (titre de l'onglet, fenêtre « À propos »).
   // Le fichier manifest.webmanifest contient aussi le nom : le changer aux deux endroits.
-  nom: 'Tableur',
+  nom: 'Omni-Tableur',
 
-  // Numéro de version : à augmenter à chaque publication (ex. 2.0.1).
-  version: '2.0.0',
+  // Numéro de version : à augmenter à chaque publication (ex. 2.1.1).
+  version: '2.1.0',
 
   auteurs: 'Ferrus Dantioch et Claude',
   siteOmni: 'https://ferrusdantioch.github.io/omni-systeme/',
@@ -21,5 +21,10 @@ self.CONFIG_APP = Object.freeze({
   // NE PAS CHANGER : les classeurs déjà enregistrés deviendraient invisibles.
   // Il est préfixé partout, car toutes les applications du site
   // ferrusdantioch.github.io partagent le même espace de stockage.
-  idStockage: 'tableur',
+  idStockage: 'omni-tableur',
+
+  // Identifiant utilisé avant le renommage en « Omni-Tableur » (version 2.0.0
+  // et avant). Au démarrage, les données encore rangées sous ce nom sont
+  // copiées vers le nouveau, puis effacées (voir js/services/stockage.js).
+  ancienIdStockage: 'tableur',
 });

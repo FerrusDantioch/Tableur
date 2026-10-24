@@ -21,10 +21,14 @@ import { CommandesEdition } from './affichage/commandes-edition.js';
 import { OutilsBordures } from './affichage/outils-bordures.js';
 import { OngletsFeuilles } from './affichage/onglets-feuilles.js';
 import { CommandesDonnees } from './affichage/commandes-donnees.js';
+import { CommandesFusion } from './affichage/commandes-fusion.js';
 import { installerBarreOutils } from './affichage/barre-outils.js';
 import { demander, ouvrirFenetre, preparerFenetres } from './affichage/fenetres.js';
 import { installerMenu } from './affichage/menu.js';
 import { PressePapiers } from './affichage/presse-papiers.js';
+import { SauvegardeFichier } from './affichage/sauvegarde-fichier.js';
+import { RechercheRemplacement } from './affichage/recherche.js';
+import { Zoom } from './affichage/zoom.js';
 import { demanderStockagePersistant, ecrireClasseur, lireClasseur, mettreDeCote, preferences } from './services/stockage.js';
 import { SauvegardeAuto } from './services/sauvegarde-auto.js';
 import { demarrerServiceWorker } from './services/pwa.js';
@@ -32,6 +36,7 @@ import { genererCSV } from './services/export-csv.js';
 import { ExportPdf } from './services/export-pdf.js';
 import { nomDeFichier, telecharger } from './services/fichiers.js';
 import { surveillerAutresOnglets } from './services/onglets.js';
+import { THEME_PAR_DEFAUT, choisirTheme } from './services/theme.js';
 
 const CONFIG = self.CONFIG_APP;
 const element = (id) => document.getElementById(id);
@@ -82,7 +87,10 @@ function presenterCellule(adr, ligne, colonne) {
 
 const zone = element('zone-grille');
 const grille = new Grille({ racine: zone, feuille: feuilleActive(), presenterCellule });
-const selection = new Selection(() => ({ lignes: feuilleActive().lignes, colonnes: feuilleActive().colonnes }));
+const selection = new Selection(
+  () => ({ lignes: feuilleActive().lignes, colonnes: feuilleActive().colonnes }),
+  () => feuilleActive().fusions,
+);
 const edition = new Edition({
   champCellule: element('editeur-cellule'),
   champBarre: element('champ-formule'),
@@ -184,6 +192,9 @@ const interactions = new Interactions({
 const avantAction = () => interactions.validerEdition(null, { refocaliser: false });
 const apresAction = () => interactions.focaliser();
 
+// Zoom de la grille (boutons − et +, deux doigts, Ctrl + molette), mémorisé sur l'appareil.
+const zoom = new Zoom({ grille, preferences, avantChangement: avantAction, apresChangement: () => interactions.actualiser() });
+
 miseEnForme = new MiseEnForme({
   classeur,
   selection,
@@ -203,6 +214,9 @@ commandesEdition = new CommandesEdition({ classeur, selection, avantAction, apre
 new OutilsBordures({ classeur, selection, preferences, avantAction, apresAction });
 new OngletsFeuilles({ classeur, avantAction, apresAction, demander, ouvrirFenetre, signaler });
 new CommandesDonnees({ classeur, selection, valeur: (feuille, adr) => moteur.valeur(feuille, adr), avantAction, apresAction, signaler });
+new CommandesFusion({ classeur, selection, demander, avantAction, apresAction, signaler });
+const recherche = new RechercheRemplacement({ classeur, selection, grille, avantAction, apresAction, signaler });
+commandes.rechercher = (remplacer) => recherche.ouvrir({ remplacer });
 
 installerBarreOutils({ preferences, avantAction, apresAction, surChangement: () => interactions.actualiser() });
 boutonAnnuler.addEventListener('click', () => commandes.annuler());
@@ -436,6 +450,21 @@ commandes.exporterPdf = () => {
   exportPdf.exporter();
 };
 
+// --- Sauvegarde complète dans un fichier (.json) ----------------------------------
+// Le fichier garde aussi le thème et le zoom ; ils sont repris à l'import.
+const sauvegardeFichier = new SauvegardeFichier({
+  classeur,
+  lireAffichage: () => ({ zoom: zoom.pourcent, theme: preferences.lire('theme', THEME_PAR_DEFAUT) }),
+  appliquerAffichage(affichage) {
+    if (affichage.theme) choisirTheme(affichage.theme, preferences);
+    if (affichage.zoom !== undefined) zoom.choisir(affichage.zoom);
+  },
+  demander,
+  avantAction,
+  apresAction,
+  signaler,
+});
+
 // --- Divers ----------------------------------------------------------------------
 
 // Taille de fenêtre modifiée (ou téléphone tourné) : le cadre de sélection est recalé.
@@ -471,7 +500,7 @@ demarrerServiceWorker({
 interactions.focaliser();
 
 // Accès pour les tests automatiques et le débogage dans la console.
-window.tableur = {
+window.omniTableur = {
   classeur,
   get feuille() {
     return classeur.feuilleActive;
@@ -483,5 +512,8 @@ window.tableur = {
   sauvegarde,
   exportPdf,
   pressePapiers,
+  sauvegardeFichier,
+  zoom,
+  recherche,
   adresse,
 };
