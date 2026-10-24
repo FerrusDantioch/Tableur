@@ -94,10 +94,10 @@ Ne pas annoncer un travail terminé avant que les deux passent.
 
 ## Licence
 
-Creative Commons BY-NC-ND 4.0 (`LICENSE`, textes officiels EN puis FR, à ne
-jamais retoucher). Bibliothèques : MIT / Apache 2.0 / OFL uniquement, listées
-dans `LICENCES.md` et dans « À propos ». Aucun CDN, aucun appel réseau (CSP
-`default-src 'self'`).
+Creative Commons BY-NC-ND 4.0 (`LICENSE` : « © 2026 Ferrus Dantioch », puis
+textes officiels EN puis FR, à ne jamais retoucher). Bibliothèques :
+MIT / Apache 2.0 / OFL uniquement, listées dans `LICENCES.md` et dans
+« À propos ». Aucun CDN, aucun appel réseau (CSP `default-src 'self'`).
 
 ## ⚠️ Plusieurs applications sur `ferrusdantioch.github.io` : limite de Chrome Android
 
