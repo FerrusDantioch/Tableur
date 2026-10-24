@@ -39,7 +39,7 @@ Remarques :
 ## Éléments propres au projet
 
 - Le logo de l'Omni-système (`assets/logo-omni-systeme.webp`) appartient à
-  Ferrus Dantioch (repris de Plume).
+  Ferrus Dantioch (repris d'Omni-Texte).
 - Les icônes de l'application (`icons/`) sont dessinées par le script
   `outils/creer-icones.py` de ce projet.
 - Le code d'Omni-Tableur appartient à Ferrus Dantioch. Il est distribué sous

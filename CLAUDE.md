@@ -13,8 +13,10 @@ nomme son cache avec ce numéro : sans changement, les appareils gardent
 l'ancienne version. Tout nouveau fichier de l'application doit aussi aller
 dans la liste `FICHIERS` de `sw.js` (le test `tests/unitaires/hors-ligne.test.mjs`
 le vérifie). Ne jamais changer `idStockage` (`config.js`) ni `"id": "/Tableur/"`
-(`manifest.webmanifest`). Le dépôt et le dossier restent `Tableur` (adresse
-GitHub Pages `…/Tableur/`). `ancienIdStockage: 'tableur'` sert à la migration
+(`manifest.webmanifest`) : cet `id` garde l'ancien nom exprès, c'est un
+identifiant et non une adresse. Le dépôt a été renommé `omni-tableur` (adresse
+GitHub Pages `…/omni-tableur/`, aussi servie ainsi par `outils/serveur.mjs`) ;
+ne plus le renommer. `ancienIdStockage: 'tableur'` sert à la migration
 des données d'avant le renommage (`stockage.js`, `theme-initial.js`,
 `onglets.js`, `sw.js`) : ne pas le retirer.
 

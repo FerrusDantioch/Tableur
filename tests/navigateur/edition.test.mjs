@@ -82,7 +82,7 @@ test('Ctrl+D et bouton « Recopier en bas » : formules adaptées', async () => 
   await page.click(td(1, 4), { modifiers: ['Shift'] });
   await page.keyboard.press('Control+r');
   assert.equal(await brut(page, 'D1'), '=C1+1');
-  assert.ok(page.url().includes('/Tableur/'), 'Ctrl+R ne recharge pas la page');
+  assert.ok(page.url().includes('/omni-tableur/'), 'Ctrl+R ne recharge pas la page');
   assert.deepEqual(page.erreurs, []);
   await contexte.close();
 });

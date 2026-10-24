@@ -1,10 +1,10 @@
 // Petit serveur web local pour essayer l'application sur son ordinateur.
 //
 // Utilisation (dans le dossier du projet) :   node outils/serveur.mjs
-// puis ouvrir http://localhost:8000/Tableur/ dans le navigateur.
+// puis ouvrir http://localhost:8000/omni-tableur/ dans le navigateur.
 //
-// L'application est servie dans le sous-dossier /Tableur/, exactement comme
-// sur GitHub Pages (https://ferrusdantioch.github.io/Tableur/) : on vérifie
+// L'application est servie dans le sous-dossier /omni-tableur/, exactement comme
+// sur GitHub Pages (https://ferrusdantioch.github.io/omni-tableur/) : on vérifie
 // ainsi que tous les chemins fonctionnent une fois publiée.
 // Aucune bibliothèque n'est nécessaire, seulement Node.js.
 
@@ -14,7 +14,7 @@ import { extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const DOSSIER = fileURLToPath(new URL('..', import.meta.url));
-const PREFIXE = '/Tableur/';
+const PREFIXE = '/omni-tableur/';
 // Port 8000 par défaut ; PORT=0 laisse l'ordinateur choisir un port libre (tests).
 const PORT = process.env.PORT === undefined ? 8000 : Number(process.env.PORT);
 
@@ -36,14 +36,14 @@ const TYPES = {
 
 const serveur = createServer(async (requete, reponse) => {
   const url = new URL(requete.url, 'http://localhost');
-  if (url.pathname === '/' || url.pathname === '/Tableur') {
+  if (url.pathname === '/' || url.pathname === '/omni-tableur') {
     reponse.writeHead(302, { Location: PREFIXE });
     reponse.end();
     return;
   }
   if (!url.pathname.startsWith(PREFIXE)) {
     reponse.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-    reponse.end('Introuvable. L’application est à l’adresse /Tableur/');
+    reponse.end('Introuvable. L’application est à l’adresse /omni-tableur/');
     return;
   }
   // Chemin du fichier demandé, sans jamais sortir du dossier du projet.
@@ -70,6 +70,6 @@ const serveur = createServer(async (requete, reponse) => {
 });
 
 serveur.listen(PORT, () => {
-  console.log(`Application disponible sur http://localhost:${serveur.address().port}/Tableur/`);
+  console.log(`Application disponible sur http://localhost:${serveur.address().port}/omni-tableur/`);
   console.log('Pour arrêter : Ctrl+C');
 });

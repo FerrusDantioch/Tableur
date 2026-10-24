@@ -7,16 +7,17 @@ comme une application classique.
 - Aucun compte, aucun serveur : les classeurs restent sur l'appareil.
 - Fonctionne sans connexion internet, après la première visite.
 - À la souris, au clavier et au doigt.
-- Application de la « Suite bureautique » de l'Omni-système, avec Plume
-  (traitement de texte) et L'Atelier (écriture de romans).
+- Application de la « Suite bureautique » de l'Omni-système, avec Omni-Texte
+  (traitement de texte) et Omni-Romancier (écriture de romans).
 - Créée par Ferrus Dantioch et Claude.
 
-Adresse une fois publiée : `https://ferrusdantioch.github.io/Tableur/`
-(dépôt GitHub `FerrusDantioch/Tableur`).
+**Ouvrir l'application :** https://ferrusdantioch.github.io/omni-tableur/
+(dépôt GitHub `FerrusDantioch/omni-tableur`).
 
-L'application s'appelait « Tableur » jusqu'à la version 2.0.0. L'adresse et le
-nom du dépôt sont gardés tels quels : les changer casserait les favoris et
-l'application déjà installée sur les appareils (voir partie 6).
+L'application s'appelait « Tableur » jusqu'à la version 2.0.0, et son dépôt
+aussi. Le dépôt a depuis été renommé `omni-tableur`, ce qui a changé son
+adresse : si tu l'avais installée depuis l'ancienne adresse `…/Tableur/`,
+désinstalle-la puis réinstalle-la depuis la nouvelle (voir partie 6).
 
 **Le plus important** : la partie 1 explique comment ne jamais perdre un
 classeur (faire régulièrement un export .json).
@@ -293,16 +294,16 @@ local. Il est fourni (`outils/serveur.mjs`) et n'a besoin que de Node.js.
 
 **À chaque essai (Windows)**
 
-1. Ouvre l'Explorateur de fichiers et va dans le dossier `Tableur`.
+1. Ouvre l'Explorateur de fichiers et va dans le dossier `omni-tableur`.
 2. Clique dans la barre d'adresse en haut de la fenêtre (là où le chemin du dossier est écrit).
 3. Efface ce qui est écrit, tape `cmd`, puis appuie sur Entrée. Une fenêtre noire s'ouvre.
 4. Dans cette fenêtre, tape : `node outils/serveur.mjs` puis appuie sur Entrée.
-5. Le message « Application disponible sur http://localhost:8000/Tableur/ » s'affiche.
-6. Ouvre Chrome et va à l'adresse `http://localhost:8000/Tableur/`.
+5. Le message « Application disponible sur http://localhost:8000/omni-tableur/ » s'affiche.
+6. Ouvre Chrome et va à l'adresse `http://localhost:8000/omni-tableur/`.
 7. Pour arrêter : clique dans la fenêtre noire et appuie sur Ctrl+C, puis ferme-la.
 
 **Sur Mac** : ouvre l'application « Terminal », tape `cd ` (avec un espace),
-glisse le dossier `Tableur` dans la fenêtre, appuie sur Entrée, puis suis les
+glisse le dossier `omni-tableur` dans la fenêtre, appuie sur Entrée, puis suis les
 étapes 4 à 7 ci-dessus.
 
 **Sur ton téléphone** : le plus simple est de publier l'application (partie 4)
@@ -312,19 +313,19 @@ et d'ouvrir son adresse sur le téléphone.
 
 ## 4. Publier l'application sur GitHub Pages
 
-Le code est sur GitHub, dans le dépôt `FerrusDantioch/Tableur`. La version
-publiée est celle de la branche `main` ; le travail de cette mise à jour est
-sur la branche `claude/tableur-pwa-spreadsheet-8cspn7`. Tous les chemins de
-l'application sont relatifs : elle fonctionne dans le sous-dossier `/Tableur/`.
+Le code est sur GitHub, dans le dépôt `FerrusDantioch/omni-tableur`. La
+version publiée est celle de la branche `main` ; chaque mise à jour est
+préparée sur une branche de travail. Tous les chemins de l'application sont
+relatifs : elle fonctionne dans le sous-dossier `/omni-tableur/`.
 
-**Publier cette mise à jour**
+**Publier une mise à jour**
 
-1. Connecte-toi sur <https://github.com> et ouvre le dépôt `Tableur`.
+1. Connecte-toi sur <https://github.com> et ouvre le dépôt `omni-tableur`.
 2. Un bandeau propose « Compare & pull request » pour la branche de travail :
    clique dessus, puis sur « Create pull request », puis sur « Merge pull
    request » et « Confirm merge ». Le code arrive sur la branche `main`.
    (Tu peux aussi me demander de préparer cette « pull request ».)
-3. Attends une à deux minutes, puis ouvre `https://ferrusdantioch.github.io/Tableur/`.
+3. Attends une à deux minutes, puis ouvre `https://ferrusdantioch.github.io/omni-tableur/`.
    Si l'application était déjà ouverte, un bandeau propose « Recharger ».
 
 **Si GitHub Pages n'est pas encore activé** : onglet « Settings » du dépôt →
@@ -438,9 +439,10 @@ tests/                   vérifications automatiques
   avant le renommage : `js/services/stockage.js` déplace une seule fois les
   données de l'ancien nom vers le nouveau — copie, vérification, puis
   effacement de l'ancien exemplaire.)
-- **Ne renomme pas** le dépôt GitHub ni le dossier `Tableur` : l'adresse de
-  l'application (`…github.io/Tableur/`) changerait.
-- **Ne change jamais** `"id": "/Tableur/"` dans `manifest.webmanifest`. Chrome
+- **Ne renomme plus** le dépôt GitHub `omni-tableur` : l'adresse de
+  l'application (`…github.io/omni-tableur/`) changerait encore.
+- **Ne change jamais** `"id": "/Tableur/"` dans `manifest.webmanifest`, même
+  s'il garde l'ancien nom : c'est un identifiant invisible, pas une adresse. Chrome
   le lit à partir de la racine du site (`https://ferrusdantioch.github.io/`) :
   `"./"` aurait donné à l'application l'identité de la racine, la même que
   d'autres applications du site. Et une application déjà installée dont l'`id`
@@ -496,7 +498,7 @@ tests/                   vérifications automatiques
   zone invisible (toutes les cellules d'un coup), sans dessiner les lignes
   hors de l'écran.
 - **PDF par l'impression du navigateur** (« Enregistrer au format PDF »),
-  comme dans Plume : hors ligne, texte sélectionnable, aucune bibliothèque.
+  comme dans Omni-Texte : hors ligne, texte sélectionnable, aucune bibliothèque.
 - **CSV au format Excel français** : `;` entre les colonnes, virgule décimale,
   dates jj/mm/aaaa, UTF-8 avec BOM.
 - **Sécurité** : la page ne charge que ses propres fichiers (règle CSP dans
