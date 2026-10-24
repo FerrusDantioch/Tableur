@@ -724,6 +724,9 @@
               <tr><td>ARRONDI</td><td><code>=ARRONDI(A1;2)</code></td><td>arrondi à 2 décimales (aussi ARRONDI.SUP, ARRONDI.INF)</td></tr>
               <tr><td>NB.SI</td><td><code>=NB.SI(B2:B20;"&gt;10")</code></td><td>combien de cellules respectent le critère</td></tr>
               <tr><td>SOMME.SI</td><td><code>=SOMME.SI(A2:A9;"Loyer";B2:B9)</code></td><td>total de B pour les lignes où A vaut « Loyer » (aussi MOYENNE.SI)</td></tr>
+              <tr><td>NB.SI.ENS</td><td><code>=NB.SI.ENS(A2:A9;"Courses";B2:B9;"&gt;50")</code></td><td>combien de lignes respectent toutes les conditions</td></tr>
+              <tr><td>SOMME.SI.ENS</td><td><code>=SOMME.SI.ENS(C2:C9;A2:A9;"mars";B2:B9;"Courses")</code></td><td>total de C pour les lignes « mars » <em>et</em> « Courses » (la plage à additionner vient en premier ; aussi MOYENNE.SI.ENS)</td></tr>
+              <tr><td>MEDIANE</td><td><code>=MEDIANE(B2:B8)</code></td><td>la valeur du milieu (moins sensible qu'une moyenne à une valeur extrême)</td></tr>
               <tr><td>RECHERCHEV</td><td><code>=RECHERCHEV("Poire";A2:C9;3;FAUX)</code></td><td>cherche « Poire » dans la 1<sup>re</sup> colonne et donne la valeur de la 3<sup>e</sup> colonne</td></tr>
               <tr><td>MAJUSCULE, MINUSCULE</td><td><code>=MAJUSCULE(A1)</code></td><td>le texte en majuscules (ou en minuscules)</td></tr>
               <tr><td>CONCATENER, &amp;</td><td><code>=A1&amp;" "&amp;B1</code></td><td>assemble des textes</td></tr>
@@ -732,7 +735,7 @@
             </tbody>
           </table>
           <p class="note">Une plage s'écrit <code>A1:B5</code> ; une colonne entière <code>A:A</code>. Le <code>$</code> fige une référence (<code>$A$1</code>). Une cellule d'une autre feuille : <code>=Feuille2!A1</code>, ou <code>='Mes ventes'!B3</code> si le nom contient une espace. Les formules se recalculent toutes seules.</p>
-          <p class="note">Critères de NB.SI et SOMME.SI : <code>"&gt;5"</code>, <code>"&lt;=2,5"</code>, <code>"&lt;&gt;0"</code> (différent de 0), <code>"pomme"</code>, <code>"P*"</code> (commence par P), <code>""</code> (cellules vides). Les majuscules ne comptent pas : <code>"oui"</code> = <code>"Oui"</code>.</p>
+          <p class="note">Critères de NB.SI, SOMME.SI et des fonctions .ENS :<code>"&gt;5"</code>, <code>"&lt;=2,5"</code>, <code>"&lt;&gt;0"</code> (différent de 0), <code>"pomme"</code>, <code>"P*"</code> (commence par P), <code>""</code> (cellules vides). Les majuscules ne comptent pas : <code>"oui"</code> = <code>"Oui"</code>.</p>
           <p class="note">Dates : tapez <code>23/10/2026</code>. Une date est un nombre de jours : <code>=B1-A1</code> donne l'écart en jours, <code>=A1+7</code> la date une semaine plus tard.</p>
         </section>
         <section>
@@ -740,7 +743,7 @@
           <table class="tableau-aide">
             <tbody>
               <tr><td><code>#DIV/0!</code></td><td>division par zéro ou par une cellule vide</td></tr>
-              <tr><td><code>#VALEUR!</code></td><td>du texte là où un nombre est attendu</td></tr>
+              <tr><td><code>#VALEUR!</code></td><td>du texte là où un nombre est attendu (ou des plages de tailles différentes dans une fonction .ENS)</td></tr>
               <tr><td><code>#REF!</code></td><td>cellule qui n'existe pas (supprimée, au-delà de AZ ou de la ligne 1000, ou feuille inconnue)</td></tr>
               <tr><td><code>#N/A</code></td><td>valeur introuvable (RECHERCHEV n'a rien trouvé)</td></tr>
               <tr><td><code>#NOM?</code></td><td>fonction ou nom mal orthographié</td></tr>

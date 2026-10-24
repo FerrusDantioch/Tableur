@@ -13,7 +13,8 @@ const ERREURS = {
   },
   '#VALUE!': {
     affichage: '#VALEUR!',
-    explication: 'Valeur incorrecte : la formule calcule avec du texte là où un nombre est attendu.',
+    explication:
+      'Valeur incorrecte : la formule calcule avec du texte là où un nombre est attendu (ou, pour NB.SI.ENS, SOMME.SI.ENS et MOYENNE.SI.ENS, des plages de tailles différentes).',
   },
   '#REF!': {
     affichage: '#REF!',

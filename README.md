@@ -190,12 +190,13 @@ barre (plus de place pour la grille sur téléphone). **Annuler**,
   majuscules (`="oui"="Oui"` est VRAI), `&` écrit `2,5` et `VRAI`, et
   `=0,1+0,2=0,3` est VRAI.
 
-Les **33 fonctions** disponibles (noms français) :
+Les **37 fonctions** disponibles (noms français) :
 
 | Fonction | Ce qu'elle fait | Exemple |
 |---|---|---|
 | SOMME | additionne | `=SOMME(A1:A10)` |
 | MOYENNE | moyenne des nombres | `=MOYENNE(B2:B8)` |
+| MEDIANE | valeur du milieu (moins sensible qu'une moyenne à une valeur extrême) | `=MEDIANE(1;2;100)` → 2 |
 | MIN, MAX | plus petit, plus grand nombre | `=MAX(C1:C20)` |
 | NB | compte les cellules qui contiennent un nombre | `=NB(A1:A100)` |
 | NBVAL | compte les cellules non vides | `=NBVAL(A1:A100)` |
@@ -211,6 +212,8 @@ Les **33 fonctions** disponibles (noms français) :
 | SIERREUR | valeur de secours si le calcul échoue | `=SIERREUR(A1/B1;0)` |
 | NB.SI | compte les cellules qui respectent un critère | `=NB.SI(B2:B20;">10")` |
 | SOMME.SI, MOYENNE.SI | somme ou moyenne selon un critère | `=SOMME.SI(A2:A9;"Loyer";B2:B9)` |
+| NB.SI.ENS | compte les lignes qui respectent **toutes** les conditions | `=NB.SI.ENS(A2:A9;"Courses";B2:B9;">50")` |
+| SOMME.SI.ENS, MOYENNE.SI.ENS | somme ou moyenne avec plusieurs conditions (la plage à calculer vient **en premier**) | `=SOMME.SI.ENS(C2:C9;A2:A9;"mars";B2:B9;"Courses")` |
 | RECHERCHEV | cherche une valeur dans la 1<sup>re</sup> colonne d'un tableau | `=RECHERCHEV("Poire";A2:C9;3;FAUX)` |
 | CONCATENER (et `&`) | assemble des textes | `=A1&" "&B1` |
 | MAJUSCULE, MINUSCULE | change la casse | `=MAJUSCULE(A1)` |
@@ -219,8 +222,10 @@ Les **33 fonctions** disponibles (noms français) :
 | DATE | fabrique une date | `=DATE(2026;10;24)` |
 | ANNEE, MOIS, JOUR | parties d'une date | `=MOIS(A1)` |
 
-- Critères de NB.SI / SOMME.SI / MOYENNE.SI : `">5"`, `"<=2,5"`, `"<>0"`,
-  `"pomme"`, `"P*"` (jokers `*` et `?`), `""` (cellules vides), `">=01/01/2026"`.
+- Critères de NB.SI / SOMME.SI / MOYENNE.SI (et de leurs versions .ENS) :
+  `">5"`, `"<=2,5"`, `"<>0"`, `"pomme"`, `"P*"` (jokers `*` et `?`), `""`
+  (cellules vides), `">=01/01/2026"`. Dans une fonction .ENS, toutes les
+  plages doivent avoir la même taille (sinon `#VALEUR!`).
 - Dates : une date est un nombre de jours (`=B1-A1` donne l'écart en jours).
 - Erreurs claires : `#DIV/0!`, `#VALEUR!`, `#REF!`, `#NOM?`, `#N/A`,
   `#ERREUR!`, `#CIRC!` (la formule dépend d'elle-même), `#NOMBRE!`. Une
@@ -421,7 +426,7 @@ tests/                   vérifications automatiques
   `tests/unitaires/contrastes.test.mjs` vérifie que le texte et les bordures restent lisibles.
 - **Ajouter une fonction en français** : dans `js/calcul/traduction.js`,
   ajoute une ligne à la liste `FONCTIONS` (nom français → nom anglais de la
-  bibliothèque, par exemple `MEDIANE: 'MEDIAN'`), puis un test dans
+  bibliothèque, par exemple `ECARTYPE: 'STDEV.S'`), puis un test dans
   `tests/unitaires/fonctions.test.mjs`. Vérifie le résultat : si la fonction
   de la bibliothèque ne se comporte pas comme Excel, écris-la dans
   `js/calcul/fonctions.js` (c'est ce qui a été fait pour NB.SI ou RECHERCHEV).

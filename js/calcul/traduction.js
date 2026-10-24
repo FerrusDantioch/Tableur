@@ -29,6 +29,7 @@ export const FONCTIONS = Object.freeze({
   // Les six fonctions de base
   SOMME: 'SUM',
   MOYENNE: 'AVERAGE',
+  MEDIANE: 'MEDIAN',
   MIN: 'MIN',
   MAX: 'MAX',
   NB: 'COUNT',
@@ -55,6 +56,9 @@ export const FONCTIONS = Object.freeze({
   'NB.SI': 'COUNTIF',
   'SOMME.SI': 'SUMIF',
   'MOYENNE.SI': 'AVERAGEIF',
+  'NB.SI.ENS': 'COUNTIFS',
+  'SOMME.SI.ENS': 'SUMIFS',
+  'MOYENNE.SI.ENS': 'AVERAGEIFS',
   NBVAL: 'COUNTA',
   // Dates
   AUJOURDHUI: 'TODAY',
