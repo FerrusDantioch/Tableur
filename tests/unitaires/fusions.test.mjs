@@ -39,14 +39,18 @@ describe('Calculs sur les fusions', () => {
 describe('Fusionner et défusionner', () => {
   test('seule la cellule en haut à gauche garde son contenu ; texte centré ; annulable', () => {
     const t = creerClasseurDeTest({ A1: 'Budget 2026', B1: 'x', C1: '=1+1', A2: 'ligne 2' });
-    t.classeur.modifierCellules(t.feuille, [{ adresse: 'B1', fond: 'jaune' }]);
+    t.classeur.modifierCellules(t.feuille, [{ adresse: 'A1', fond: 'jaune', gras: true }, { adresse: 'B1', fond: 'bleu' }]);
     const avant = JSON.stringify(t.classeur.versJSON());
     assert.deepEqual(t.classeur.fusionner(t.feuille, P('A1:C1')), { ok: true });
     assert.deepEqual(textes(t.feuille.fusions), ['A1:C1']);
     assert.equal(t.feuille.brut('A1'), 'Budget 2026');
     assert.equal(t.feuille.brut('B1'), '');
     assert.equal(t.feuille.brut('C1'), '');
-    assert.equal(t.feuille.cellule('B1').fond, 'jaune'); // la mise en forme reste
+    // Toute la zone prend la mise en forme de la cellule en haut à gauche.
+    for (const adr of ['A1', 'B1', 'C1']) {
+      assert.equal(t.feuille.cellule(adr).fond, 'jaune', adr);
+      assert.equal(t.feuille.cellule(adr).gras, true, adr);
+    }
     assert.equal(t.feuille.cellule('A1').alignement, 'centre');
     assert.equal(t.feuille.brut('A2'), 'ligne 2');
     assert.equal(t.valeur('C1'), null);
@@ -56,6 +60,49 @@ describe('Fusionner et défusionner', () => {
     assert.equal(t.valeur('C1'), 2);
     t.classeur.retablir();
     assert.deepEqual(textes(t.feuille.fusions), ['A1:C1']);
+  });
+
+  test('les bordures font le tour de toute la zone fusionnée', () => {
+    const t = creerClasseurDeTest({ A1: 'Titre' });
+    const trait = { style: 'epais', couleur: 'bleu' };
+    // Avant la fusion : bordure en haut et en bas de A1 seulement, à droite de C1, à l'intérieur de B1.
+    t.classeur.modifierCellules(t.feuille, [
+      { adresse: 'A1', bordures: { haut: trait, bas: trait } },
+      { adresse: 'B1', bordures: { droite: trait } },
+      { adresse: 'C1', bordures: { droite: trait } },
+    ]);
+    t.classeur.fusionner(t.feuille, P('A1:C1'));
+    const b = (adr) => t.feuille.cellule(adr).bordures ?? {};
+    for (const adr of ['A1', 'B1', 'C1']) {
+      assert.deepEqual(b(adr).haut, trait, `${adr} haut`);
+      assert.deepEqual(b(adr).bas, trait, `${adr} bas`);
+    }
+    assert.deepEqual(b('C1').droite, trait);
+    assert.equal(b('B1').droite, undefined); // plus de trait à l'intérieur de la zone
+    // Une bordure posée ensuite sur la cellule fusionnée (toute la zone sélectionnée) va aussi partout.
+    t.classeur.modifierCellules(t.feuille, ['A1', 'B1', 'C1'].map((adresse) => ({ adresse, fond: 'vert' })));
+    assert.equal(t.feuille.cellule('C1').fond, 'vert');
+  });
+
+  test('une formule qui vise une case de la fusion utilise la cellule en haut à gauche', () => {
+    const t = creerClasseurDeTest({ A1: '10', B1: '5', D1: '=B1*2', D2: '=C1', D3: '=SOMME(A1:C1)', D4: '=A1' });
+    t.classeur.fusionner(t.feuille, P('A1:C1'));
+    assert.equal(t.valeur('D1'), 20); // =B1 → A1 (10)
+    assert.equal(t.valeur('D2'), 10);
+    assert.equal(t.valeur('D3'), 10); // une plage compte chaque case une fois (comme Excel)
+    assert.equal(t.valeur('D4'), 10);
+    // Recalcul automatique quand la cellule en haut à gauche change.
+    t.remplir({ A1: '7' });
+    assert.equal(t.valeur('D1'), 14);
+    assert.equal(t.valeur('D2'), 7);
+    // Défusionner : B1 est de nouveau une case à part (vide).
+    t.classeur.defusionner(t.feuille, P('A1'));
+    assert.equal(t.valeur('D1'), 0);
+    // Une autre feuille qui vise la fusion : même règle.
+    t.classeur.fusionner(t.feuille, P('A1:C1'));
+    const autre = t.classeur.ajouterFeuille({ nom: 'Résumé' });
+    t.classeur.modifierCellules(autre, [{ adresse: 'A1', brut: '=Feuille1!C1+1' }]);
+    assert.equal(t.moteur.valeur(autre, 'A1'), 8);
   });
 
   test('un alignement déjà choisi est gardé ; refus si moins de deux cellules ou fusion coupée', () => {

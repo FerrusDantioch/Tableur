@@ -717,24 +717,45 @@ export class Classeur {
   }
 
   /**
-   * Fusionne une plage (au moins deux cellules). Seule la cellule en haut à
-   * gauche garde son contenu ; les autres sont vidées (leur mise en forme
-   * reste). Les fusions entièrement dans la plage sont remplacées. Le texte
-   * est centré, sauf si la cellule avait déjà un alignement. Annulable.
+   * Fusionne une plage (au moins deux cellules). Annulable.
+   *   - Seule la cellule en haut à gauche garde son contenu ; les autres sont vidées.
+   *   - Toute la zone prend la mise en forme de la cellule en haut à gauche
+   *     (couleurs, gras, format…), et ses bordures font le tour de la zone
+   *     entière : haut et gauche de la cellule en haut à gauche, bas de celle
+   *     en bas à gauche, droite de celle en haut à droite. Ainsi, après
+   *     « Défusionner », les cellules gardent l'aspect de la zone fusionnée.
+   *   - Le texte est centré, sauf si la cellule avait déjà un alignement.
+   *   - Les fusions entièrement dans la plage sont remplacées.
    * @returns {{ok: boolean, message?: string}}
    */
   fusionner(feuille, plage, selection = null) {
     const refus = this.pourquoiPasFusionner(feuille, plage);
     if (refus) return { ok: false, message: refus };
-    const coin = versAdresse(plage.debut.ligne, plage.debut.colonne);
+    const { debut, fin } = plage;
+    const coin = versAdresse(debut.ligne, debut.colonne);
     this.#modifierStructure({ feuille, selection }, () => {
-      for (const adresse of feuille.adresses()) {
-        const { ligne, colonne } = lireAdresse(adresse);
-        const cellule = feuille.cellule(adresse);
-        if (adresse !== coin && dansPlage(plage, ligne, colonne) && cellule.brut !== '') feuille.poser(adresse, { ...cellule, brut: '' });
+      const hautGauche = feuille.cellule(coin) ?? { brut: '' };
+      const style = {};
+      for (const nom of PROPRIETES_STYLE) if (nom !== 'bordures') style[nom] = hautGauche[nom] ?? null;
+      if (!style.alignement) style.alignement = 'centre';
+      const tour = {
+        haut: hautGauche.bordures?.haut,
+        gauche: hautGauche.bordures?.gauche,
+        bas: feuille.cellule(versAdresse(fin.ligne, debut.colonne))?.bordures?.bas,
+        droite: feuille.cellule(versAdresse(debut.ligne, fin.colonne))?.bordures?.droite,
+      };
+      for (let l = debut.ligne; l <= fin.ligne; l++) {
+        for (let c = debut.colonne; c <= fin.colonne; c++) {
+          const adresse = versAdresse(l, c);
+          const bordures = {};
+          if (l === debut.ligne && tour.haut) bordures.haut = tour.haut;
+          if (l === fin.ligne && tour.bas) bordures.bas = tour.bas;
+          if (c === debut.colonne && tour.gauche) bordures.gauche = tour.gauche;
+          if (c === fin.colonne && tour.droite) bordures.droite = tour.droite;
+          const brut = adresse === coin ? hautGauche.brut : '';
+          feuille.poser(adresse, { brut, ...style, bordures });
+        }
       }
-      const haut = feuille.cellule(coin);
-      if (!haut?.alignement) feuille.poser(coin, { ...(haut ?? { brut: '' }), alignement: 'centre' });
       feuille.poserFusions([...feuille.fusions.filter((f) => !seChevauchent(f, plage)), plage]);
     });
     return { ok: true };

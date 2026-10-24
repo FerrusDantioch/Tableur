@@ -113,7 +113,12 @@ barre (plus de place pour la grille sur téléphone). **Annuler**,
   sélectionner la plage, puis « Fusionner ». Règles, comme dans Excel :
   - seule la cellule en haut à gauche garde son contenu ; si d'autres cellules
     sont remplies, une question est posée avant de les vider ;
-  - le texte est centré (sauf alignement déjà choisi) ;
+  - le texte est centré (sauf alignement déjà choisi) ; les couleurs et les
+    bordures s'appliquent à toute la zone fusionnée (au moment de la fusion,
+    toute la zone prend la mise en forme de la cellule en haut à gauche) ;
+  - une formule qui vise une case de la zone (`=B1` quand A1:C1 est
+    fusionnée) utilise la cellule en haut à gauche ; une plage
+    (`=SOMME(A1:C1)`) compte chaque case une seule fois, comme dans Excel ;
   - une cellule fusionnée se choisit d'un seul clic, les flèches sautent
     par-dessus, et les formules l'utilisent par son adresse en haut à gauche ;
   - sur une cellule fusionnée, le bouton devient « Défusionner » ; « Annuler »
