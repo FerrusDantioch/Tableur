@@ -106,6 +106,9 @@ function nettoyerFormat(format) {
 const STYLES = {
   gras: (valeur) => valeur === true,
   italique: (valeur) => valeur === true,
+  // « Retour à la ligne » : le texte trop long continue sur la ligne suivante
+  // de la cellule (et la ligne du tableau grandit) au lieu d'être coupé.
+  retour: (valeur) => valeur === true,
   couleur: (valeur) => (ENCRES.includes(valeur) ? valeur : null),
   fond: (valeur) => (COULEURS_FOND.includes(valeur) ? valeur : null),
   alignement: (valeur) => (ALIGNEMENTS.includes(valeur) ? valeur : null),
@@ -119,7 +122,7 @@ export const PROPRIETES_STYLE = Object.keys(STYLES);
 const estParDefaut = (valeur) => valeur === null || valeur === false;
 
 /**
- * Remet une cellule en forme : { brut, gras, italique, couleur, fond,
+ * Remet une cellule en forme : { brut, gras, italique, retour, couleur, fond,
  * alignement, format, bordures }, ou null si elle est entièrement vide
  * (pas de texte et pas de mise en forme).
  */

@@ -37,6 +37,11 @@ des données d'avant le renommage (`stockage.js`, `theme-initial.js`,
   (plusieurs feuilles en une seule annulation, « Tout remplacer »).
 - Zoom : `affichage/zoom.js` + `Grille.changerZoom` ; les largeurs enregistrées
   restent à 100 % (`#largeurEcran` multiplie à l'affichage).
+- Retour à la ligne : propriété de cellule `retour`. Les hauteurs de lignes ne
+  sont pas enregistrées : `Grille.#mesurerLignes` mesure le texte (zone
+  invisible `.mesure-retour`) et `#hauts[l]` donne le haut de chaque ligne.
+  Toute position verticale passe par `#hauts` / `hauteurDe(l)`, jamais
+  `ligne × hauteur`.
 - Cellules fusionnées : `Feuille.fusions` (plages, enregistrées `"fusions":
   ["A1:D1"]`), `donnees/fusions.js`, `Classeur.fusionner/defusionner`. À
   l'écran, un bloc `.cellule-fusionnee` est posé sur les cases couvertes

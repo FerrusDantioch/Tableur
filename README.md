@@ -129,6 +129,12 @@ barre (plus de place pour la grille sur téléphone). **Annuler**,
 - **Gras** (**Ctrl + B**), **Italique** (**Ctrl + I**), couleur du **Texte**,
   couleur de **Fond** (couleurs douces, adaptées à chaque thème),
   alignement **Gauche / Centre / Droite**.
+- **À la ligne** (retour à la ligne) : un texte trop long continue sur
+  plusieurs lignes dans la cellule au lieu d'être coupé par « … ». La ligne
+  du tableau s'agrandit toute seule, et se réajuste quand le texte, la
+  largeur de la colonne ou le zoom changent. Comme dans Excel, une cellule
+  fusionnée n'agrandit pas ses lignes (le texte passe à la ligne à
+  l'intérieur de la zone). Le PDF garde aussi le retour à la ligne.
 - **Fusionner** des cellules (idéal pour un titre au-dessus d'un tableau) :
   - seule la cellule en haut à gauche garde son contenu ; si d'autres
     cellules sont remplies, une question est posée avant de les vider ;
@@ -444,7 +450,8 @@ tests/                   vérifications automatiques
 - `npm run test:navigateur` : tests dans un vrai navigateur, à la souris, au
   clavier et au doigt (téléphone imité) : saisie, onglets, tri, import et
   export, sauvegarde, passage de l'ancien nom au nouveau, zoom, recherche,
-  fusion, mise en forme conditionnelle, thèmes, hors ligne, PDF. Il faut
+  fusion, mise en forme conditionnelle, retour à la ligne, thèmes, hors
+  ligne, PDF. Il faut
   d'abord, une seule fois : `npm install` puis `npx playwright install chromium`.
 
 ---
@@ -466,7 +473,11 @@ tests/                   vérifications automatiques
   auteurs (remplacée par HyperFormula, sous licence GPL) ; formula.js ne sait
   pas lire une formule, seulement calculer des fonctions.
 - **Grille « virtuelle »** : seules les lignes visibles existent dans la page.
-  1000 lignes × 52 colonnes s'affichent aussi vite que 100 lignes.
+  1000 lignes × 52 colonnes s'affichent aussi vite que 100 lignes. La
+  position de chaque ligne est calculée d'avance ; une ligne avec du texte
+  renvoyé à la ligne est plus haute : le navigateur mesure ce texte dans une
+  zone invisible (toutes les cellules d'un coup), sans dessiner les lignes
+  hors de l'écran.
 - **PDF par l'impression du navigateur** (« Enregistrer au format PDF »),
   comme dans Plume : hors ligne, texte sélectionnable, aucune bibliothèque.
 - **CSV au format Excel français** : `;` entre les colonnes, virgule décimale,
@@ -498,8 +509,10 @@ tests/                   vérifications automatiques
 
 - Un seul classeur à la fois (avec autant de feuilles que l'on veut) ;
   1000 lignes × 52 colonnes au maximum par feuille.
-- Pas de retour à la ligne dans une cellule (un texte trop long est coupé
-  avec « … »), pas de tableaux de valeurs (formules matricielles).
+- Pas de tableaux de valeurs (formules matricielles).
+- La hauteur des lignes ne se règle pas à la main : elle suit le texte
+  renvoyé à la ligne (bouton « À la ligne »). Pendant la saisie, le texte
+  s'écrit sur une seule ligne (la barre « fx » montre tout le texte).
 - Copier une cellule fusionnée colle son contenu, pas la fusion elle-même.
 - Le tri trie les lignes du tableau entier ; pour trier une partie précise,
   il faut d'abord la sélectionner (plusieurs lignes et colonnes).

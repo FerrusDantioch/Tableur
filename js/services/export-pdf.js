@@ -131,7 +131,7 @@ function traitImprime(bordure) {
 
 /**
  * Crée la section imprimable : le titre, puis le tableau des cellules utilisées,
- * avec la mise en forme (gras, italique, couleurs, alignement, bordures).
+ * avec la mise en forme (gras, italique, retour à la ligne, couleurs, alignement, bordures).
  * (Fonction séparée pour pouvoir la tester.)
  * @param {object} [options]
  * @param {boolean} [options.quadrillage]  traits gris clair entre toutes les cellules
@@ -203,6 +203,7 @@ export function construireImpression(titre, feuille, presenterCellule, { quadril
       if (vue.genre !== 'vide') td.className = vue.genre;
       if (vue.gras) td.classList.add('gras');
       if (vue.italique) td.classList.add('italique');
+      if (vue.retour) td.classList.add('retour');
       if (vue.fond) td.dataset.fond = vue.fond;
       if (vue.couleur) td.dataset.encre = vue.couleur;
       if (vue.alignement) td.dataset.align = vue.alignement;

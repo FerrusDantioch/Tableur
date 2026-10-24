@@ -69,7 +69,8 @@ const feuilleActive = () => classeur.feuilleActive;
 
 /**
  * Ce qu'affiche une cellule de la feuille active : valeur calculée mise en
- * forme (format des nombres), gras, italique, couleurs, alignement et bordures.
+ * forme (format des nombres), gras, italique, retour à la ligne, couleurs,
+ * alignement et bordures.
  * Les règles de mise en forme conditionnelle (voir calcul/conditions.js)
  * peuvent remplacer les couleurs : elles sont donc recalculées à chaque
  * dessin de la cellule, c'est-à-dire à chaque changement de sa valeur.
@@ -88,6 +89,7 @@ function presenterCellule(adr, ligne, colonne) {
     ...vue,
     gras: cellule?.gras,
     italique: cellule?.italique,
+    retour: cellule?.retour,
     couleur: conditions.encre ?? cellule?.couleur,
     fond: conditions.fond ?? cellule?.fond,
     alignement: cellule?.alignement,

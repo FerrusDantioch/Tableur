@@ -104,7 +104,7 @@ function verifierCellule(cellule, ou) {
       throw abime(`${ou} a une valeur inconnue (« ${nom} »)`);
     }
   };
-  for (const nom of ['gras', 'italique']) {
+  for (const nom of ['gras', 'italique', 'retour']) {
     if (cellule[nom] !== undefined && typeof cellule[nom] !== 'boolean') throw abime(`${ou} a une valeur inconnue (« ${nom} »)`);
   }
   choix('couleur', ENCRES);

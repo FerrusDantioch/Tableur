@@ -101,6 +101,13 @@
     font-style: italic;
   }
 
+  /* Retour à la ligne : la ligne imprimée grandit toute seule. */
+  .impression td.retour {
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+  }
+
   .impression td[data-align="gauche"] { text-align: left; }
   .impression td[data-align="centre"] { text-align: center; }
   .impression td[data-align="droite"] { text-align: right; }
