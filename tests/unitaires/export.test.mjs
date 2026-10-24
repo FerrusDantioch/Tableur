@@ -2,12 +2,12 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { creerTableur } from './outils.mjs';
+import { creerClasseurDeTest } from './outils.mjs';
 import { genererCSV } from '../../js/services/export-csv.js';
 import { nomDeFichier } from '../../js/services/fichiers.js';
 
 test('CSV : séparateur « ; », virgule décimale, résultats des formules', () => {
-  const t = creerTableur({
+  const t = creerClasseurDeTest({
     A1: 'Poste',
     B1: 'Montant',
     A2: 'Loyer',
@@ -28,14 +28,14 @@ test('CSV : séparateur « ; », virgule décimale, résultats des formules', ()
 });
 
 test('CSV : guillemets quand c’est nécessaire', () => {
-  const t = creerTableur({ A1: 'a;b', B1: 'il dit "oui"', C1: ' espace', A2: 'é à ç €' });
+  const t = creerClasseurDeTest({ A1: 'a;b', B1: 'il dit "oui"', C1: ' espace', A2: 'é à ç €' });
   const lignes = genererCSV(t.feuille, t.moteur).slice(1).split('\r\n');
   assert.equal(lignes[0], '"a;b";"il dit ""oui""";" espace"');
   assert.equal(lignes[1], 'é à ç €;;');
 });
 
 test('CSV : classeur vide', () => {
-  const t = creerTableur();
+  const t = creerClasseurDeTest();
   assert.equal(genererCSV(t.feuille, t.moteur), '');
   // Une cellule seulement mise en forme ne compte pas.
   t.classeur.modifierCellules(t.feuille, [{ adresse: 'C3', gras: true }]);

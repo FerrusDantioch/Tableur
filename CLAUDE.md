@@ -1,7 +1,8 @@
-# Tableur — notes pour Claude
+# Omni-Tableur — notes pour Claude
 
-PWA de tableur (suite bureautique de l'Omni-système) en **HTML/CSS/JS pur,
-modules ES, sans framework ni compilation**. Code, commentaires et messages de
+PWA de tableur « Omni-Tableur » (appelée « Tableur » jusqu'à la 2.0.0 ; suite
+bureautique de l'Omni-système) en **HTML/CSS/JS pur, modules ES, sans
+framework ni compilation**. Code, commentaires et messages de
 commit en français, rédigés pour un débutant : garder ce niveau d'explication.
 L'utilisateur est novice : toujours lui parler en français, simplement.
 
@@ -12,7 +13,10 @@ nomme son cache avec ce numéro : sans changement, les appareils gardent
 l'ancienne version. Tout nouveau fichier de l'application doit aussi aller
 dans la liste `FICHIERS` de `sw.js` (le test `tests/unitaires/hors-ligne.test.mjs`
 le vérifie). Ne jamais changer `idStockage` (`config.js`) ni `"id": "/Tableur/"`
-(`manifest.webmanifest`).
+(`manifest.webmanifest`). Le dépôt et le dossier restent `Tableur` (adresse
+GitHub Pages `…/Tableur/`). `ancienIdStockage: 'tableur'` sert à la migration
+des données d'avant le renommage (`stockage.js`, `theme-initial.js`,
+`onglets.js`, `sw.js`) : ne pas le retirer.
 
 ## Architecture (trois couches)
 
@@ -23,10 +27,10 @@ le vérifie). Ne jamais changer `idStockage` (`config.js`) ni `"id": "/Tableur/"
   `structure`, `onglets`, `active`…).
 - `js/calcul/` : moteur multi-feuilles (clé de cellule = `idFeuille:adresse`),
   traduction FR → fast-formula-parser. `&` et les comparaisons sont réécrits en
-  `TABLEUR.CONCAT` / `TABLEUR.COMPARER` (voir `fonctions.js`).
+  `INTERNE.CONCAT` / `INTERNE.COMPARER` (voir `fonctions.js`).
 - `js/affichage/` : grille **virtuelle** (seules les lignes visibles existent :
   `grille.td(l, c)` peut renvoyer `undefined`), barre d'outils en onglets.
-- `js/app.js` relie tout ; `window.tableur` sert aux tests.
+- `js/app.js` relie tout ; `window.omniTableur` sert aux tests.
 
 ## Tests
 
@@ -63,4 +67,4 @@ dans `LICENCES.md` et dans « À propos ». Aucun CDN, aucun appel réseau (CSP
 Chrome Android n'installe qu'une seule application par origine : les autres
 affichent « Cette appli est déjà installée ». Brave installe tout ; sinon
 « Créer un raccourci ». Une même origine partage aussi le stockage : tous les
-noms de stockage commencent par `tableur`.
+noms de stockage commencent par `omni-tableur`.

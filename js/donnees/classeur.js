@@ -47,6 +47,13 @@ const TAILLE_HISTORIQUE = 200;
 /** Longueur maximale d'un nom de feuille (comme dans Excel). */
 export const NOM_FEUILLE_MAX = 31;
 
+/**
+ * Marque écrite dans chaque classeur enregistré. Les classeurs enregistrés
+ * avant le renommage en « Omni-Tableur » portent l'ancienne marque, « tableur ».
+ */
+export const FORMAT_CLASSEUR = 'omni-tableur';
+const FORMATS_ACCEPTES = [FORMAT_CLASSEUR, 'tableur'];
+
 const bornes = (valeur, min, max) => Math.min(max, Math.max(min, Math.round(valeur)));
 
 // ---------------------------------------------------------------------------
@@ -718,7 +725,7 @@ export class Classeur {
   /** Le classeur entier sous forme d'objet simple, prêt à être enregistré. */
   versJSON() {
     return {
-      format: 'tableur',
+      format: FORMAT_CLASSEUR,
       version: 2,
       titre: this.titre,
       active: Math.max(0, this.feuilles.indexOf(this.#active)),
@@ -732,7 +739,7 @@ export class Classeur {
    * l'historique d'annulation est vidé.
    */
   charger(donnees) {
-    if (!donnees || donnees.format !== 'tableur') throw new Error('Ce fichier n’est pas un classeur Tableur.');
+    if (!donnees || !FORMATS_ACCEPTES.includes(donnees.format)) throw new Error('Ce fichier n’est pas un classeur Omni-Tableur.');
     this.titre = typeof donnees.titre === 'string' && donnees.titre.trim() ? donnees.titre : 'Sans titre';
     const liste = Array.isArray(donnees.feuilles) && donnees.feuilles.length ? donnees.feuilles : [{}];
     const feuilles = liste.map((donneesFeuille, index) => {

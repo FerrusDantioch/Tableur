@@ -7,21 +7,24 @@ import { chromium } from 'playwright';
 
 const RACINE = fileURLToPath(new URL('../..', import.meta.url));
 
-/** Démarre le serveur local et renvoie son adresse et une fonction pour l'arrêter. */
+/**
+ * Démarre le serveur local et renvoie son adresse et une fonction pour l'arrêter.
+ * (PORT=0 : l'ordinateur choisit lui-même un port libre, jamais déjà occupé.)
+ */
 export async function demarrerServeur() {
-  const port = 20000 + Math.floor(Math.random() * 20000);
   const processus = spawn(process.execPath, ['outils/serveur.mjs'], {
     cwd: RACINE,
-    env: { ...process.env, PORT: String(port) },
+    env: { ...process.env, PORT: '0' },
     stdio: ['ignore', 'pipe', 'inherit'],
   });
-  await new Promise((resoudre, rejeter) => {
+  const url = await new Promise((resoudre, rejeter) => {
     processus.stdout.on('data', (morceau) => {
-      if (String(morceau).includes('disponible')) resoudre();
+      const adresse = /disponible sur (\S+)/.exec(String(morceau));
+      if (adresse) resoudre(adresse[1]);
     });
     processus.on('exit', (code) => rejeter(new Error(`Serveur arrêté (code ${code})`)));
   });
-  return { url: `http://localhost:${port}/Tableur/`, arreter: () => processus.kill() };
+  return { url, arreter: () => processus.kill() };
 }
 
 /** Lance Chromium (sans fenêtre). */
@@ -43,7 +46,7 @@ export async function ouvrirApplication(navigateur, url, options = {}) {
     if (message.type() === 'error') page.erreurs.push(message.text());
   });
   await page.goto(url);
-  await page.waitForFunction(() => window.tableur !== undefined);
+  await page.waitForFunction(() => window.omniTableur !== undefined);
   return { contexte, page };
 }
 
@@ -59,16 +62,16 @@ export function texteCellule(page, adresse) {
       for (const l of m[1]) c = c * 26 + l.charCodeAt(0) - 64;
       return { ligne: Number(m[2]), colonne: c };
     })();
-    window.tableur.grille.rendreVisible(ligne, colonne);
-    return window.tableur.grille.td(ligne, colonne).textContent;
+    window.omniTableur.grille.rendreVisible(ligne, colonne);
+    return window.omniTableur.grille.td(ligne, colonne).textContent;
   }, adresse);
 }
 
 /** Adresse de la cellule active (ex. "A1"). */
 export function celluleActive(page) {
   return page.evaluate(() => {
-    const { ligne, colonne } = window.tableur.selection.active;
-    return window.tableur.adresse(ligne, colonne);
+    const { ligne, colonne } = window.omniTableur.selection.active;
+    return window.omniTableur.adresse(ligne, colonne);
   });
 }
 

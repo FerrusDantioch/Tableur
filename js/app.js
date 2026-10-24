@@ -471,7 +471,7 @@ demarrerServiceWorker({
 interactions.focaliser();
 
 // Accès pour les tests automatiques et le débogage dans la console.
-window.tableur = {
+window.omniTableur = {
   classeur,
   get feuille() {
     return classeur.feuilleActive;

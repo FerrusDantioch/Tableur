@@ -5,7 +5,7 @@
 
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { calculer, creerTableur } from './outils.mjs';
+import { calculer, creerClasseurDeTest } from './outils.mjs';
 import { dateVersTexte, serieAujourdhui } from '../../js/donnees/saisie.js';
 
 /** Vérifie une liste de [formule, résultat affiché attendu] avec les cellules données. */
@@ -101,7 +101,7 @@ describe('Recherche : RECHERCHEV', () => {
       ],
       bareme,
     );
-    const t = creerTableur({ A1: '=RECHERCHEV(C1;A3:B4;2;FAUX)', A3: 'x', B3: 'trouvé' });
+    const t = creerClasseurDeTest({ A1: '=RECHERCHEV(C1;A3:B4;2;FAUX)', A3: 'x', B3: 'trouvé' });
     assert.equal(t.affiche('A1'), '#N/A');
     assert.match(t.explication('A1'), /RECHERCHEV/);
     t.remplir({ C1: 'X' });
@@ -153,14 +153,14 @@ describe('Comparaisons à la française', () => {
 describe('Dates', () => {
   test('AUJOURDHUI() s’affiche en date', () => {
     const aujourdhui = dateVersTexte(serieAujourdhui());
-    const t = creerTableur({ A1: '=AUJOURDHUI()', A2: '=AUJOURDHUI()+1', A3: '=ANNEE(AUJOURDHUI())' });
+    const t = creerClasseurDeTest({ A1: '=AUJOURDHUI()', A2: '=AUJOURDHUI()+1', A3: '=ANNEE(AUJOURDHUI())' });
     assert.equal(t.affiche('A1'), aujourdhui);
     assert.match(t.affiche('A2'), /^\d\d\/\d\d\/\d{4}$/);
     assert.equal(t.affiche('A3'), String(new Date().getFullYear()));
   });
 
   test('dates tapées jj/mm/aaaa : des nombres qu’on peut calculer', () => {
-    const t = creerTableur({ A1: '01/01/2026', A2: '15/03/2026', A3: '=A2-A1', A4: '=A1+31', B1: '31/02/2026', B2: '1/2/26' });
+    const t = creerClasseurDeTest({ A1: '01/01/2026', A2: '15/03/2026', A3: '=A2-A1', A4: '=A1+31', B1: '31/02/2026', B2: '1/2/26' });
     assert.equal(t.affiche('A1'), '01/01/2026');
     assert.equal(t.affiche('A3'), '73'); // écart en jours
     assert.equal(t.valeur('A4'), 46054);
@@ -175,7 +175,7 @@ describe('Dates', () => {
 
 describe('Références vers une autre feuille', () => {
   test('=Feuille2!A1, plages, noms avec espaces, recalcul', () => {
-    const t = creerTableur({ A1: '10' });
+    const t = creerClasseurDeTest({ A1: '10' });
     const ventes = t.classeur.ajouterFeuille({ nom: 'Feuille2' });
     t.classeur.modifierCellules(ventes, [
       { adresse: 'A1', brut: '5' },
@@ -196,7 +196,7 @@ describe('Références vers une autre feuille', () => {
   });
 
   test('feuille renommée ou supprimée', () => {
-    const t = creerTableur();
+    const t = creerClasseurDeTest();
     const autre = t.classeur.ajouterFeuille({ nom: 'Ventes' });
     t.classeur.modifierCellules(autre, [{ adresse: 'A1', brut: '42' }]);
     t.remplir({ A1: '=Ventes!A1', A2: '=Inconnue!A1' });

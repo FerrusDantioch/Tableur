@@ -420,7 +420,7 @@ export class MoteurCalcul {
   #erreur(erreurBibliotheque) {
     const message = erreurBibliotheque.message ?? '';
     const inconnue = /Function (\S+) is not implemented/.exec(message);
-    if (inconnue) return new ErreurCalcul('#NAME?', `La fonction ${inconnue[1]} n’existe pas dans Tableur.`);
+    if (inconnue) return new ErreurCalcul('#NAME?', `La fonction ${inconnue[1]} n’existe pas dans Omni-Tableur.`);
     const tropArguments = /Function (\S+) has too many arguments/.exec(message);
     if (tropArguments) return new ErreurCalcul('#N/A', `Trop d’arguments pour la fonction ${tropArguments[1]}.`);
     if (/is missing/.test(message)) return new ErreurCalcul('#N/A', 'Il manque un argument à une fonction.');

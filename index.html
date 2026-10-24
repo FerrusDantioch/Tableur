@@ -5,12 +5,12 @@
     <!-- interactive-widget : quand le clavier du téléphone s'ouvre, la page
          rétrécit au lieu d'être recouverte (la cellule reste visible). -->
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
-    <meta name="description" content="Tableur : un tableur simple qui fonctionne hors ligne. Les données restent sur l'appareil." />
+    <meta name="description" content="Omni-Tableur : un tableur simple qui fonctionne hors ligne. Les données restent sur l'appareil." />
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#1d1929" />
     <!-- Sécurité : la page ne charge que ses propres fichiers (rien d'internet). -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'" />
-    <title>Tableur</title>
+    <title>Omni-Tableur</title>
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
@@ -33,7 +33,7 @@
   <body>
     <!-- Icônes (dessinées pour l'application). On les réutilise avec <use href="#…">. -->
     <svg class="icones" aria-hidden="true" focusable="false">
-      <symbol id="i-tableur" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2.5" fill="none" stroke="currentColor" stroke-width="2" /><path d="M3 9.5h18M3 15h18M9 4v16" fill="none" stroke="currentColor" stroke-width="2" /></symbol>
+      <symbol id="i-marque" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2.5" fill="none" stroke="currentColor" stroke-width="2" /><path d="M3 9.5h18M3 15h18M9 4v16" fill="none" stroke="currentColor" stroke-width="2" /></symbol>
       <symbol id="i-annuler" viewBox="0 0 24 24"><path d="M9 15 4 10l5-5M4 10h10a6 6 0 0 1 0 12h-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
       <symbol id="i-retablir" viewBox="0 0 24 24"><path d="m15 15 5-5-5-5M20 10H10a6 6 0 0 0 0 12h3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
       <symbol id="i-valider" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" /></symbol>
@@ -76,7 +76,7 @@
     </svg>
 
     <header class="entete">
-      <span class="marque" aria-hidden="true"><svg><use href="#i-tableur" /></svg></span>
+      <span class="marque" aria-hidden="true"><svg><use href="#i-marque" /></svg></span>
       <label class="titre-classeur">
         <span class="visuellement-cache">Titre du classeur</span>
         <input id="titre" type="text" value="Sans titre" maxlength="120" autocomplete="off" spellcheck="false" />
@@ -88,7 +88,7 @@
         <button id="bouton-retablir" class="outil" type="button" title="Rétablir (Ctrl+Y)" disabled>
           <svg aria-hidden="true"><use href="#i-retablir" /></svg><span class="libelle">Rétablir</span>
         </button>
-        <button id="bouton-a-propos" class="outil" type="button" aria-haspopup="dialog" title="À propos de Tableur : version, contact, licence">
+        <button id="bouton-a-propos" class="outil" type="button" aria-haspopup="dialog" title="À propos d'Omni-Tableur : version, contact, licence">
           <svg aria-hidden="true"><use href="#i-info" /></svg><span class="libelle">À propos</span>
         </button>
         <button id="bouton-menu" class="outil" type="button" aria-haspopup="dialog" title="Menu : thème, aide, à propos…">
@@ -350,9 +350,9 @@
       <button id="bouton-recharger" class="outil" type="button">Recharger</button>
     </div>
 
-    <!-- Bandeau affiché si Tableur est ouvert dans deux onglets ou fenêtres. -->
+    <!-- Bandeau affiché si Omni-Tableur est ouvert dans deux onglets ou fenêtres. -->
     <div id="bandeau-onglets" class="bandeau" role="alert" hidden>
-      <span>Tableur est aussi ouvert ailleurs (autre onglet ou fenêtre). Gardez-en un seul ouvert, sinon des modifications pourraient être perdues.</span>
+      <span>Omni-Tableur est aussi ouvert ailleurs (autre onglet ou fenêtre). Gardez-en un seul ouvert, sinon des modifications pourraient être perdues.</span>
       <button id="bouton-compris" class="outil" type="button">Compris</button>
     </div>
 
@@ -451,19 +451,19 @@
         <div class="a-propos-identite">
           <img src="assets/logo-omni-systeme.webp" width="88" height="88" alt="Logo de l'Omni-système" />
           <div>
-            <p class="nom-appli" data-config="nom">Tableur</p>
+            <p class="nom-appli" data-config="nom">Omni-Tableur</p>
             <p class="note">Version <span data-config="version"></span></p>
           </div>
         </div>
         <p><strong>Application créée par <span data-config="auteurs">Ferrus Dantioch et Claude</span>.</strong></p>
-        <p>Tableur fait partie de la Suite bureautique de l'Omni-système, aux côtés de Plume (traitement de texte) et de L'Atelier (écriture de romans).</p>
+        <p>Omni-Tableur fait partie de la Suite bureautique de l'Omni-système, aux côtés de Plume (traitement de texte) et de L'Atelier (écriture de romans).</p>
         <p>Vos classeurs restent sur cet appareil : aucun compte, rien n'est envoyé sur internet. L'application fonctionne aussi sans connexion, et chaque modification est enregistrée automatiquement.</p>
         <p><a data-config-lien="siteOmni" href="https://ferrusdantioch.github.io/omni-systeme/" target="_blank" rel="noopener">Site de l'Omni-système</a></p>
         <!-- Retours : une adresse-alias (Proton) créée pour ça. Le lien ouvre seulement
              l'application de messagerie, adresse et objet déjà remplis : rien ne part tout seul. -->
         <section class="a-propos-bloc" aria-labelledby="titre-retours">
           <h3 id="titre-retours">Un retour, une idée, un problème ?</h3>
-          <p>Vos messages sont les bienvenus : <a id="lien-contact" href="mailto:omni-systeme.choking513@passmail.net?subject=Retour%20sur%20Tableur">écrire un message</a> (votre messagerie s'ouvre, avec l'objet « Retour sur Tableur » déjà rempli).</p>
+          <p>Vos messages sont les bienvenus : <a id="lien-contact" href="mailto:omni-systeme.choking513@passmail.net?subject=Retour%20sur%20Omni-Tableur">écrire un message</a> (votre messagerie s'ouvre, avec l'objet « Retour sur Omni-Tableur » déjà rempli).</p>
           <p class="adresse-contact">
             <span id="adresse-contact" class="adresse-mail">omni-systeme.choking513@passmail.net</span>
             <button id="copier-adresse" class="outil" type="button">Copier l'adresse</button>
@@ -472,7 +472,7 @@
         </section>
         <section class="a-propos-bloc" aria-labelledby="titre-licence">
           <h3 id="titre-licence">Licence</h3>
-          <p>Tableur est distribué sous licence <strong>Creative Commons BY-NC-ND 4.0</strong> (Attribution – Pas d'utilisation commerciale – Pas de modification) : vous pouvez l'utiliser et le partager tel quel, gratuitement, en citant son auteur. Il ne peut être ni vendu, ni modifié. Texte complet : fichier LICENSE du projet ; résumé : <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.fr" target="_blank" rel="noopener">site de Creative Commons</a>.</p>
+          <p>Omni-Tableur est distribué sous licence <strong>Creative Commons BY-NC-ND 4.0</strong> (Attribution – Pas d'utilisation commerciale – Pas de modification) : vous pouvez l'utiliser et le partager tel quel, gratuitement, en citant son auteur. Il ne peut être ni vendu, ni modifié. Texte complet : fichier LICENSE du projet ; résumé : <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.fr" target="_blank" rel="noopener">site de Creative Commons</a>.</p>
         </section>
         <section class="a-propos-bloc" aria-labelledby="titre-bibliotheques">
           <h3 id="titre-bibliotheques">Bibliothèques et polices utilisées</h3>
@@ -533,7 +533,7 @@
           <h3>Feuilles et données</h3>
           <ul>
             <li><strong>Feuilles</strong> : les onglets en bas de l'écran. <strong>+</strong> ajoute une feuille ; un appui sur un onglet l'affiche ; un appui sur l'onglet affiché ouvre son menu (<strong>Renommer…</strong>, <strong>Supprimer…</strong>). À la souris, un double-clic renomme.</li>
-            <li>Onglet <strong>« Données »</strong> → <strong>Trier</strong> : placez-vous dans la colonne qui décide de l'ordre. Tableur trouve le tableau autour, reconnaît la ligne de titres (case à cocher), puis trie en ordre croissant ou décroissant. Les lignes restent entières.</li>
+            <li>Onglet <strong>« Données »</strong> → <strong>Trier</strong> : placez-vous dans la colonne qui décide de l'ordre. Omni-Tableur trouve le tableau autour, reconnaît la ligne de titres (case à cocher), puis trie en ordre croissant ou décroissant. Les lignes restent entières.</li>
             <li><strong>Figer la 1<sup>re</sup> ligne</strong> : la ligne des titres reste visible quand on fait défiler.</li>
             <li><strong>Importer CSV</strong> : un fichier CSV (Excel, banque, Google Sheets…) arrive dans une nouvelle feuille. <strong>Exporter</strong> : la feuille affichée en PDF ou en CSV.</li>
           </ul>

@@ -6,8 +6,8 @@
 //   =SI(A1>0;"oui";"non")              IF(A1>0,"oui","non")
 //   =ARRONDI(B2*1,5;2)                 ROUND(B2*1.5,2)
 //   =ET(VRAI;FAUX)                     AND(TRUE,FALSE)
-//   =A1&" €"                           TABLEUR.CONCAT(A1," €")
-//   =SI(A1="oui";1;0)                  IF(TABLEUR.COMPARER(A1,"=","oui"),1,0)
+//   =A1&" €"                           INTERNE.CONCAT(A1," €")
+//   =SI(A1="oui";1;0)                  IF(INTERNE.COMPARER(A1,"=","oui"),1,0)
 //
 // Règles :
 //   - les noms de fonctions français sont traduits (les noms anglais restent acceptés) ;
@@ -180,17 +180,17 @@ function traduireExpression(morceaux) {
   if (textes.includes(null)) return texteDe(morceaux);
   let resultat = textes[0];
   comparaisons.operateurs.forEach((operateur, k) => {
-    resultat = `TABLEUR.COMPARER(${resultat},"${operateur}",${textes[k + 1]})`;
+    resultat = `INTERNE.COMPARER(${resultat},"${operateur}",${textes[k + 1]})`;
   });
   return resultat;
 }
 
-/** A&B&C → TABLEUR.CONCAT(A,B,C) ; null si un morceau manque (formule mal écrite). */
+/** A&B&C → INTERNE.CONCAT(A,B,C) ; null si un morceau manque (formule mal écrite). */
 function traduireAssemblage(morceaux) {
   const { parties, operateurs } = couper(morceaux, (m) => m.type === 'operateur' && m.texte === '&');
   if (operateurs.length === 0) return texteDe(morceaux);
   if (parties.some(vide)) return null;
-  return `TABLEUR.CONCAT(${parties.map(texteDe).join(',')})`;
+  return `INTERNE.CONCAT(${parties.map(texteDe).join(',')})`;
 }
 
 /**

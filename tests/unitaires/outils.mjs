@@ -21,7 +21,7 @@ if (!globalThis.FormulaParser) {
  * Crée un classeur et son moteur de calcul, avec des cellules déjà remplies.
  * Renvoie des raccourcis pratiques pour les tests.
  */
-export function creerTableur(cellules = {}) {
+export function creerClasseurDeTest(cellules = {}) {
   const classeur = new Classeur();
   const feuille = classeur.feuilles[0];
   const moteur = new MoteurCalcul(classeur);
@@ -48,7 +48,7 @@ export function creerTableur(cellules = {}) {
 
 /** Calcule une formule seule (dans Z1) au milieu de cellules données ; renvoie le texte affiché. */
 export function calculer(formule, cellules = {}) {
-  const { remplir, affiche } = creerTableur(cellules);
+  const { remplir, affiche } = creerClasseurDeTest(cellules);
   remplir({ Z1: formule });
   return affiche('Z1');
 }

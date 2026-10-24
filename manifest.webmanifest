@@ -1,7 +1,7 @@
 {
-  "name": "Tableur",
-  "short_name": "Tableur",
-  "description": "Tableur hors ligne de la Suite bureautique de l'Omni-système. Les classeurs restent sur l'appareil : aucun compte, aucune donnée envoyée.",
+  "name": "Omni-Tableur",
+  "short_name": "Omni-Tableur",
+  "description": "Omni-Tableur, le tableur hors ligne de la Suite bureautique de l'Omni-système. Les classeurs restent sur l'appareil : aucun compte, aucune donnée envoyée.",
   "lang": "fr",
   "dir": "ltr",
   "id": "/Tableur/",

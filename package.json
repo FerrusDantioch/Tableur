@@ -1,7 +1,7 @@
 {
-  "name": "tableur",
-  "version": "2.0.0",
-  "description": "Tableur hors ligne de la Suite bureautique de l'Omni-système",
+  "name": "omni-tableur",
+  "version": "2.1.0",
+  "description": "Omni-Tableur, tableur hors ligne de la Suite bureautique de l'Omni-système",
   "private": true,
   "type": "module",
   "license": "CC-BY-NC-ND-4.0",

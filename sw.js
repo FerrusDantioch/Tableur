@@ -2,17 +2,19 @@
 // qu'elle fonctionne sans connexion internet.
 //
 // - À l'installation, tous les fichiers de la liste FICHIERS sont copiés dans
-//   un cache dont le nom contient la version (ex. « tableur-1.0.0 »).
+//   un cache dont le nom contient la version (ex. « omni-tableur-2.1.0 »).
 // - Ensuite, chaque fichier est servi depuis ce cache (« cache d'abord »).
 // - Quand la version change dans js/config.js, le navigateur détecte ce
 //   service worker modifié, prépare le nouveau cache, et l'application propose
 //   « Recharger ». Les anciens caches de CETTE application sont alors supprimés
-//   (jamais ceux des autres applications du même site).
+//   (jamais ceux des autres applications du même site), y compris ceux d'avant
+//   le renommage en « Omni-Tableur » (préfixe « tableur- »).
 
 importScripts('js/config.js');
 
 const CONFIG = self.CONFIG_APP;
 const PREFIXE = `${CONFIG.idStockage}-`;
+const ANCIEN_PREFIXE = `${CONFIG.ancienIdStockage}-`;
 const CACHE = `${PREFIXE}${CONFIG.version}`;
 
 // Liste de tous les fichiers de l'application. À tenir à jour quand on en
@@ -107,7 +109,8 @@ self.addEventListener('activate', (evenement) => {
   evenement.waitUntil(
     (async () => {
       for (const nom of await caches.keys()) {
-        if (nom.startsWith(PREFIXE) && nom !== CACHE) await caches.delete(nom);
+        const deCetteApplication = nom.startsWith(PREFIXE) || nom.startsWith(ANCIEN_PREFIXE);
+        if (deCetteApplication && nom !== CACHE) await caches.delete(nom);
       }
       await self.clients.claim();
     })(),

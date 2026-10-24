@@ -17,7 +17,7 @@ after(async () => {
   serveur?.arreter();
 });
 
-const brut = (page, adr) => page.evaluate((a) => window.tableur.feuille.brut(a), adr);
+const brut = (page, adr) => page.evaluate((a) => window.omniTableur.feuille.brut(a), adr);
 const aller = async (page, adr) => {
   await page.fill('#nom-cellule', adr);
   await page.press('#nom-cellule', 'Enter');
@@ -27,7 +27,7 @@ const options = { permissions: ['clipboard-read', 'clipboard-write'] };
 test('copier-coller une formule : les références s’adaptent', async () => {
   const { contexte, page } = await ouvrirApplication(navigateur, serveur.url, options);
   await page.evaluate(() => {
-    const { classeur, feuille } = window.tableur;
+    const { classeur, feuille } = window.omniTableur;
     classeur.modifierCellules(feuille, [
       { adresse: 'A1', brut: '2' }, { adresse: 'A2', brut: '3' }, { adresse: 'A3', brut: '4' },
       { adresse: 'B1', brut: '=A1*10', gras: true, fond: 'vert' },
@@ -54,7 +54,7 @@ test('copier-coller une formule : les références s’adaptent', async () => {
 test('couper-coller déplace sans changer les références', async () => {
   const { contexte, page } = await ouvrirApplication(navigateur, serveur.url, options);
   await page.evaluate(() => {
-    const { classeur, feuille } = window.tableur;
+    const { classeur, feuille } = window.omniTableur;
     classeur.modifierCellules(feuille, [{ adresse: 'A1', brut: '5' }, { adresse: 'B1', brut: '=A1+1' }]);
   });
   await aller(page, 'B1');

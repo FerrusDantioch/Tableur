@@ -1,6 +1,6 @@
-# Tableur — tableur hors ligne
+# Omni-Tableur — tableur hors ligne
 
-Tableur est un tableur simple (comme Excel ou Google Sheets, pour les
+Omni-Tableur est un tableur simple (comme Excel ou Google Sheets, pour les
 analyses courantes) qui s'installe sur un ordinateur ou un téléphone Android,
 comme une application classique.
 
@@ -13,6 +13,10 @@ comme une application classique.
 
 Adresse une fois publiée : `https://ferrusdantioch.github.io/Tableur/`
 (dépôt GitHub `FerrusDantioch/Tableur`).
+
+L'application s'appelait « Tableur » jusqu'à la version 2.0.0. L'adresse et le
+nom du dépôt sont gardés tels quels : les changer casserait les favoris et
+l'application déjà installée sur les appareils (voir partie 6).
 
 ---
 
@@ -175,7 +179,7 @@ Sans changement de version, les utilisateurs gardent l'ancienne version
 
 ## 4. Installer l'application sur un appareil
 
-- **Ordinateur (Chrome, Edge)** : Menu de Tableur → « Installer l'application
+- **Ordinateur (Chrome, Edge)** : Menu d'Omni-Tableur → « Installer l'application
   sur cet appareil » (ou l'icône d'installation dans la barre d'adresse).
 - **Android (Chrome, Brave)** : menu du navigateur (⋮) → « Installer
   l'application » ou « Ajouter à l'écran d'accueil ».
@@ -200,7 +204,7 @@ Sans changement de version, les utilisateurs gardent l'ancienne version
   ou en PDF.
 - Le classeur d'un téléphone et celui d'un ordinateur sont indépendants
   (pas de synchronisation pour l'instant).
-- Ouvre Tableur dans **un seul onglet à la fois** : un bandeau prévient si ce
+- Ouvre Omni-Tableur dans **un seul onglet à la fois** : un bandeau prévient si ce
   n'est pas le cas (sinon un onglet pourrait écraser les modifications de l'autre).
 - Sur Firefox, une question peut apparaître (« stocker des données de façon
   persistante ») : réponds « Autoriser ».
@@ -237,7 +241,7 @@ js/donnees/              (a) LES DONNÉES — ce que tu as saisi
 js/calcul/               (b) LE CALCUL DES FORMULES
   traduction.js          formules françaises → bibliothèque (SOMME → SUM, « ; » → « , »)
   moteur.js              calcule, suit les dépendances (entre feuilles aussi), recalcule
-  fonctions.js           fonctions écrites pour Tableur (NB.SI, RECHERCHEV, MAJUSCULE…)
+  fonctions.js           fonctions écrites pour Omni-Tableur (NB.SI, RECHERCHEV, MAJUSCULE…)
   comparaisons.js        comparaisons et critères à la française
   erreurs.js             #DIV/0!, #REF!… et leurs explications
   bibliotheque.js        accès à la bibliothèque fast-formula-parser
@@ -270,8 +274,13 @@ tests/                   vérifications automatiques
 
 - **Nom ou version** : `js/config.js`. Si tu changes le nom, change-le aussi
   dans `manifest.webmanifest` (un test vérifie que les deux correspondent).
-- **Ne change jamais** `idStockage: 'tableur'` dans `js/config.js` : les
-  classeurs déjà enregistrés deviendraient invisibles.
+- **Ne change jamais** `idStockage: 'omni-tableur'` dans `js/config.js` : les
+  classeurs déjà enregistrés deviendraient invisibles. (Il valait `'tableur'`
+  avant le renommage : `js/services/stockage.js` déplace une seule fois les
+  données de l'ancien nom vers le nouveau — copie, vérification, puis
+  effacement de l'ancien exemplaire.)
+- **Ne renomme pas** le dépôt GitHub ni le dossier `Tableur` : l'adresse de
+  l'application (`…github.io/Tableur/`) changerait.
 - **Ne change jamais** `"id": "/Tableur/"` dans `manifest.webmanifest`. Chrome
   le lit à partir de la racine du site (`https://ferrusdantioch.github.io/`) :
   `"./"` aurait donné à l'application l'identité de la racine, la même que

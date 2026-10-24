@@ -15,7 +15,8 @@ import { fileURLToPath } from 'node:url';
 
 const DOSSIER = fileURLToPath(new URL('..', import.meta.url));
 const PREFIXE = '/Tableur/';
-const PORT = Number(process.env.PORT) || 8000;
+// Port 8000 par défaut ; PORT=0 laisse l'ordinateur choisir un port libre (tests).
+const PORT = process.env.PORT === undefined ? 8000 : Number(process.env.PORT);
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -69,6 +70,6 @@ const serveur = createServer(async (requete, reponse) => {
 });
 
 serveur.listen(PORT, () => {
-  console.log(`Application disponible sur http://localhost:${PORT}/Tableur/`);
+  console.log(`Application disponible sur http://localhost:${serveur.address().port}/Tableur/`);
   console.log('Pour arrêter : Ctrl+C');
 });

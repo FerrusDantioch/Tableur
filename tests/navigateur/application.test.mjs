@@ -9,7 +9,7 @@ const attendreEnregistrement = (page) =>
   page.waitForFunction(() => document.getElementById('etat-sauvegarde').textContent === '✓ Enregistré');
 const recharger = async (page) => {
   await page.reload();
-  await page.waitForFunction(() => window.tableur !== undefined);
+  await page.waitForFunction(() => window.omniTableur !== undefined);
 };
 
 let serveur;
@@ -40,7 +40,7 @@ test('sauvegarde automatique : tout est retrouvé après fermeture', async () =>
   await cliquerOutil(page, '#bouton-gras');
   await cliquerOutil(page, '#bouton-fond');
   await page.click('#panneau-fond .pastille[data-fond="jaune"]');
-  await page.evaluate(() => window.tableur.classeur.modifierLargeurs(window.tableur.feuille, [1], 180));
+  await page.evaluate(() => window.omniTableur.classeur.modifierLargeurs(window.omniTableur.feuille, [1], 180));
   await attendreEnregistrement(page);
 
   // Nouvelle page (comme une réouverture de l'application).
@@ -48,14 +48,14 @@ test('sauvegarde automatique : tout est retrouvé après fermeture', async () =>
   autre.erreurs = [];
   autre.on('pageerror', (e) => autre.erreurs.push(e.message));
   await autre.goto(serveur.url);
-  await autre.waitForFunction(() => window.tableur !== undefined);
+  await autre.waitForFunction(() => window.omniTableur !== undefined);
   assert.equal(await autre.inputValue('#titre'), 'Mon budget');
-  assert.equal(await autre.title(), 'Mon budget – Tableur');
+  assert.equal(await autre.title(), 'Mon budget – Omni-Tableur');
   assert.equal(await texteCellule(autre, 'A1'), 'Loyer');
   assert.equal(await texteCellule(autre, 'B2'), '7800');
   assert.match(await autre.getAttribute(td(1, 1), 'class'), /gras/);
   assert.equal(await autre.getAttribute(td(1, 1), 'data-fond'), 'jaune');
-  assert.equal(await autre.evaluate(() => window.tableur.feuille.largeur(1)), 180);
+  assert.equal(await autre.evaluate(() => window.omniTableur.feuille.largeur(1)), 180);
   assert.deepEqual(autre.erreurs, []);
   assert.deepEqual(page.erreurs, []);
   await contexte.close();
@@ -102,7 +102,7 @@ test('trois thèmes, mémorisés', async () => {
 test('sauvegarde automatique : plusieurs feuilles, mise en forme, bordures, ligne figée', async () => {
   const { contexte, page } = await ouvrirApplication(navigateur, serveur.url);
   await page.evaluate(() => {
-    const { classeur } = window.tableur;
+    const { classeur } = window.omniTableur;
     const premiere = classeur.feuilleActive;
     classeur.modifierCellules(premiere, [
       { adresse: 'A1', brut: 'Total', gras: true, italique: true, couleur: 'bleu', alignement: 'centre' },
@@ -122,7 +122,7 @@ test('sauvegarde automatique : plusieurs feuilles, mise en forme, bordures, lign
   assert.equal(await texteCellule(page, 'A1'), '2469');
   await page.click('.onglet-feuille:text-is("Feuille1")');
   const etat = await page.evaluate(() => {
-    const { feuille, grille } = window.tableur;
+    const { feuille, grille } = window.omniTableur;
     const a1 = grille.td(1, 1);
     const b1 = grille.td(1, 2);
     return {
@@ -144,7 +144,7 @@ test('À propos : bouton direct, contact, licence et bibliothèques', async () =
   await page.click('#bouton-a-propos');
   assert.ok(await page.isVisible('#fenetre-a-propos'));
   const texte = await page.textContent('#fenetre-a-propos');
-  assert.match(texte, /Tableur/);
+  assert.match(texte, /Omni-Tableur/);
   assert.match(texte, /Version \d+\.\d+\.\d+/);
   assert.match(texte, /Application créée par Ferrus Dantioch et Claude/);
   assert.match(texte, /Un retour, une idée, un problème \?/);
@@ -153,7 +153,7 @@ test('À propos : bouton direct, contact, licence et bibliothèques', async () =
   // Lien qui ouvre la messagerie, avec l'objet déjà rempli ; adresse affichée en clair.
   assert.equal(
     await page.getAttribute('#lien-contact', 'href'),
-    'mailto:omni-systeme.choking513@passmail.net?subject=Retour%20sur%20Tableur',
+    'mailto:omni-systeme.choking513@passmail.net?subject=Retour%20sur%20Omni-Tableur',
   );
   assert.equal(await page.textContent('#adresse-contact'), 'omni-systeme.choking513@passmail.net');
   await page.click('#copier-adresse');
@@ -172,7 +172,7 @@ test('menu : lignes et colonnes en plus, aide, à propos', async () => {
   assert.match(await page.textContent('#taille-feuille'), /150 lignes × 31 colonnes/);
   assert.ok(await page.$('th.entete-colonne[data-colonne="31"]'));
   // La ligne 150 n'est dessinée qu'une fois arrivée à l'écran (grille virtuelle).
-  await page.evaluate(() => window.tableur.grille.rendreVisible(150, 31));
+  await page.evaluate(() => window.omniTableur.grille.rendreVisible(150, 31));
   assert.ok(await page.$(td(150, 31)));
   await page.click('#menu-aide');
   assert.ok(await page.isVisible('#fenetre-aide'));
@@ -205,7 +205,7 @@ test('nouveau classeur : confirmation, puis annulable', async () => {
   await page.click('#menu-nouveau');
   await page.click('#fenetre-confirmation [data-fermer="effacer"]');
   // La fenêtre se ferme juste après le clic (événement « close ») : on attend l'effacement.
-  await page.waitForFunction(() => window.tableur.classeur.titre === 'Sans titre' && !window.tableur.classeur.feuilles[0].brut('A1'));
+  await page.waitForFunction(() => window.omniTableur.classeur.titre === 'Sans titre' && !window.omniTableur.classeur.feuilles[0].brut('A1'));
   assert.equal(await texteCellule(page, 'A1'), '');
   await page.click('#bouton-annuler');
   assert.equal(await texteCellule(page, 'A1'), 'précieux');
@@ -219,7 +219,7 @@ test('application installable et utilisable sans connexion', async () => {
     const lien = document.querySelector('link[rel="manifest"]');
     return (await fetch(lien.href)).json();
   });
-  assert.equal(manifeste.name, 'Tableur');
+  assert.equal(manifeste.name, 'Omni-Tableur');
   assert.equal(manifeste.display, 'standalone');
   // Le service worker est installé et a tout mis en cache.
   await page.evaluate(() => navigator.serviceWorker.ready);
@@ -254,7 +254,7 @@ test('titre enregistré pendant la frappe ; Échap remet l’ancien', async () =
   await page.keyboard.type('Comptes');
   // Sans quitter le champ : le titre est déjà pris en compte et enregistré.
   await attendreEnregistrement(page);
-  assert.equal(await page.evaluate(() => window.tableur.classeur.titre), 'Comptes');
+  assert.equal(await page.evaluate(() => window.omniTableur.classeur.titre), 'Comptes');
   await page.keyboard.press('Enter');
   await page.click('#titre');
   await page.keyboard.press('Control+a');
@@ -272,7 +272,7 @@ test('avertissement si l’application est ouverte deux fois', async () => {
   assert.equal(await page.isVisible('#bandeau-onglets'), false);
   const seconde = await contexte.newPage();
   await seconde.goto(serveur.url);
-  await seconde.waitForFunction(() => window.tableur !== undefined);
+  await seconde.waitForFunction(() => window.omniTableur !== undefined);
   await seconde.waitForSelector('#bandeau-onglets', { state: 'visible' });
   await page.waitForSelector('#bandeau-onglets', { state: 'visible' });
   await seconde.click('#bouton-compris');

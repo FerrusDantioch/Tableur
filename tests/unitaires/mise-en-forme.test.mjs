@@ -3,7 +3,7 @@
 
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { creerTableur } from './outils.mjs';
+import { creerClasseurDeTest } from './outils.mjs';
 import { presenter, decimalesAffichees } from '../../js/affichage/format.js';
 import { borduresADessiner, calculerBordures } from '../../js/donnees/bordures.js';
 import { lirePlage } from '../../js/donnees/adresses.js';
@@ -38,7 +38,7 @@ describe('Formats de nombre', () => {
   });
 
   test('le format ne change pas la valeur utilisée par les calculs', () => {
-    const t = creerTableur({ A1: '2,345' });
+    const t = creerClasseurDeTest({ A1: '2,345' });
     t.classeur.modifierCellules(t.feuille, [{ adresse: 'A1', format: { type: 'nombre', decimales: 1 } }]);
     t.remplir({ B1: '=A1*1000' });
     assert.equal(t.valeur('A1'), 2.345);
@@ -62,7 +62,7 @@ describe('Bordures', () => {
   const cotes = (bordures) => Object.keys(bordures ?? {}).sort().join(',');
 
   test('toutes les bordures : chaque cellule est encadrée', () => {
-    const t = creerTableur();
+    const t = creerClasseurDeTest();
     const dessin = poser(t, 'B2:C3', 'toutes', fin);
     assert.deepEqual(t.feuille.cellule('B2').bordures, { haut: fin, bas: fin, gauche: fin, droite: fin });
     // B2 dessine son bas et sa droite ; son haut est dessiné par B1, sa gauche par A2.
@@ -74,7 +74,7 @@ describe('Bordures', () => {
   });
 
   test('bordure extérieure seulement', () => {
-    const t = creerTableur();
+    const t = creerClasseurDeTest();
     const dessin = poser(t, 'B2:D4', 'exterieur', epais);
     assert.deepEqual(t.feuille.cellule('C3'), null); // la cellule du milieu n'a rien
     assert.deepEqual(t.feuille.cellule('B2').bordures, { haut: epais, gauche: epais });
@@ -85,7 +85,7 @@ describe('Bordures', () => {
   });
 
   test('haut, bas, gauche, droite, puis aucune', () => {
-    const t = creerTableur();
+    const t = creerClasseurDeTest();
     poser(t, 'A1:B1', 'bas', fin);
     assert.deepEqual(t.feuille.cellule('A1').bordures, { bas: fin });
     let dessin = poser(t, 'A1', 'haut', epais);
@@ -103,7 +103,7 @@ describe('Bordures', () => {
   });
 
   test('la dernière bordure posée l’emporte sur celle de la voisine', () => {
-    const t = creerTableur();
+    const t = creerClasseurDeTest();
     poser(t, 'A1', 'toutes', fin);
     const dessin = poser(t, 'A2', 'haut', epais);
     // Le bas de A1 (fin) a été effacé : c'est le haut épais de A2 qui se voit.
